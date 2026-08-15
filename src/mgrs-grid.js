@@ -170,7 +170,7 @@ export function intervalForRf(rf) {
   if (!Number.isFinite(n) || n >= 75000) {
     return {
       meters: 10000,
-      accuracy: 1,
+      accuracy: 2,
       id: '10k',
       label: t('print.gridInterval.10k'),
       labelKey: 'print.gridInterval.10k',
@@ -180,7 +180,7 @@ export function intervalForRf(rf) {
   if (n >= 25000) {
     return {
       meters: 1000,
-      accuracy: 2,
+      accuracy: 3,
       id: '1k',
       label: t('print.gridInterval.1k'),
       labelKey: 'print.gridInterval.1k',
@@ -189,7 +189,7 @@ export function intervalForRf(rf) {
   }
   return {
     meters: 100,
-    accuracy: 3,
+    accuracy: 4,
     id: '100m',
     label: t('print.gridInterval.100m'),
     labelKey: 'print.gridInterval.100m',
@@ -205,20 +205,20 @@ export function intervalForZoom(zoom) {
   if (z < 8) {
     return { meters: 0, accuracy: 0, id: 'gzd', label: '', labelKey: '', hidden: false, gzdOnly: true };
   }
-  if (z <= 10) {
+  if (z <= 12) {
     return {
       meters: 10000,
-      accuracy: 1,
+      accuracy: 2,
       id: '10k',
       label: t('print.gridInterval.10k'),
       labelKey: 'print.gridInterval.10k',
       hidden: false,
     };
   }
-  if (z <= 13) {
+  if (z <= 14) {
     return {
       meters: 1000,
-      accuracy: 2,
+      accuracy: 3,
       id: '1k',
       label: t('print.gridInterval.1k'),
       labelKey: 'print.gridInterval.1k',
@@ -227,7 +227,7 @@ export function intervalForZoom(zoom) {
   }
   return {
     meters: 100,
-    accuracy: 3,
+    accuracy: 4,
     id: '100m',
     label: t('print.gridInterval.100m'),
     labelKey: 'print.gridInterval.100m',
@@ -479,14 +479,9 @@ function buildLabels(zone, northHem, bounds, interval, accuracy) {
         continue;
       }
       if (utmZone(p.lon) !== zone) continue;
-      try {
-        const compact = forward([p.lon, p.lat], accuracy);
-        features.push(
-          pointFeature(p.lon, p.lat, labelForAccuracy(compact, accuracy), 'cell'),
-        );
-      } catch {
-        // polar / invalid
-      }
+      // Interior easting/northing type is dead (DESIGN_SPEC §0).
+      // Edge labels live in the white collar via ticks.js.
+      void accuracy;
     }
   }
 
@@ -681,12 +676,31 @@ function emptyFC() {
   return { type: 'FeatureCollection', features: [] };
 }
 
-const VIS_LAYERS = [GZD_LINE_LAYER, LINE_LAYER, GZD_LABEL_LAYER, LABEL_LAYER];
+const GZD_CASE_LAYER = 'mgrs-gzd-case';
+const LINE_CASE_LAYER = 'mgrs-grid-case';
+const VIS_LAYERS = [
+  GZD_CASE_LAYER,
+  LINE_CASE_LAYER,
+  GZD_LINE_LAYER,
+  LINE_LAYER,
+  GZD_LABEL_LAYER,
+  LABEL_LAYER,
+];
+
+const INK = '#000000';
+const GZD = '#8B1E1E';
+const PAPER = '#FFFFFF';
 
 function setOverlayVisible(map, on) {
   const vis = on ? 'visible' : 'none';
   for (const id of VIS_LAYERS) {
     if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis);
+  }
+}
+
+function dropGridLayers(map) {
+  for (const id of VIS_LAYERS) {
+    if (map.getLayer(id)) map.removeLayer(id);
   }
 }
 
@@ -701,111 +715,241 @@ export function attachMgrsGrid(map, onUpdate) {
     if (src) src.setData(data);
     setOverlayVisible(map, !hidden);
     if (onUpdate) onUpdate({ interval, accuracy, hidden, polar, labelKey });
+    paintInk();
   };
 
+  const paintInk = () => {
+    const printing = !!printOverride;
+    if (map.getLayer(GZD_CASE_LAYER)) {
+      map.setPaintProperty(GZD_CASE_LAYER, 'line-color', PAPER);
+      map.setPaintProperty(GZD_CASE_LAYER, 'line-width', printing ? 6 : 5);
+      map.setPaintProperty(GZD_CASE_LAYER, 'line-opacity', printing ? 1 : 0.92);
+    }
+    if (map.getLayer(LINE_CASE_LAYER)) {
+      map.setPaintProperty(LINE_CASE_LAYER, 'line-color', PAPER);
+      map.setPaintProperty(
+        LINE_CASE_LAYER,
+        'line-width',
+        printing
+          ? [
+              'match',
+              ['get', 'level'],
+              '100km',
+              4.2,
+              '10km',
+              3.4,
+              '1km',
+              2.8,
+              2.4,
+            ]
+          : [
+              'match',
+              ['get', 'level'],
+              '100km',
+              3.6,
+              '10km',
+              2.8,
+              '1km',
+              2.2,
+              1.8,
+            ],
+      );
+      map.setPaintProperty(LINE_CASE_LAYER, 'line-opacity', printing ? 1 : 0.9);
+    }
+    if (map.getLayer(GZD_LINE_LAYER)) {
+      map.setPaintProperty(GZD_LINE_LAYER, 'line-color', GZD);
+      map.setPaintProperty(GZD_LINE_LAYER, 'line-width', 2.5);
+      map.setPaintProperty(GZD_LINE_LAYER, 'line-opacity', 0.85);
+    }
+    if (map.getLayer(LINE_LAYER)) {
+      map.setPaintProperty(LINE_LAYER, 'line-color', INK);
+      map.setPaintProperty(
+        LINE_LAYER,
+        'line-opacity',
+        printing
+          ? 0.85
+          : [
+              'match',
+              ['get', 'level'],
+              '100km',
+              0.75,
+              '10km',
+              0.4,
+              '1km',
+              0.4,
+              0.28,
+            ],
+      );
+    }
+    if (map.getLayer(GZD_LABEL_LAYER)) {
+      map.setPaintProperty(GZD_LABEL_LAYER, 'text-color', GZD);
+      map.setPaintProperty(GZD_LABEL_LAYER, 'text-halo-color', PAPER);
+    }
+    if (map.getLayer(LABEL_LAYER)) {
+      map.setPaintProperty(LABEL_LAYER, 'text-color', INK);
+      map.setPaintProperty(LABEL_LAYER, 'text-halo-color', PAPER);
+    }
+  };
+
+  let adding = false;
   const addLayers = () => {
-    if (map.getSource(SOURCE_ID)) return;
-    map.addSource(SOURCE_ID, { type: 'geojson', data: emptyFC() });
+    if (adding) return;
+    adding = true;
+    try {
+      dropGridLayers(map);
+      if (!map.getSource(SOURCE_ID)) {
+        map.addSource(SOURCE_ID, { type: 'geojson', data: emptyFC() });
+      }
 
-    map.addLayer({
-      id: GZD_LINE_LAYER,
-      type: 'line',
-      source: SOURCE_ID,
-      filter: ['==', ['get', 'level'], 'gzd'],
-      layout: { 'line-cap': 'butt', 'line-join': 'miter' },
-      paint: {
-        'line-color': '#8B1E1E',
-        'line-width': 2.5,
-        'line-opacity': 0.85,
-      },
-    });
+      map.addLayer({
+        id: GZD_CASE_LAYER,
+        type: 'line',
+        source: SOURCE_ID,
+        filter: ['==', ['get', 'level'], 'gzd'],
+        layout: { 'line-cap': 'butt', 'line-join': 'miter' },
+        paint: {
+          'line-color': PAPER,
+          'line-width': 5,
+          'line-opacity': 0.92,
+        },
+      });
 
-    map.addLayer({
-      id: LINE_LAYER,
-      type: 'line',
-      source: SOURCE_ID,
-      filter: [
-        'all',
-        ['==', ['get', 'kind'], 'line'],
-        ['!=', ['get', 'level'], 'gzd'],
-      ],
-      layout: { 'line-cap': 'butt', 'line-join': 'miter' },
-      paint: {
-        'line-color': '#1C1914',
-        'line-width': [
-          'match',
-          ['get', 'level'],
-          '100km',
-          1.5,
-          '10km',
-          0.9,
-          '1km',
-          0.6,
-          0.4,
+      map.addLayer({
+        id: LINE_CASE_LAYER,
+        type: 'line',
+        source: SOURCE_ID,
+        filter: [
+          'all',
+          ['==', ['get', 'kind'], 'line'],
+          ['!=', ['get', 'level'], 'gzd'],
         ],
-        'line-opacity': [
-          'match',
-          ['get', 'level'],
-          '100km',
-          0.75,
-          '10km',
-          0.4,
-          '1km',
-          0.4,
-          0.28,
+        layout: { 'line-cap': 'butt', 'line-join': 'miter' },
+        paint: {
+          'line-color': PAPER,
+          'line-width': [
+            'match',
+            ['get', 'level'],
+            '100km',
+            3.6,
+            '10km',
+            2.8,
+            '1km',
+            2.2,
+            1.8,
+          ],
+          'line-opacity': 0.9,
+        },
+      });
+
+      map.addLayer({
+        id: GZD_LINE_LAYER,
+        type: 'line',
+        source: SOURCE_ID,
+        filter: ['==', ['get', 'level'], 'gzd'],
+        layout: { 'line-cap': 'butt', 'line-join': 'miter' },
+        paint: {
+          'line-color': GZD,
+          'line-width': 2.5,
+          'line-opacity': 0.85,
+        },
+      });
+
+      map.addLayer({
+        id: LINE_LAYER,
+        type: 'line',
+        source: SOURCE_ID,
+        filter: [
+          'all',
+          ['==', ['get', 'kind'], 'line'],
+          ['!=', ['get', 'level'], 'gzd'],
         ],
-      },
-    });
+        layout: { 'line-cap': 'butt', 'line-join': 'miter' },
+        paint: {
+          'line-color': INK,
+          'line-width': [
+            'match',
+            ['get', 'level'],
+            '100km',
+            1.5,
+            '10km',
+            0.9,
+            '1km',
+            0.6,
+            0.4,
+          ],
+          'line-opacity': [
+            'match',
+            ['get', 'level'],
+            '100km',
+            0.75,
+            '10km',
+            0.4,
+            '1km',
+            0.4,
+            0.28,
+          ],
+        },
+      });
 
-    map.addLayer({
-      id: GZD_LABEL_LAYER,
-      type: 'symbol',
-      source: SOURCE_ID,
-      filter: ['==', ['get', 'level'], 'gzd'],
-      layout: {
-        'text-field': ['get', 'label'],
-        'text-size': 13,
-        'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-        'text-allow-overlap': false,
-        'text-padding': 4,
-      },
-      paint: {
-        'text-color': '#8B1E1E',
-        'text-halo-color': 'rgba(244, 239, 228, 0.80)',
-        'text-halo-width': 2,
-      },
-    });
+      map.addLayer({
+        id: GZD_LABEL_LAYER,
+        type: 'symbol',
+        source: SOURCE_ID,
+        filter: ['==', ['get', 'level'], 'gzd'],
+        layout: {
+          'text-field': ['get', 'label'],
+          'text-size': 13,
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-allow-overlap': true,
+          'text-padding': 2,
+        },
+        paint: {
+          'text-color': GZD,
+          'text-halo-color': PAPER,
+          'text-halo-width': 3.5,
+        },
+      });
 
-    map.addLayer({
-      id: LABEL_LAYER,
-      type: 'symbol',
-      source: SOURCE_ID,
-      filter: [
-        'all',
-        ['==', ['get', 'kind'], 'label'],
-        ['!=', ['get', 'level'], 'gzd'],
-      ],
-      layout: {
-        'text-field': ['get', 'label'],
-        'text-size': 11,
-        'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
-        'text-allow-overlap': false,
-        'text-padding': 2,
-      },
-      paint: {
-        'text-color': '#1C1914',
-        'text-halo-color': 'rgba(244, 239, 228, 0.80)',
-        'text-halo-width': 2,
-      },
-    });
+      map.addLayer({
+        id: LABEL_LAYER,
+        type: 'symbol',
+        source: SOURCE_ID,
+        filter: [
+          'all',
+          ['==', ['get', 'kind'], 'label'],
+          ['!=', ['get', 'level'], 'gzd'],
+        ],
+        layout: {
+          'text-field': ['get', 'label'],
+          'text-size': 11,
+          'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+          'text-allow-overlap': false,
+          'text-padding': 2,
+        },
+        paint: {
+          'text-color': INK,
+          'text-halo-color': PAPER,
+          'text-halo-width': 2,
+        },
+      });
 
-    apply();
+      paintInk();
+      apply();
+    } finally {
+      adding = false;
+    }
   };
 
   gridApply = apply;
 
   if (map.isStyleLoaded()) addLayers();
   map.on('load', addLayers);
+  map.on('style.load', addLayers);
+  map.on('styledata', () => {
+    if (!map.isStyleLoaded()) return;
+    if (!map.getLayer(LINE_LAYER)) addLayers();
+    else paintInk();
+  });
   map.on('moveend', apply);
   map.on('zoomend', apply);
 

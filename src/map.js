@@ -2,9 +2,9 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { t } from './copy.js';
 
-/** Washington DC / Monument — zoom 12 so OpenTopoMap reads as topo. */
-export const DEFAULT_CENTER = { lon: -77.035, lat: 38.89 };
-export const DEFAULT_ZOOM = 12;
+/** Jefferson Pier / Washington DC — RF target 1:24 000 after first layout. */
+export const DEFAULT_CENTER = { lon: -77.0353, lat: 38.8895 };
+export const DEFAULT_ZOOM = 14;
 
 export const OT_TILES = [
   'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
@@ -114,6 +114,11 @@ export function buildStyle(tileId = activeTileSource) {
     },
     layers: [
       {
+        id: 'well',
+        type: 'background',
+        paint: { 'background-color': '#E8D9B8' },
+      },
+      {
         id: 'basemap',
         type: 'raster',
         source: 'basemap',
@@ -152,15 +157,33 @@ function tilesHavePainted(map) {
 export function attachTileFallback(map) {
   let errors = 0;
   let switched = activeTileSource !== 'opentopomap';
-  let osmSettled = switched;
+  let painted = false;
+
+  const dismiss = () => {
+    painted = true;
+    setStatus('');
+  };
+
+  const basemapReady = (e) => {
+    if (!e || e.sourceId !== 'basemap') return;
+    if (e.isSourceLoaded || e.sourceDataType === 'idle') dismiss();
+  };
+  map.on('sourcedata', basemapReady);
+  map.on('data', (e) => {
+    if (e && e.sourceId === 'basemap' && e.dataType === 'source' && e.isSourceLoaded) {
+      dismiss();
+    }
+  });
 
   map.on('error', (e) => {
     const src = e?.sourceId || e?.source?.id;
     const msg = String(e?.error?.message || e?.error || '');
-    const tileish =
-      src === 'basemap' ||
-      /tile|opentopo|Failed to fetch|CORS|network/i.test(msg);
-    if (!tileish) return;
+    if (src && src !== 'basemap') return;
+    if (/glyph|font|\.pbf/i.test(msg)) return;
+    if (painted) {
+      dismiss();
+      return;
+    }
 
     if (!switched) {
       errors += 1;
@@ -168,19 +191,13 @@ export function attachTileFallback(map) {
       switched = true;
       applyTileSource(map, 'osm');
       map.once('idle', () => {
-        osmSettled = true;
-        if (tilesHavePainted(map)) setStatus('');
+        if (painted || tilesHavePainted(map)) dismiss();
         else setStatus(t('chrome.tilesFailed'), { retry: true });
       });
       return;
     }
 
-    if (!osmSettled) return;
-    if (tilesHavePainted(map)) {
-      setStatus('');
-      return;
-    }
-    setStatus(t('chrome.tilesFailed'), { retry: true });
+    if (!painted) setStatus(t('chrome.tilesFailed'), { retry: true });
   });
 }
 
@@ -201,7 +218,7 @@ function showNoWebGL() {
   const banner = document.getElementById('no-webgl');
   const chrome = document.getElementById('chrome');
   const hud = document.getElementById('hud');
-  const frame = document.getElementById('print-frame');
+  const desk = document.getElementById('desk');
   const mapEl = document.getElementById('map');
   const status = document.getElementById('map-status');
   if (banner) {
@@ -211,7 +228,7 @@ function showNoWebGL() {
   }
   if (chrome) chrome.hidden = true;
   if (hud) hud.hidden = true;
-  if (frame) frame.hidden = true;
+  if (desk) desk.hidden = true;
   if (mapEl) mapEl.hidden = true;
   if (status) status.hidden = true;
 }
@@ -270,7 +287,7 @@ export async function createMap(containerId = 'map') {
   }
 
   map.on('idle', () => {
-    if (tilesHavePainted(map)) setStatus('');
+    if (tilesHavePainted(map) || map.isSourceLoaded?.('basemap')) setStatus('');
   });
 
   const kickResize = () => {

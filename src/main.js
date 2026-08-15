@@ -1,4 +1,4 @@
-import { API_BASE, t, applyStaticCopy } from './copy.js';
+import { t, applyStaticCopy } from './copy.js';
 import {
   createMap,
   activeTileSource,
@@ -10,7 +10,6 @@ import {
   centerMgrsCompact,
   intervalForZoom,
   precisionForZoom,
-  formatMgrs,
   isGridAvailable,
   setPrintInterval,
 } from './mgrs-grid.js';
@@ -22,6 +21,7 @@ import {
   renderPrintScaleBar,
 } from './scale.js';
 import { attachSearch } from './search.js';
+import { attachCollarTicks } from './ticks.js';
 
 const TITLE_MAX = 28;
 
@@ -30,7 +30,8 @@ const state = {
   lastAccuracy: 2,
   lastScaleText: '',
   lastMgrs: '',
-  lastLabel: '',
+  lastLabel: 'Washington, District of Columbia',
+  exampleLocked: true,
   polar: false,
   gridHidden: false,
 };
@@ -62,6 +63,21 @@ function truncateTitle(raw) {
   return `${s.slice(0, TITLE_MAX - 1)}…`;
 }
 
+function isLatLonLabel(s) {
+  const v = String(s || '').trim();
+  if (!v) return false;
+  if (/^-?\d+(?:\.\d+)?\s*[,;\s]\s*-?\d+(?:\.\d+)?$/.test(v)) return true;
+  if (/^-?\d+(?:\.\d+)?\s*[NSns]\s*[,;\s]\s*-?\d+(?:\.\d+)?\s*[EWew]$/.test(v)) return true;
+  return false;
+}
+
+function sheetTitle(square) {
+  const raw = String(state.lastLabel || '').trim();
+  if (raw && !isLatLonLabel(raw)) return truncateTitle(raw);
+  if (square) return truncateTitle(square);
+  return t('lbl.untitled');
+}
+
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value == null ? '' : String(value);
@@ -70,12 +86,12 @@ function setText(id, value) {
 function applyChromeCopy() {
   applyStaticCopy(document);
   setText('app-name', t('app.name'));
+  document.title = t('app.documentTitle');
   setText('search-aria-label', t('search.ariaLabel'));
   const input = document.getElementById('search-input');
   if (input) {
     input.placeholder = t('ph.search');
     input.setAttribute('aria-label', t('search.ariaLabel'));
-    input.title = t('search.examples');
   }
   const clearBtn = document.getElementById('search-clear');
   if (clearBtn) {
@@ -94,13 +110,6 @@ function applyChromeCopy() {
     printBtn.setAttribute('aria-label', t('chrome.ariaPrint'));
   }
   setText('search-helper', t('search.helper'));
-  setText('formats-heading', t('search.formats.heading'));
-  setText('fmt-mgrs100', t('search.formats.mgrs100'));
-  setText('fmt-mgrs1k', t('search.formats.mgrs1k'));
-  setText('fmt-mgrs10k', t('search.formats.mgrs10k'));
-  setText('fmt-decimal', t('search.formats.decimal'));
-  setText('fmt-dms', t('search.formats.dms'));
-  setText('fmt-place', t('search.formats.place'));
   const retry = document.getElementById('tile-retry');
   if (retry) retry.textContent = t('chrome.retry');
   const noWeb = document.getElementById('no-webgl');
@@ -119,8 +128,15 @@ function applyChromeCopy() {
   setText('print-datum-value', t('print.datumValue'));
   setText('lbl-print-projection', t('print.projection'));
   setText('print-projection-value', t('print.projectionValue'));
-  setText('lbl-print-north', t('print.north'));
-  setText('lbl-print-true-north', t('print.northTrue'));
+  setText('lbl-print-north', t('print.north.gm'));
+  setText('print-gm-note', t('print.north.note'));
+  setText('lbl-print-gzd', t('print.gridZone'));
+  setText('lbl-print-example', t('print.example'));
+  setText('print-example-place', t('print.example.place'));
+  setText('print-example-grid', t('print.example.grid'));
+  setText('print-example-note', t('print.example.note'));
+  setText('print-gm-angle', 'G–M 9° 30′ W');
+  setText('print-gm-conv', 'convergence 1° 17′');
   setText('lbl-print-legend', t('print.legend'));
   setText('leg-roads', t('print.legend.roads'));
   setText('leg-water', t('print.legend.water'));
@@ -131,47 +147,43 @@ function applyChromeCopy() {
   setText('lbl-print-printed', t('print.printed'));
   setText('lbl-print-sheet', t('print.sheet'));
   setText('print-sheet-value', t('print.sheetValue'));
-  setText('print-disclaimer', t('print.disclaimer'));
-  setText('grid-unavailable', t('chrome.gridUnavailable'));
+  setText(
+    'print-disclaimer',
+    `${t('app.name')} · ${t('print.attribution.notUsgs')}. ${t('print.disclaimer')}`,
+  );
+  setText('grid-unavailable', t('lbl.gridUnavailable'));
   const mgrsEl = document.getElementById('center-mgrs');
   if (mgrsEl) mgrsEl.setAttribute('aria-label', t('chrome.mgrsAria'));
 }
 
-function layoutPrintFrame() {
-  const frame = document.getElementById('print-frame');
-  if (!frame || frame.hidden) return;
-  const toolbar = 48;
+function layoutSheet(map) {
+  const desk = document.getElementById('desk');
+  const sheet = document.getElementById('sheet');
+  if (!desk || !sheet || document.body.classList.contains('printing')) return;
   const inset = 24;
-  const zoomW = 36 + 16;
-  const hud = document.getElementById('hud');
-  const hudH = hud && !hud.hidden ? hud.getBoundingClientRect().height : 88;
-  const hudW = hud && !hud.hidden ? hud.getBoundingClientRect().width : 168;
-  const top = toolbar + inset;
-  const left = inset;
-  const right = inset;
-  const bottom = Math.max(inset, 16 + hudH + inset, 16 + 74 + inset);
-  const availW = Math.max(40, window.innerWidth - left - right);
-  const availH = Math.max(40, window.innerHeight - top - bottom);
-  const ar = 7.74 / 8.14;
-  let w = availW;
-  let h = w / ar;
-  if (h > availH) {
-    h = availH;
-    w = h * ar;
+  const r = desk.getBoundingClientRect();
+  const availW = Math.max(40, r.width - inset * 2);
+  const availH = Math.max(40, r.height - inset * 2);
+  const natW = 8.5 * 96;
+  const natH = 11 * 96;
+  const scale = Math.min(availW / natW, availH / natH);
+  const w = natW * scale;
+  const h = natH * scale;
+  sheet.style.left = `${Math.round((r.width - w) / 2)}px`;
+  sheet.style.top = `${Math.round((r.height - h) / 2)}px`;
+  sheet.style.transform = `scale(${scale})`;
+  if (map) {
+    try { map.resize(); } catch { /* first layout */ }
   }
-  const x = left + (availW - w) / 2;
-  const y = top + (availH - h) / 2;
-  frame.style.position = 'fixed';
-  frame.style.top = `${Math.round(y)}px`;
-  frame.style.left = `${Math.round(x)}px`;
-  frame.style.width = `${Math.round(w)}px`;
-  frame.style.height = `${Math.round(h)}px`;
-  frame.style.right = 'auto';
-  frame.style.bottom = 'auto';
-  frame.style.margin = '0';
-  frame.style.pointerEvents = 'none';
-  void hudW;
-  void zoomW;
+}
+
+function setZoomForPrintRf(map, target = 24000) {
+  const w = (map.getCanvas() && map.getCanvas().clientWidth) || 7.74 * 96;
+  const groundM = 7.74 * 0.0254 * target;
+  const mpp = groundM / w;
+  const lat = map.getCenter().lat;
+  const z = Math.log2((156543.03392804097 * Math.cos((lat * Math.PI) / 180)) / mpp);
+  if (Number.isFinite(z)) map.setZoom(Math.min(18, Math.max(2, z)));
 }
 
 function setMgrsReadout(text, polar = false) {
@@ -179,7 +191,7 @@ function setMgrsReadout(text, polar = false) {
   const unavail = document.getElementById('grid-unavailable');
   if (!el) return;
   if (polar || !text) {
-    el.textContent = polar ? t('chrome.gridUnavailable') : '';
+    el.textContent = polar ? t('lbl.gridUnavailable') : '';
     el.classList.toggle('is-unavailable', polar);
     if (unavail) unavail.hidden = true;
     if (polar) state.lastMgrs = '';
@@ -212,30 +224,13 @@ function updateCenterHud(map) {
   }
 }
 
-let convertTimer = 0;
-async function refreshRemoteMgrs(map) {
-  if (!API_BASE) return;
-  const c = map.getCenter();
-  if (!isGridAvailable(c.lat)) return;
-  const precision = precisionForZoom(map.getZoom());
-  const url = `${API_BASE}/api/convert?lat=${encodeURIComponent(c.lat)}&lon=${encodeURIComponent(c.lng)}&precision=${encodeURIComponent(precision)}`;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return;
-    const data = await res.json();
-    const raw = data.mgrs || data.MGRS || data.value;
-    if (raw) setMgrsReadout(formatMgrs(String(raw).replace(/\s+/g, '')));
-  } catch {
-    // keep last good value
-  }
-}
 
 function fillPrintBlock(map) {
   const scale = computePrintScale(map);
   state.lastScaleText = scale.text;
   const rfBand = intervalForPrintRf(scale.rf);
   const square = centerMgrs(map, rfBand.accuracy);
-  const title = truncateTitle(state.lastLabel || square || t('lbl.untitled'));
+  const title = sheetTitle(square);
   setText('print-title', title);
   setText('print-title-upper', title);
   setText('print-upper-title', title);
@@ -247,6 +242,19 @@ function fillPrintBlock(map) {
   setText('print-attr', attrPrint());
   setText('print-product', t('app.name'));
   setText('print-sheet-value', t('print.sheetValue'));
+  setText(
+    'print-disclaimer',
+    `${t('app.name')} · ${t('print.attribution.notUsgs')}. ${t('print.disclaimer')}`,
+  );
+  const gzd = String(square || '').trim().split(/\s+/)[0] || '';
+  setText('print-gzd', gzd);
+  if (state.exampleLocked) {
+    setText('print-example-place', t('print.example.place'));
+    setText('print-example-grid', t('print.example.grid'));
+  } else {
+    setText('print-example-place', title);
+    setText('print-example-grid', square || '');
+  }
   renderPrintScaleBar(document.getElementById('print-scale-bar'), scale.metersPerPixel);
   return rfBand;
 }
@@ -256,21 +264,21 @@ function attachPrint(map) {
   if (!btn) return;
 
   const prepare = () => {
+    const scale = computePrintScale(map);
+    setPrintInterval(intervalForPrintRf(scale.rf));
     document.body.classList.add('printing');
     fillPrintBlock(map);
-    const scale = computePrintScale(map);
-    setGridPrintMode(intervalForPrintRf(scale.rf));
     const compact = centerMgrsCompact(map, precisionForZoom(map.getZoom()));
     document.title = printFilename(compact);
     map.resize();
   };
 
   const restore = () => {
-    setGridPrintMode(null);
+    setPrintInterval(null);
     document.body.classList.remove('printing');
     document.title = t('app.documentTitle');
     map.resize();
-    layoutPrintFrame();
+    layoutSheet();
   };
 
   window.addEventListener('beforeprint', prepare);
@@ -319,11 +327,20 @@ function attachPrint(map) {
 
 async function main() {
   applyChromeCopy();
-  layoutPrintFrame();
-  window.addEventListener('resize', layoutPrintFrame);
+  layoutSheet();
+  window.addEventListener('resize', () => layoutSheet());
 
   const map = await createMap('map');
   if (!map) return;
+  layoutSheet(map);
+  try {
+    map.resize();
+  } catch {
+    // first layout
+  }
+  setZoomForPrintRf(map, 24000);
+  attachCollarTicks(map);
+  fillPrintBlock(map);
 
   const scaleEl = document.getElementById('scale-readout');
 
@@ -339,9 +356,11 @@ async function main() {
   attachScaleReadout(map, scaleEl);
   attachSearch(map, {
     onLocate: (info) => {
-      if (info.label) {
-        const compact = String(info.mgrs || info.label).replace(/\s+/g, '');
-        state.lastLabel = info.mgrs ? formatMgrs(compact) : info.label;
+      state.exampleLocked = false;
+      if (info && info.kind === 'place' && info.label && !isLatLonLabel(info.label)) {
+        state.lastLabel = info.label;
+      } else {
+        state.lastLabel = '';
       }
     },
   });
@@ -349,15 +368,12 @@ async function main() {
 
   const hud = () => {
     updateCenterHud(map);
-    layoutPrintFrame();
+    layoutSheet(map);
+    fillPrintBlock(map);
   };
   map.on('load', hud);
   map.on('move', () => updateCenterHud(map));
-  map.on('resize', layoutPrintFrame);
-  map.on('moveend', () => {
-    window.clearTimeout(convertTimer);
-    convertTimer = window.setTimeout(() => refreshRemoteMgrs(map), 120);
-  });
+  map.on('resize', () => layoutSheet(map));
   if (map.loaded()) hud();
 }
 

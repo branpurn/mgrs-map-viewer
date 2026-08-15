@@ -3,7 +3,7 @@
   margin: 0;
 }
 
-#print-sheet { display: none; }
+#print-sheet { display: block; }
 
 #print-upper {
   position: absolute;
@@ -11,7 +11,7 @@
   left: 0.38in;
   width: 7.74in;
   height: 0.33in;
-  background: #EDE6D6;
+  background: #FFFFFF;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -45,10 +45,10 @@
   left: 0.38in;
   width: 7.74in;
   height: 2.00in;
-  background: #EDE6D6;
+  background: #FFFFFF;
   box-sizing: border-box;
-  border-top: 0.75pt solid #1C1914;
-  border-bottom: 0.35pt solid #1C1914;
+  border-top: 0.75pt solid #000000;
+  border-bottom: 0.35pt solid #000000;
   padding: 0.08in 0;
   display: flex;
   align-items: stretch;
@@ -64,7 +64,7 @@
 #print-footer .print-col-b {
   width: 2.00in;
   flex: 0 0 2.00in;
-  border-left: 0.35pt solid #1C1914;
+  border-left: 0.35pt solid #000000;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -73,12 +73,12 @@
 #print-footer .print-col-c {
   width: 1.50in;
   flex: 0 0 1.50in;
-  border-left: 0.35pt solid #1C1914;
+  border-left: 0.35pt solid #000000;
 }
 #print-footer .print-col-d {
   width: 1.30in;
   flex: 0 0 1.30in;
-  border-left: 0.35pt solid #1C1914;
+  border-left: 0.35pt solid #000000;
   font-size: 7pt;
   line-height: 1.2;
 }
@@ -146,9 +146,9 @@
 }
 .psb-track i { flex: 1; display: block; height: 100%; }
 .psb-track i:nth-child(odd),
-.psb-track .seg-ink { background: #1C1914; }
+.psb-track .seg-ink { background: #000000; }
 .psb-track i:nth-child(even),
-.psb-track .seg-paper { background: #F4EFE4; }
+.psb-track .seg-paper { background: #FFFFFF; }
 
 .psb-labels {
   display: flex;
@@ -227,7 +227,7 @@
   top: 10.76in;
   left: 0.38in;
   width: 7.74in;
-  height: 0.18in;
+  height: 0.22in;
   overflow: hidden;
 }
 
@@ -249,7 +249,7 @@ body.printing #app {
   height: 11in !important;
   max-width: 8.5in;
   max-height: 11in;
-  background: #F4EFE4 !important;
+  background: #FFFFFF !important;
   color: #1C1914;
   overflow: hidden !important;
   margin: 0 !important;
@@ -262,7 +262,6 @@ body.printing #app {
 body.printing .chrome,
 body.printing #chrome,
 body.printing #hud,
-body.printing #print-frame,
 body.printing #crosshair,
 body.printing #map-status,
 body.printing #search-note,
@@ -301,13 +300,13 @@ body.printing #map {
   width: 7.74in !important;
   height: 8.14in !important;
   overflow: hidden !important;
-  outline: 1.25pt solid #1C1914;
+  outline: 1.25pt solid #000000;
   z-index: 2;
 }
 
 @media print {
   html, body, #app {
-    background: #F4EFE4 !important;
+    background: #FFFFFF !important;
     color: #1C1914;
     width: 8.5in !important;
     height: 11in !important;
@@ -327,7 +326,6 @@ body.printing #map {
   .chrome,
   #chrome,
   #hud,
-  #print-frame,
   #crosshair,
   #map-status,
   #search-note,
@@ -365,7 +363,47 @@ body.printing #map {
     width: 7.74in !important;
     height: 8.14in !important;
     overflow: hidden !important;
-    outline: 1.25pt solid #1C1914;
+    outline: 1.25pt solid #000000;
     z-index: 2;
   }
+}
+
+
+.print-ident-extra { margin: 0.03in 0 0.04in; }
+.print-ident-extra .print-k,
+.print-k { margin: 0.02in 0 0; font-size: 6.5pt; line-height: 1.15; color: #4A4036; }
+.print-ident-extra .print-v,
+.print-v { margin: 0; font-size: 7pt; line-height: 1.15; color: #1C1914; }
+.print-v.mono, .print-gm-fig { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+.print-v.bold { font-weight: 700; font-size: 8.5pt; }
+.print-note { margin: 0; font-size: 6pt; line-height: 1.15; color: #4A4036; }
+.print-gm { display: block; margin: 0 auto 0.02in; }
+.print-gm-fig { margin: 0; font-size: 6.5pt; line-height: 1.2; text-align: center; }
+.print-col-a { overflow: hidden; }
+.print-col-a .print-title { font-size: 11pt; }
+.print-spec div { height: 0.14in; }
+.psb-track { gap: 0; }
+.psb-track .psb-gap {
+  flex: 0 0 0.08in;
+  background: transparent !important;
+  border: 0;
+}
+#print-ticks .tick { position: absolute; background: #000; }
+#print-ticks .lab {
+  position: absolute;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 7pt;
+  color: #000;
+  line-height: 1;
+}
+
+body.printing #desk { background: #fff !important; overflow: visible !important; }
+body.printing #sheet {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  transform: none !important;
+  width: 8.5in !important;
+  height: 11in !important;
+  box-shadow: none !important;
 }

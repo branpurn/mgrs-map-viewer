@@ -16,28 +16,43 @@ export function metersPerPixelAtCenter(map) {
 }
 
 function frameWidthPx() {
-  const frame = document.getElementById('print-frame');
-  if (frame) {
-    const w = frame.getBoundingClientRect().width;
+  const mapEl = document.getElementById('map');
+  if (mapEl) {
+    const w = mapEl.getBoundingClientRect().width;
     if (w > 0) return w;
   }
   return 7.74 * 96;
 }
 
+export function computeViewScale(map) {
+  const mpp = metersPerPixelAtCenter(map);
+  if (mpp == null) {
+    return { rf: null, rawRf: null, text: '', metersPerPixel: null };
+  }
+  const rawRf = (mpp * 96) / 0.0254;
+  const nice = roundToNice(rawRf);
+  return {
+    rf: nice,
+    rawRf,
+    text: formatScaleRatio(nice),
+    metersPerPixel: mpp,
+  };
+}
+
 export function computeScale(map) {
-  return computePrintScale(map);
+  return computeViewScale(map);
 }
 
 /** Print principal grid from RF (not screen zoom). */
 export function intervalForPrintRf(rf) {
   const n = Number(rf);
   if (!Number.isFinite(n) || n >= 75000) {
-    return { meters: 10000, accuracy: 1, id: '10k', labelKey: 'print.gridInterval.10k' };
+    return { meters: 10000, accuracy: 2, id: '10k', labelKey: 'print.gridInterval.10k' };
   }
   if (n >= 25000) {
-    return { meters: 1000, accuracy: 2, id: '1k', labelKey: 'print.gridInterval.1k' };
+    return { meters: 1000, accuracy: 3, id: '1k', labelKey: 'print.gridInterval.1k' };
   }
-  return { meters: 100, accuracy: 3, id: '100m', labelKey: 'print.gridInterval.100m' };
+  return { meters: 100, accuracy: 4, id: '100m', labelKey: 'print.gridInterval.100m' };
 }
 
 /**
@@ -101,6 +116,11 @@ export function buildPrintScaleBar(track, endEl, mpp) {
   track.innerHTML = '';
   for (let i = 0; i < segs; i += 1) {
     track.appendChild(document.createElement('i'));
+    if (i === 1) {
+      const gap = document.createElement('i');
+      gap.className = 'psb-gap';
+      track.appendChild(gap);
+    }
   }
   const widthPx = Math.min(maxPx, total / mpp);
   track.parentElement.style.width = `${widthPx}px`;
@@ -140,7 +160,7 @@ export function renderPrintScaleBar(el, mpp) {
 export function attachScaleReadout(map, el) {
   const bar = document.getElementById('scale-bar');
   const render = () => {
-    const { text, metersPerPixel } = computePrintScale(map);
+    const { text, metersPerPixel } = computeViewScale(map);
     if (el && text) {
       el.textContent = text;
       el.setAttribute('aria-label', t('chrome.scaleLabel'));

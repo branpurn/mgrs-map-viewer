@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#2B2924" />
     <title>MGRS Viewer</title>
-    <link rel="icon" href="/icon/favicon-16.png" sizes="16x16" type="image/png" />
-    <link rel="icon" href="/icon/favicon-32.png" sizes="32x32" type="image/png" />
-    <link rel="apple-touch-icon" href="/icon/apple-touch-180.png" sizes="180x180" />
-    <link rel="icon" href="/icon/app-icon-512.png" sizes="512x512" type="image/png" />
+    <link rel="icon" href="./icon/favicon-16.png" sizes="16x16" type="image/png" />
+    <link rel="icon" href="./icon/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="./icon/apple-touch-180.png" sizes="180x180" />
+    <link rel="icon" href="./icon/app-icon-512.png" sizes="512x512" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/src/style.css" />
-    <link rel="stylesheet" href="/src/print.css" />
+    <link rel="stylesheet" href="./src/style.css" />
+    <link rel="stylesheet" href="./src/print.css" />
   </head>
   <body>
     <div id="app">
-      <div id="no-webgl" class="no-webgl" hidden><p></p></div>
+      <div id="no-webgl" class="no-webgl" hidden><img src="./icon/app-icon-512.png" width="48" height="48" alt="" /><p></p></div>
 
       <header class="chrome" id="chrome">
         <div class="brand">
@@ -40,112 +40,123 @@
         <button type="button" id="print-btn"></button>
         <p id="search-helper" class="search-helper"></p>
         <p id="search-hint" class="search-hint" hidden></p>
-        <p id="search-note" class="search-note" hidden></p>
-        <div id="search-formats" class="search-formats" hidden>
-          <p class="formats-h" id="formats-heading"></p>
-          <p id="fmt-mgrs100"></p>
-          <p id="fmt-mgrs1k"></p>
-          <p id="fmt-mgrs10k"></p>
-          <p id="fmt-decimal"></p>
-          <p id="fmt-dms"></p>
-          <p id="fmt-place"></p>
-        </div>
       </header>
 
-      <div id="map" role="application" aria-label="Topographic map"></div>
-      <div id="print-frame" class="print-frame" aria-hidden="true"></div>
-      <div id="crosshair" class="crosshair" aria-hidden="true"></div>
-
-      <div id="map-status" class="map-status" hidden>
-        <span class="status-text"></span>
-        <button type="button" id="tile-retry" hidden></button>
-      </div>
-
-      <div class="hud" id="hud">
-        <span id="scale-readout" class="hud-rf"></span>
-        <span id="hud-zoom-interval" class="hud-band"></span>
-        <span id="center-mgrs" class="hud-mgrs"></span>
-        <div id="scale-bar" class="scale-bar" hidden>
-          <span class="scale-bar-track"></span>
-          <span class="scale-bar-label"></span>
-        </div>
-        <p id="tile-source" class="tile-source"></p>
-        <p id="grid-unavailable" class="grid-unavailable" hidden></p>
-      </div>
-
-      <div id="print-sheet" class="print-sheet" aria-hidden="true">
-        <div id="print-upper" class="print-upper-collar">
-          <span id="print-product" class="print-product" data-i18n="app.name">MGRS Viewer</span>
-          <h1 id="print-title-upper" class="print-title-upper"></h1>
-        </div>
-        <div id="print-footer" class="print-lower-collar">
-          <div class="print-col print-col-a">
-            <h1 id="print-title" class="print-title"></h1>
-            <p class="print-series" id="print-series" data-i18n="print.series"></p>
-            <p class="print-subtitle" id="print-subtitle" data-i18n="print.subtitle"></p>
-            <dl class="print-spec">
-              <div>
-                <dt id="lbl-print-scale" data-i18n="print.scale"></dt>
-                <dd id="print-scale"></dd>
-              </div>
-              <div>
-                <dt id="lbl-print-grid" data-i18n="print.grid"></dt>
-                <dd id="print-grid-value" data-i18n="print.gridValue"></dd>
-              </div>
-              <div id="print-grid-interval-row">
-                <dt id="lbl-print-grid-interval" data-i18n="print.gridInterval"></dt>
-                <dd id="print-grid-interval"></dd>
-              </div>
-              <div>
-                <dt id="lbl-print-datum" data-i18n="print.datum"></dt>
-                <dd id="print-datum-value" data-i18n="print.datumValue"></dd>
-              </div>
-              <div>
-                <dt id="lbl-print-projection" data-i18n="print.projection"></dt>
-                <dd id="print-projection-value" data-i18n="print.projectionValue"></dd>
-              </div>
-            </dl>
-          </div>
-          <div class="print-col print-col-b">
-            <p class="print-north-label" id="lbl-print-north" data-i18n="print.north"></p>
-            <svg class="print-north-arrow" viewBox="0 0 40 56" width="40" height="40" aria-hidden="true">
-              <polygon points="20,0 30,30 20,24 10,30" fill="#1C1914" />
-              <line x1="20" y1="24" x2="20" y2="52" stroke="#1C1914" stroke-width="2.2" />
-            </svg>
-            <p class="print-true-north" id="lbl-print-true-north" data-i18n="print.northTrue"></p>
-            <div id="print-scale-bar" class="print-scale-bar">
-              <div class="psb-track" id="print-scale-track"></div>
-              <div class="psb-labels"><span>0</span><span id="print-scale-end"></span></div>
+      <div id="desk">
+        <div id="sheet">
+          <div id="map" role="application" aria-label="Topographic map"></div>
+          <div id="print-ticks" aria-hidden="true"></div>
+          <div id="print-sheet" class="print-sheet" aria-hidden="true">
+            <div id="print-upper" class="print-upper-collar">
+              <span id="print-product" class="print-product" data-i18n="app.name">MGRS Viewer</span>
+              <h1 id="print-title-upper" class="print-title-upper"></h1>
             </div>
-          </div>
-          <div class="print-col print-col-c">
-            <p class="legend-h" id="lbl-print-legend" data-i18n="print.legend"></p>
-            <ul>
-              <li><i class="swatch roads"></i><span id="leg-roads" data-i18n="print.legend.roads"></span></li>
-              <li><i class="swatch water"></i><span id="leg-water" data-i18n="print.legend.water"></span></li>
-              <li><i class="swatch contours"></i><span id="leg-contours" data-i18n="print.legend.contours"></span></li>
-              <li><i class="swatch grid"></i><span id="leg-grid" data-i18n="print.legend.grid"></span></li>
-              <li><i class="swatch places"></i><span id="leg-places" data-i18n="print.legend.places"></span></li>
-              <li><i class="swatch relief"></i><span id="leg-relief" data-i18n="print.legend.relief"></span></li>
-            </ul>
-          </div>
-          <div class="print-col print-col-d">
-            <div class="print-meta-block">
-              <span class="meta-lbl" id="lbl-print-printed" data-i18n="print.printed"></span>
-              <strong id="print-date"></strong>
+            <div id="print-footer" class="print-lower-collar">
+              <div class="print-col print-col-a">
+                <h1 id="print-title" class="print-title"></h1>
+                <p class="print-series" id="print-series" data-i18n="print.series"></p>
+                <p class="print-subtitle" id="print-subtitle" data-i18n="print.subtitle"></p>
+                <div class="print-ident-extra">
+                  <p class="print-k" id="lbl-print-gzd"></p>
+                  <p class="print-v mono" id="print-gzd"></p>
+                  <p class="print-k" id="lbl-print-example"></p>
+                  <p class="print-v" id="print-example-place"></p>
+                  <p class="print-v mono bold" id="print-example-grid"></p>
+                  <p class="print-note" id="print-example-note"></p>
+                </div>
+                <dl class="print-spec">
+                  <div>
+                    <dt id="lbl-print-scale" data-i18n="print.scale"></dt>
+                    <dd id="print-scale"></dd>
+                  </div>
+                  <div>
+                    <dt id="lbl-print-grid" data-i18n="print.grid"></dt>
+                    <dd id="print-grid-value" data-i18n="print.gridValue"></dd>
+                  </div>
+                  <div id="print-grid-interval-row">
+                    <dt id="lbl-print-grid-interval" data-i18n="print.gridInterval"></dt>
+                    <dd id="print-grid-interval"></dd>
+                  </div>
+                  <div>
+                    <dt id="lbl-print-datum" data-i18n="print.datum"></dt>
+                    <dd id="print-datum-value" data-i18n="print.datumValue"></dd>
+                  </div>
+                  <div>
+                    <dt id="lbl-print-projection" data-i18n="print.projection"></dt>
+                    <dd id="print-projection-value" data-i18n="print.projectionValue"></dd>
+                  </div>
+                </dl>
+              </div>
+              <div class="print-col print-col-b">
+                <p class="print-north-label" id="lbl-print-north"></p>
+                <svg id="print-gm" class="print-gm" viewBox="0 0 170 72" width="1.70in" height="0.62in" aria-hidden="true">
+                  <line x1="85" y1="68" x2="85" y2="8" stroke="#1C1914" stroke-width="1.2"/>
+                  <polygon points="85,4 82,12 88,12" fill="#1C1914"/>
+                  <text x="90" y="14" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914">GN</text>
+                  <line x1="85" y1="68" x2="93" y2="10" stroke="#1C1914" stroke-width="1"/>
+                  <text x="96" y="22" font-size="9" fill="#1C1914">★</text>
+                  <text x="104" y="24" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914">TN</text>
+                  <line x1="85" y1="68" x2="62" y2="12" stroke="#1C1914" stroke-width="1.2"/>
+                  <polygon points="62,12 58,20 68,16" fill="#1C1914"/>
+                  <text x="40" y="18" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914">MN</text>
+                </svg>
+                <p class="print-gm-fig mono" id="print-gm-angle">G–M 9° 30′ W</p>
+                <p class="print-gm-fig mono" id="print-gm-conv">convergence 1° 17′</p>
+                <p class="print-note" id="print-gm-note"></p>
+                <div id="print-scale-bar" class="print-scale-bar">
+                  <div class="psb-track" id="print-scale-track"></div>
+                  <div class="psb-labels"><span>0</span><span id="print-scale-end"></span></div>
+                </div>
+              </div>
+              <div class="print-col print-col-c">
+                <p class="legend-h" id="lbl-print-legend" data-i18n="print.legend"></p>
+                <ul>
+                  <li><i class="swatch roads"></i><span id="leg-roads" data-i18n="print.legend.roads"></span></li>
+                  <li><i class="swatch water"></i><span id="leg-water" data-i18n="print.legend.water"></span></li>
+                  <li><i class="swatch contours"></i><span id="leg-contours" data-i18n="print.legend.contours"></span></li>
+                  <li><i class="swatch grid"></i><span id="leg-grid" data-i18n="print.legend.grid"></span></li>
+                  <li><i class="swatch places"></i><span id="leg-places" data-i18n="print.legend.places"></span></li>
+                  <li><i class="swatch relief"></i><span id="leg-relief" data-i18n="print.legend.relief"></span></li>
+                </ul>
+              </div>
+              <div class="print-col print-col-d">
+                <div class="print-meta-block">
+                  <span class="meta-lbl" id="lbl-print-printed" data-i18n="print.printed"></span>
+                  <strong id="print-date"></strong>
+                </div>
+                <div class="print-meta-block">
+                  <span class="meta-lbl" id="lbl-print-sheet" data-i18n="print.sheet"></span>
+                  <strong id="print-sheet-value" class="sheet-value" data-i18n="print.sheetValue"></strong>
+                </div>
+              </div>
             </div>
-            <div class="print-meta-block">
-              <span class="meta-lbl" id="lbl-print-sheet" data-i18n="print.sheet"></span>
-              <strong id="print-sheet-value" class="sheet-value" data-i18n="print.sheetValue"></strong>
-            </div>
+            <footer id="print-legal" class="print-legal">
+              <p class="print-disclaimer" id="print-disclaimer"></p>
+              <p class="print-attr" id="print-attr"></p>
+            </footer>
           </div>
         </div>
-        <footer id="print-legal" class="print-legal">
-          <p class="print-disclaimer" id="print-disclaimer" data-i18n="print.disclaimer">Not an official USGS or military product. Verify in the field. Do not use as the sole navigation source.</p>
-          <p class="print-attr" id="print-attr"></p>
-        </footer>
+
+        <div id="map-status" class="map-status" hidden>
+          <span class="status-text"></span>
+          <button type="button" id="tile-retry" hidden></button>
+        </div>
+
+        <div class="hud" id="hud">
+          <span id="scale-readout" class="hud-rf"></span>
+          <span id="hud-zoom-interval" class="hud-band"></span>
+          <span id="center-mgrs" class="hud-mgrs"></span>
+          <div id="scale-bar" class="scale-bar" hidden>
+            <span class="scale-bar-track"></span>
+            <span class="scale-bar-label"></span>
+          </div>
+          <p id="tile-source" class="tile-source"></p>
+          <p id="grid-unavailable" class="grid-unavailable" hidden></p>
+        </div>
       </div>
-    </div>
-    <script type="module" src="/src/main.js"></script>
+    </div><!-- #app -->
+    <p id="search-note" class="search-note" hidden></p>
+    <div id="search-matches" class="search-matches" hidden></div>
+    <script type="module" src="./src/main.js"></script>
   </body>
 </html>
