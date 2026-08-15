@@ -11,6 +11,8 @@ Field use. No account. No wizard.
 
 Print still makes the Letter sheet when Sheet is Off.
 
+Tiles and grid print with **Background graphics** unchecked. Do not turn Background graphics on.
+
 Empty or ocean frames still print. The title is UNTITLED SHEET.
 
 `P` prints. `+` / `-` zoom. `/` focuses search.
