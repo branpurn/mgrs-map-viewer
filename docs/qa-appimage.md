@@ -81,6 +81,8 @@ Raw `print.*` keys or WGS 84 on the sheet: pack is not reading strings.json.
 
 Raw `print.legend` or garbled G–M (`0.4° 7' 93' W`) is a fail. Expect **Legend** and **G–M 9° 30′ W** / **convergence 1° 17′**.
 
+Fail: first-load RF ≠ HUD. Print → Cancel leaves **1:12 000**. A 1:12 000 print capture.
+
 ## Out of scope
 
-USNG collar look, tile color, RF vs zoom. Visual pass is Designer’s USNG spec after Frontend lands it. Copy words: [qa-expected-copy.md](qa-expected-copy.md).
+USNG collar look, tile color. Visual pass is Designer’s USNG spec after Frontend lands it. Copy words: [qa-expected-copy.md](qa-expected-copy.md).
