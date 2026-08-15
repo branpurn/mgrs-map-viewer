@@ -59,12 +59,12 @@ function rebuild(map, host) {
     const px = map.project([p.lon, p.lat]);
     if (px.x < -2 || px.x > mw + 2) continue;
     const xIn = LEFT + (px.x / mw) * MAP_W;
-    const x = `${xIn}in`;
-    tick(host, { left: x, top: `${TOP - OUT}in`, width: '0.6pt', height: `${OUT + INN}in` });
-    tick(host, { left: x, top: `${TOP + MAP_H - INN}in`, width: '0.6pt', height: `${OUT + INN}in` });
+    const x = `${(xIn / 8.5) * 100}%`;
+    tick(host, { left: x, top: `${((TOP - OUT) / 11) * 100}%`, width: '0.6pt', height: `${((OUT + INN) / 11) * 100}%` });
+    tick(host, { left: x, top: `${((TOP + MAP_H - INN) / 11) * 100}%`, width: '0.6pt', height: `${((OUT + INN) / 11) * 100}%` });
     const text = edgeLabel(e, step);
-    lab(host, text, { left: `${xIn - 0.08}in`, top: `${TOP - OUT - LAB - 0.08}in` });
-    lab(host, text, { left: `${xIn - 0.08}in`, top: `${TOP + MAP_H + OUT + 0.02}in` });
+    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP - OUT - LAB - 0.08) / 11) * 100}%` });
+    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + MAP_H + OUT + 0.02) / 11) * 100}%` });
   }
 
   for (let n = snapUp(minN, step); n <= maxN; n += step) {
@@ -72,12 +72,12 @@ function rebuild(map, host) {
     const px = map.project([p.lon, p.lat]);
     if (px.y < -2 || px.y > mh + 2) continue;
     const yIn = TOP + (px.y / mh) * MAP_H;
-    const y = `${yIn}in`;
-    tick(host, { top: y, left: `${LEFT - OUT}in`, height: '0.6pt', width: `${OUT + INN}in` });
-    tick(host, { top: y, left: `${LEFT + MAP_W - INN}in`, height: '0.6pt', width: `${OUT + INN}in` });
+    const y = `${(yIn / 11) * 100}%`;
+    tick(host, { top: y, left: `${((LEFT - OUT) / 8.5) * 100}%`, height: '0.6pt', width: `${((OUT + INN) / 8.5) * 100}%` });
+    tick(host, { top: y, left: `${((LEFT + MAP_W - INN) / 8.5) * 100}%`, height: '0.6pt', width: `${((OUT + INN) / 8.5) * 100}%` });
     const text = edgeLabel(n, step);
-    lab(host, text, { left: `${LEFT - OUT - LAB - 0.14}in`, top: `${yIn - 0.06}in` });
-    lab(host, text, { left: `${LEFT + MAP_W + OUT + 0.02}in`, top: `${yIn - 0.06}in` });
+    lab(host, text, { left: `${((LEFT - OUT - LAB - 0.14) / 8.5) * 100}%`, top: `${((yIn - 0.06) / 11) * 100}%` });
+    lab(host, text, { left: `${((LEFT + MAP_W + OUT + 0.02) / 8.5) * 100}%`, top: `${((yIn - 0.06) / 11) * 100}%` });
   }
 }
 

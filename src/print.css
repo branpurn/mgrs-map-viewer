@@ -8,10 +8,10 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-upper {
   position: absolute;
-  top: 0.25in;
-  left: 0.38in;
-  width: 7.74in;
-  height: 0.33in;
+  top: calc(100% * 0.25 / 11);
+  left: calc(100% * 0.38 / 8.5);
+  width: calc(100% * 7.74 / 8.5);
+  height: calc(100% * 0.33 / 11);
   background: #FFFFFF;
   display: flex;
   align-items: flex-end;
@@ -42,10 +42,10 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-footer {
   position: absolute;
-  top: 8.72in;
-  left: 0.38in;
-  width: 7.74in;
-  height: 2.00in;
+  top: calc(100% * 8.72 / 11);
+  left: calc(100% * 0.38 / 8.5);
+  width: calc(100% * 7.74 / 8.5);
+  height: calc(100% * 2.00 / 11);
   background: #FFFFFF;
   box-sizing: border-box;
   border-top: 0.75pt solid #000000;
@@ -228,10 +228,10 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-legal {
   position: absolute;
-  top: 10.76in;
-  left: 0.38in;
-  width: 7.74in;
-  height: 0.22in;
+  top: calc(100% * 10.76 / 11);
+  left: calc(100% * 0.38 / 8.5);
+  width: calc(100% * 7.74 / 8.5);
+  height: calc(100% * 0.22 / 11);
   overflow: hidden;
 }
 

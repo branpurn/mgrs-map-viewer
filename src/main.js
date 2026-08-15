@@ -213,14 +213,15 @@ function layoutSheet(map) {
   sheet.style.transform = 'none';
   sheet.style.aspectRatio = 'auto';
   if (hud) {
-    hud.style.left = `${Math.round(x + w + 16)}px`;
-    hud.style.top = `${Math.round(Math.max(8, y + h - hudH))}px`;
-    hud.style.right = 'auto';
-    hud.style.bottom = 'auto';
+    hud.style.right = '8px';
+    hud.style.bottom = '8px';
+    hud.style.left = 'auto';
+    hud.style.top = 'auto';
   }
   if (dock) {
-    dock.style.left = `${Math.round(x - 16 - zoomW)}px`;
-    dock.style.top = `${Math.round(y + h - zoomH)}px`;
+    dock.style.left = '8px';
+    dock.style.bottom = '8px';
+    dock.style.top = 'auto';
   }
   if (map) {
     sheetLayoutBusy = true;
