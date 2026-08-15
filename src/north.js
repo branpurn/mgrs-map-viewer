@@ -79,3 +79,14 @@ export function ray(cx, by, deg, len) {
   const rad = (Number(deg) || 0) * DEG;
   return [cx + len * Math.sin(rad), by - len * Math.cos(rad)];
 }
+
+/**
+ * USGS diagrams exaggerate small G–M / convergence so the three rays read.
+ * Text stays on the true angles; this is display-only.
+ */
+export function visualAngle(deg, { minAbs = 16, gain = 2.4, maxAbs = 38 } = {}) {
+  const n = Number(deg);
+  if (!Number.isFinite(n) || Math.abs(n) < 0.05) return 0;
+  const s = n < 0 ? -1 : 1;
+  return s * Math.min(maxAbs, Math.max(minAbs, Math.abs(n) * gain));
+}

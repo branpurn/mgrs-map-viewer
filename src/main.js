@@ -28,7 +28,7 @@ import {
 } from './scale.js';
 import { attachSearch } from './search.js';
 import { attachCollarTicks } from './ticks.js';
-import { northAt, ray } from './north.js';
+import { northAt, ray, visualAngle } from './north.js';
 
 if (typeof window.__mgrsNativePrint !== 'function') {
   window.__mgrsNativePrint = window.print.bind(window);
@@ -111,9 +111,11 @@ function paintNorthDiagram(map) {
   const n = northAt(c.lng, c.lat);
   const cx = 70;
   const by = 88;
+  const gnVis = visualAngle(n.conv, { minAbs: 12, gain: 2.2, maxAbs: 22 });
+  const mnVis = visualAngle(n.decl, { minAbs: 26, gain: 2.4, maxAbs: 40 });
   const tn = ray(cx, by, 0, 78);
-  const gn = ray(cx, by, n.conv, 76);
-  const mn = ray(cx, by, n.decl, 74);
+  const gn = ray(cx, by, gnVis, 76);
+  const mn = ray(cx, by, mnVis, 74);
   setSvgLine('gm-tn', cx, by, tn[0], tn[1]);
   setSvgLine('gm-gn', cx, by, gn[0], gn[1]);
   setSvgLine('gm-mn', cx, by, mn[0], mn[1]);
@@ -124,7 +126,7 @@ function paintNorthDiagram(map) {
     return `${tip[0]},${tip[1]} ${l[0]},${l[1]} ${r[0]},${r[1]}`;
   };
   setSvgPoints('gm-tn-head', head(tn, 0));
-  setSvgPoints('gm-mn-head', head(mn, n.decl));
+  setSvgPoints('gm-mn-head', head(mn, mnVis));
   const tnLab = document.getElementById('lbl-north-true');
   const gnLab = document.getElementById('lbl-north-grid');
   const mnLab = document.getElementById('lbl-north-magnetic');
@@ -139,12 +141,12 @@ function paintNorthDiagram(map) {
     star.setAttribute('y', String(tn[1] + 4));
   }
   if (gnLab) {
-    gnLab.setAttribute('x', String(gn[0] + (n.conv >= 0 ? 3 : -16)));
+    gnLab.setAttribute('x', String(gn[0] + (gnVis >= 0 ? 3 : -16)));
     gnLab.setAttribute('y', String(gn[1] + 10));
     gnLab.textContent = t('print.north.grid');
   }
   if (mnLab) {
-    mnLab.setAttribute('x', String(mn[0] + (n.decl >= 0 ? 3 : -18)));
+    mnLab.setAttribute('x', String(mn[0] + (mnVis >= 0 ? 3 : -18)));
     mnLab.setAttribute('y', String(mn[1] + 6));
     mnLab.textContent = t('print.north.magnetic');
   }

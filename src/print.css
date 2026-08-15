@@ -12,11 +12,24 @@ html.printing, html.printing body { background: var(--paper) !important; }
 
 #print-sheet { display: block; overflow: hidden; }
 
+#print-mask-left,
+#print-mask-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(100% * 0.38 / 8.5);
+  background: var(--paper);
+  z-index: 6;
+  pointer-events: none;
+}
+#print-mask-left { left: 0; }
+#print-mask-right { right: 0; left: auto; }
+
 #print-upper {
   position: absolute;
   top: 0;
-  left: calc(100% * 0.38 / 8.5);
-  width: calc(100% * 7.74 / 8.5);
+  left: 0;
+  width: 100%;
   /* Lock the white mask to the neatline (y 0.58). Height+width-% padding
      overflowed into #map after zoom/layoutSheet and made a title sliver. */
   right: auto;
@@ -34,7 +47,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
 
 #print-upper .print-product {
   position: absolute;
-  left: 0;
+  left: calc(100% * 0.38 / 8.5);
   right: auto;
   top: auto;
   bottom: calc(100% * 0.12 / 0.58);
@@ -68,7 +81,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
 
 #print-date-upper {
   position: absolute;
-  right: 0;
+  right: calc(100% * 0.38 / 8.5);
   left: auto;
   top: auto;
   bottom: calc(100% * 0.12 / 0.58);
@@ -82,10 +95,12 @@ html.printing, html.printing body { background: var(--paper) !important; }
   position: absolute;
   z-index: 8;
   top: calc(100% * 8.72 / 11);
-  left: calc(100% * 0.38 / 8.5);
-  width: calc(100% * 7.74 / 8.5);
+  left: 0;
+  width: 100%;
   height: calc(100% * 2.00 / 11);
   background: var(--collar);
+  padding-left: calc(100% * 0.38 / 8.5);
+  padding-right: calc(100% * 0.38 / 8.5);
   box-sizing: border-box;
   border-top: 0.75pt solid #000000;
   border-bottom: 0.35pt solid #000000;
@@ -492,6 +507,7 @@ body.printing #map {
   color: #1C1914;
   line-height: 1;
   white-space: nowrap;
+  text-shadow: 0 0 2px #F4EFE4, 0 0 2px #F4EFE4, 1px 0 0 #F4EFE4, -1px 0 0 #F4EFE4, 0 1px 0 #F4EFE4, 0 -1px 0 #F4EFE4;
 }
 
 body.printing #print-ticks { display: block !important; z-index: 21; }
