@@ -2,15 +2,15 @@
 
 Source: strings.json. No new product copy. Fail if the UI shows different words.
 
-## This pass
+## Sheet toggle
 
-Toolbar: **Sheet**, **On** / **Off**. Default On. Fail if the control says WYSIWYG On, or a raw key.
+Toolbar label is **Sheet**. On is the Letter sheet. Off is the full map. Default On.
 
 Print is still US Letter (8.5 × 11 in) either way.
 
-Collar sheet row: still **Sheet**. Unchanged. Size still 8.5 × 11 in.
+Collar unchanged: **NAD 83**, **GRID ZONE**, **G–M**. Sheet row still **Sheet**.
 
-DATUM is **NAD 83**. Fail: WGS 84. Any raw key on screen.
+Fail: WYSIWYG On, WGS 84, a raw key on screen.
 
 ## Search
 
@@ -37,7 +37,7 @@ DATUM is **NAD 83**. Fail: WGS 84. Any raw key on screen.
 | Switch on | chrome.wysiwygOn | On |
 | Switch off | chrome.wysiwygOff | Off |
 
-Visible toolbar label is **Sheet**, left of Print. Switch reads **On** / **Off**. Default On. Print is still Letter either way. Fail if it says WYSIWYG On, or a raw key.
+Visible toolbar label is **Sheet**, left of Print. On is the Letter sheet. Off is the full map. Default On. Print is still Letter either way. Fail if it says WYSIWYG On, or a raw key.
 
 ## Collar (print sheet)
 
