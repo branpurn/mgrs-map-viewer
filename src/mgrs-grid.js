@@ -444,74 +444,13 @@ function squareLetters(compact) {
 }
 
 function buildLabels(zone, northHem, bounds, interval, accuracy) {
-  const features = [];
-  const sw = latLonToUtm(bounds.west, bounds.south, zone);
-  const ne = latLonToUtm(bounds.east, bounds.north, zone);
-  const minE = Math.max(100000, Math.min(sw.easting, ne.easting) - interval);
-  const maxE = Math.min(900000, Math.max(sw.easting, ne.easting) + interval);
-  const minN = Math.min(sw.northing, ne.northing) - interval;
-  const maxN = Math.max(sw.northing, ne.northing) + interval;
-
-  let step = interval;
-  const maxLabels = 64;
-  while (
-    ((maxE - minE) / step) * ((maxN - minN) / step) > maxLabels &&
-    step < 100000
-  ) {
-    step *= 2;
-  }
-
-  const [zWest, zEast] = zoneLonRange(zone);
-  const everyFifth = interval <= 100;
-
-  for (let e = snapUp(minE, step); e < maxE; e += step) {
-    for (let n = snapUp(minN, step); n < maxN; n += step) {
-      if (everyFifth && (e % 500 !== 0 || n % 500 !== 0)) continue;
-      const p = utmToLatLon(zone, e + step / 2, n + step / 2, northHem);
-      if (
-        p.lat < bounds.south ||
-        p.lat > bounds.north ||
-        p.lon < bounds.west ||
-        p.lon > bounds.east ||
-        p.lon < zWest ||
-        p.lon > zEast
-      ) {
-        continue;
-      }
-      if (utmZone(p.lon) !== zone) continue;
-      // Interior easting/northing type is dead (DESIGN_SPEC §0).
-      // Edge labels live in the white collar via ticks.js.
-      void accuracy;
-    }
-  }
-
-  if (interval <= 100000) {
-    const sqStep = 100000;
-    for (let e = snapUp(minE, sqStep); e < maxE; e += sqStep) {
-      for (let n = snapUp(minN, sqStep); n < maxN; n += sqStep) {
-        const p = utmToLatLon(zone, e + sqStep / 2, n + sqStep / 2, northHem);
-        if (
-          p.lat < bounds.south ||
-          p.lat > bounds.north ||
-          p.lon < bounds.west ||
-          p.lon > bounds.east ||
-          p.lon < zWest ||
-          p.lon > zEast
-        ) {
-          continue;
-        }
-        try {
-          const compact = forward([p.lon, p.lat], 0);
-          const letters = squareLetters(compact);
-          if (letters) features.push(pointFeature(p.lon, p.lat, letters, '100km'));
-        } catch {
-          // skip
-        }
-      }
-    }
-  }
-
-  return features;
+  // Corners only (buildCornerLabels). No center 18S UJ / 100 km square letters.
+  void zone;
+  void northHem;
+  void bounds;
+  void interval;
+  void accuracy;
+  return [];
 }
 
 function bandSouth(letter) {

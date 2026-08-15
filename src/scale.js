@@ -17,10 +17,18 @@ export function metersPerPixelAtCenter(map) {
 
 export function frameWidthPx() {
   const mapEl = document.getElementById('map');
-  if (mapEl) {
-    const w = mapEl.clientWidth || mapEl.getBoundingClientRect().width;
-    if (w > 0) return w;
+  const live = mapEl ? (mapEl.clientWidth || mapEl.getBoundingClientRect().width) : 0;
+  const printing = typeof document !== 'undefined' && document.body.classList.contains('printing');
+  const off = typeof document !== 'undefined' && document.body.classList.contains('wysiwyg-off');
+  if (printing && live > 0) return live;
+  if (!off && live > 40) {
+    try { document.body.dataset.letterMapW = String(live); } catch { /* */ }
+    return live;
   }
+  // Sheet Off / search must not change RF — reuse the Letter neatline width.
+  const cached = typeof document !== 'undefined' ? Number(document.body.dataset.letterMapW) : 0;
+  if (cached > 40) return cached;
+  if (live > 0) return live;
   return 7.74 * 96;
 }
 

@@ -14,19 +14,19 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-upper {
   position: absolute;
-  top: calc(100% * 0.22 / 11);
+  top: 0;
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
-  height: calc(100% * 0.34 / 11);
-  max-height: calc(100% * 0.36 / 11);
+  height: calc(100% * 0.58 / 11);
+  max-height: calc(100% * 0.58 / 11);
   background: #FFFFFF;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 0 0 0.02in;
+  padding: 0 0 calc(100% * 0.12 / 11);
   box-sizing: border-box;
   overflow: hidden;
-  z-index: 6;
+  z-index: 7;
   pointer-events: none;
 }
 

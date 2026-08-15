@@ -163,12 +163,14 @@ body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {
   isolation: isolate;
   pointer-events: auto;
 }
+#chrome-tools #zoom-dock,
 #zoom-dock {
   position: relative !important;
   left: auto !important;
   top: auto !important;
   right: auto !important;
   bottom: auto !important;
+  inset: auto !important;
   flex: 0 0 64px;
   width: 64px;
   min-width: 64px;
@@ -179,6 +181,11 @@ body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {
   pointer-events: auto;
   isolation: isolate;
   margin-right: 4px;
+}
+#desk #zoom-dock,
+#sheet #zoom-dock,
+#map #zoom-dock {
+  display: none !important;
 }
 #chrome #zoom-dock .maplibregl-ctrl-group {
   display: flex;
@@ -666,8 +673,8 @@ body.no-webgl-active #print-sheet {
   align-items: center;
   gap: 8px;
   height: 32px;
-  min-width: 132px;
-  padding: 0 8px;
+  min-width: 168px;
+  padding: 0 14px 0 10px;
   border: 0;
   background: transparent;
   color: #fff;

@@ -35,7 +35,10 @@ function lab(el, text, style) {
 
 function rebuild(map, host) {
   host.replaceChildren();
-  const band = intervalForZoom(map.getZoom());
+  const printing = document.body.classList.contains('printing');
+  const band = printing
+    ? { meters: 1000, hidden: false, gzdOnly: false }
+    : intervalForZoom(map.getZoom());
   const step = band.meters;
   if (!step || band.hidden || band.gzdOnly) return;
 
@@ -64,10 +67,9 @@ function rebuild(map, host) {
     // Bottom ticks stay inside the neatline — do not enter Col A title.
     tick(host, { left: x, top: `${((TOP + MAP_H - INN) / 11) * 100}%`, width: '0.6pt', height: `${(INN / 11) * 100}%` });
     const text = edgeLabel(e, step);
-    // Inside the map face. Bottom labels sit 0.22" above the neatline so
-    // tick 23 cannot kiss the Col A title (ellipsis stays closed).
+    // Spec §2: 0.14" band *inside* the neatline. Bottom eastings (23/24) required.
     lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + 0.03) / 11) * 100}%` });
-    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + MAP_H - 0.32) / 11) * 100}%` });
+    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + MAP_H - 0.13) / 11) * 100}%` });
   }
 
   for (let n = snapUp(minN, step); n <= maxN; n += step) {

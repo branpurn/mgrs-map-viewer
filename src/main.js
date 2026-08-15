@@ -710,6 +710,14 @@ function snapshotPrintMapFace(map) {
   img.style.pointerEvents = 'none';
   document.body.classList.add('has-print-face');
   document.documentElement.classList.add('has-print-face');
+  // If hiding WebGL also hid the PNG, leave the live canvas painted.
+  try {
+    const cs = window.getComputedStyle(img);
+    if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0) {
+      document.body.classList.remove('has-print-face');
+      document.documentElement.classList.remove('has-print-face');
+    }
+  } catch { /* keep class */ }
   return true;
 }
 
@@ -718,12 +726,21 @@ async function capturePrintFaceOrRetry(map) {
     try {
       if (typeof map.triggerRepaint === 'function') map.triggerRepaint();
     } catch { /* */ }
-    await waitForMapPaint(map, 2200);
-    await frames(2);
+    await new Promise((resolve) => {
+      let done = false;
+      const finish = () => { if (!done) { done = true; resolve(); } };
+      try {
+        map.once('render', () => {
+          requestAnimationFrame(() => requestAnimationFrame(finish));
+        });
+      } catch {
+        finish();
+      }
+      setTimeout(finish, i < 3 ? 360 : 720);
+    });
     if (snapshotPrintMapFace(map)) return true;
-    await new Promise((r) => setTimeout(r, 90));
   }
-  // No raster — do not hide WebGL (that blanks the sheet).
+  // No raster — do not hide WebGL and do not print an empty buffer.
   document.body.classList.remove('has-print-face');
   document.documentElement.classList.remove('has-print-face');
   return false;
@@ -865,12 +882,11 @@ function attachPrint(map) {
       try { map.resize(); } catch { /* print size */ }
       // Real raster BEFORE window.print(). Same tab only. Never window.open.
       const ok = await capturePrintFaceOrRetry(map);
-      const img = document.getElementById('print-map-face');
-      if (!ok || !img || !img.src || img.src.length < 32) {
-        document.body.classList.remove('has-print-face');
-        document.documentElement.classList.remove('has-print-face');
-      }
       if (!printArmed) return;
+      if (!ok) {
+        restore();
+        return;
+      }
       const prevOpen = window.open;
       window.open = function mgrsNoSecondTab() { return null; };
       try {
