@@ -2,7 +2,7 @@
 
 import strings from '../strings.json';
 
-export const API_BASE = String(import.meta.env.VITE_API_BASE || '').replace(/\/$/, '');
+export const API_BASE = '';
 
 /**
  * Look up a flat key from strings.json and replace `{name}` tokens.

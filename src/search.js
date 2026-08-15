@@ -1,5 +1,5 @@
 import { toPoint } from 'mgrs';
-import { API_BASE, t } from './copy.js';
+import { t } from './copy.js';
 
 const DECIMAL = /^(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)$/;
 const HEMI_SUFFIX =
@@ -133,23 +133,62 @@ function classifySearchError(res, data) {
   return 'failed';
 }
 
+function mapHit(hit) {
+  if (!hit || typeof hit !== 'object') return null;
+  const lat = parseFloat(hit.lat);
+  const lon = parseFloat(hit.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  let bbox;
+  if (Array.isArray(hit.bbox) && hit.bbox.length === 4) {
+    bbox = hit.bbox;
+  }
+  const label = hit.label != null && String(hit.label).trim() ? String(hit.label).trim() : '';
+  return {
+    lat,
+    lon,
+    zoom: Number(hit.zoom) || 14,
+    label,
+    kind: hit.kind,
+    mgrs: hit.mgrs,
+    bbox,
+  };
+}
+
 /**
- * Remote place search. Does not invent a geocoder when VITE_API_BASE is empty.
+ * Map API payload to place hits. Prefer data.results[]; if that is empty/missing
+ * but the root object itself has finite lat+lon, treat the root as one hit.
+ */
+export function normalizeHits(data) {
+  if (!data || typeof data !== 'object') return [];
+  let raw = Array.isArray(data.results) ? data.results : [];
+  if (
+    raw.length === 0 &&
+    Number.isFinite(parseFloat(data.lat)) &&
+    Number.isFinite(parseFloat(data.lon))
+  ) {
+    raw = [data];
+  }
+  return raw.map(mapHit).filter(Boolean);
+}
+
+/**
+ * Place search via same-origin GET /api/search. Do not call Nominatim from the renderer. MGRS / lat-long stay local.
  * @param {string} q
  */
 export async function searchPlace(q) {
-  if (!API_BASE) {
-    return { needsApi: true };
-  }
+  const query = String(q == null ? '' : q).trim();
+  if (!query) return { empty: true };
+
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     const err = new Error('offline');
     err.code = 'offline';
     throw err;
   }
 
+  const url = '/api/search?q=' + encodeURIComponent(query);
   let res;
   try {
-    res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(q)}`);
+    res = await fetch(url, { headers: { Accept: 'application/json' } });
   } catch (e) {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       const err = new Error('offline');
@@ -166,30 +205,18 @@ export async function searchPlace(q) {
     data = null;
   }
 
-  if (res.status === 200 && data) {
-    if (Array.isArray(data.results) && data.results.length === 0) {
-      return { none: true, q };
+  if (res.status === 200) {
+    const mapped = normalizeHits(data);
+    if (mapped.length === 0) {
+      if (!query) return { empty: true };
+      return { none: true, q: query };
     }
-    if (Array.isArray(data.results) && data.results.length > 1) {
-      return { ambiguous: true, q, results: data.results };
-    }
-    const hit = Array.isArray(data.results) ? data.results[0] : data;
-    if (hit && Number.isFinite(hit.lat) && Number.isFinite(hit.lon)) {
-      return {
-        lat: hit.lat,
-        lon: hit.lon,
-        zoom: hit.zoom,
-        mgrs: hit.mgrs,
-        label: hit.label || hit.query || q,
-        precision: hit.precision,
-        bbox: hit.bbox,
-      };
-    }
-    return { none: true, q };
+    if (mapped.length > 1) return { ambiguous: true, q: query, results: mapped };
+    return mapped[0];
   }
 
   const kind = classifySearchError(res, data);
-  return { error: kind, q };
+  return { error: kind, q: query };
 }
 
 function flyTo(map, lon, lat, zoom) {
@@ -217,25 +244,35 @@ function fitOrFly(map, hit) {
 
 /**
  * @param {import('maplibre-gl').Map} map
- * @param {{ onLocate?: (info: { label: string, mgrs?: string }) => void }} [opts]
+ * @param {{ onLocate?: (info: { kind: string, label?: string }) => void }} [opts]
  */
 export function attachSearch(map, opts = {}) {
   const form = document.getElementById('search-form');
   const input = document.getElementById('search-input');
   const note = document.getElementById('search-note');
-  const matches = document.getElementById('search-matches');
   const clearBtn = document.getElementById('search-clear');
-  const formats = document.getElementById('search-formats');
+
+  let matches = document.getElementById('search-matches');
+  if (!matches) {
+    matches = document.createElement('div');
+    matches.id = 'search-matches';
+    matches.className = 'search-matches';
+    matches.hidden = true;
+    document.body.appendChild(matches);
+  } else if (matches.closest('#chrome') || matches.closest('#app')) {
+    document.body.appendChild(matches);
+  }
 
   let missTimer = 0;
   let fadeTimer = 0;
 
-  const placeOverlay = (el, belowPx = 0) => {
+  const pinToInput = (el, topPx) => {
     if (!el || !input) return;
     const r = input.getBoundingClientRect();
     el.style.left = `${r.left}px`;
     el.style.width = `${r.width}px`;
-    if (belowPx) el.style.top = `${belowPx}px`;
+    el.style.right = 'auto';
+    el.style.top = `${topPx}px`;
   };
 
   const hideNote = () => {
@@ -256,7 +293,7 @@ export function attachSearch(map, opts = {}) {
     }
     window.clearTimeout(missTimer);
     window.clearTimeout(fadeTimer);
-    placeOverlay(note, 52);
+    pinToInput(note, 52);
     note.hidden = false;
     note.textContent = text;
     note.classList.remove('is-fading');
@@ -280,22 +317,34 @@ export function attachSearch(map, opts = {}) {
 
   const showMatches = (items, q) => {
     if (!matches) return;
-    placeOverlay(matches, 74);
     matches.innerHTML = '';
-    items.slice(0, 12).forEach((hit) => {
+    const heading = document.createElement('p');
+    heading.className = 'matches-h';
+    heading.textContent = t('search.matches');
+    matches.appendChild(heading);
+    pinToInput(matches, 74);
+    items.slice(0, 8).forEach((hit) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.textContent = hit.label || hit.query || q;
+      const raw = String(hit.label || '').trim();
+      const text = raw.length <= 28 ? raw : raw.slice(0, 27) + '…';
+      btn.textContent = text;
       btn.addEventListener('click', () => {
         hideMatches();
         hideNote();
         fitOrFly(map, hit);
         if (opts.onLocate) {
-          opts.onLocate({ label: hit.label || q, mgrs: hit.mgrs });
+          opts.onLocate({ kind: 'place', label: hit.label });
         }
       });
       matches.appendChild(btn);
     });
+    if (items.length > 8) {
+      const extra = document.createElement('p');
+      extra.className = 'matches-h';
+      extra.textContent = t('search.matchesTooMany', { n: 8 });
+      matches.appendChild(extra);
+    }
     matches.hidden = false;
   };
 
@@ -338,16 +387,17 @@ export function attachSearch(map, opts = {}) {
       hideNote();
       flyTo(map, parsed.lon, parsed.lat, parsed.zoom);
       if (opts.onLocate) {
-        opts.onLocate({
-          label: parsed.type === 'mgrs' ? parsed.mgrs : `${parsed.lat}, ${parsed.lon}`,
-          mgrs: parsed.mgrs,
-        });
+        opts.onLocate({ kind: parsed.type });
       }
       return;
     }
 
     try {
       const result = await searchPlace(parsed.q);
+      if (result && result.empty) {
+        showMiss(missKey('empty'));
+        return;
+      }
       if (result && result.needsApi) {
         showMiss(missKey('unrecognizedQuery'));
         return;
@@ -377,7 +427,7 @@ export function attachSearch(map, opts = {}) {
         hideNote();
         fitOrFly(map, result);
         if (opts.onLocate) {
-          opts.onLocate({ label: result.label, mgrs: result.mgrs });
+          opts.onLocate({ kind: 'place', label: result.label });
         }
         return;
       }
@@ -394,17 +444,13 @@ export function attachSearch(map, opts = {}) {
     syncClear();
   });
 
-  input.addEventListener('focus', () => {
-    if (formats) {
-      placeOverlay(formats, 52);
-      formats.hidden = false;
-    }
+  input.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter') return;
+    ev.preventDefault();
+    if (typeof form.requestSubmit === 'function') form.requestSubmit();
+    else form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
   });
-  input.addEventListener('blur', () => {
-    window.setTimeout(() => {
-      if (formats && document.activeElement !== input) formats.hidden = true;
-    }, 150);
-  });
+
 
   if (clearBtn) {
     clearBtn.addEventListener('click', (ev) => {
@@ -414,9 +460,8 @@ export function attachSearch(map, opts = {}) {
   }
 
   window.addEventListener('resize', () => {
-    if (note && !note.hidden) placeOverlay(note, 52);
-    if (formats && !formats.hidden) placeOverlay(formats, 52);
-    if (matches && !matches.hidden) placeOverlay(matches, 74);
+    if (note && !note.hidden) pinToInput(note, 52);
+    if (matches && !matches.hidden) pinToInput(matches, 74);
   });
 
   document.addEventListener('keydown', (ev) => {
