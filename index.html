@@ -12,11 +12,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans+Condensed:wght@700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./src/style.css" />
     <link rel="stylesheet" href="./src/print.css" />
+    <script>
+      if (/[?&]print=1\b/.test(location.search)) document.documentElement.classList.add('printing');
+      if (/[?&]print=1\b/.test(location.search)) document.addEventListener('DOMContentLoaded', function () {
+        document.body.classList.add('printing');
+      });
+    </script>
+
   </head>
   <body>
     <div id="app">
@@ -24,7 +31,7 @@
 
       <header class="chrome" id="chrome">
         <div class="brand">
-          <span class="app-name" id="app-name"></span>
+          <span class="app-name" id="app-name">MGRS Viewer</span>
         </div>
         <form id="search-form" autocomplete="off">
           <label class="sr-only" for="search-input" id="search-aria-label"></label>
@@ -33,11 +40,12 @@
             name="q"
             type="search"
             spellcheck="false"
+            placeholder="Grid or place"
           />
           <button type="button" id="search-clear" class="ghost" hidden></button>
           <button type="submit" id="search-submit"></button>
         </form>
-        <button type="button" id="print-btn"></button>
+        <button type="button" id="print-btn">Print</button>
         <p id="search-helper" class="search-helper"></p>
         <p id="search-hint" class="search-hint" hidden></p>
       </header>
@@ -54,16 +62,6 @@
             <div id="print-footer" class="print-lower-collar">
               <div class="print-col print-col-a">
                 <h1 id="print-title" class="print-title"></h1>
-                <p class="print-series" id="print-series" data-i18n="print.series"></p>
-                <p class="print-subtitle" id="print-subtitle" data-i18n="print.subtitle"></p>
-                <div class="print-ident-extra">
-                  <p class="print-k" id="lbl-print-gzd"></p>
-                  <p class="print-v mono" id="print-gzd"></p>
-                  <p class="print-k" id="lbl-print-example"></p>
-                  <p class="print-v" id="print-example-place"></p>
-                  <p class="print-v mono bold" id="print-example-grid"></p>
-                  <p class="print-note" id="print-example-note"></p>
-                </div>
                 <dl class="print-spec">
                   <div>
                     <dt id="lbl-print-scale" data-i18n="print.scale"></dt>
@@ -86,19 +84,29 @@
                     <dd id="print-projection-value" data-i18n="print.projectionValue"></dd>
                   </div>
                 </dl>
+                <div class="print-ident-extra">
+                  <p class="print-k" id="lbl-print-gzd"></p>
+                  <p class="print-v mono" id="print-gzd"></p>
+                  <p class="print-k" id="lbl-print-example"></p>
+                  <p class="print-v" id="print-example-place"></p>
+                  <p class="print-v mono bold" id="print-example-grid"></p>
+                  <p class="print-note" id="print-example-note"></p>
+                </div>
+                <p class="print-series" id="print-series" data-i18n="print.series"></p>
+                <p class="print-subtitle" id="print-subtitle" data-i18n="print.subtitle"></p>
               </div>
               <div class="print-col print-col-b">
                 <p class="print-north-label" id="lbl-print-north"></p>
                 <svg id="print-gm" class="print-gm" viewBox="0 0 170 72" width="1.70in" height="0.62in" aria-hidden="true">
                   <line x1="85" y1="68" x2="85" y2="8" stroke="#1C1914" stroke-width="1.2"/>
                   <polygon points="85,4 82,12 88,12" fill="#1C1914"/>
-                  <text x="90" y="14" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914">GN</text>
+                  <text id="lbl-north-grid" x="90" y="14" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914"></text>
                   <line x1="85" y1="68" x2="93" y2="10" stroke="#1C1914" stroke-width="1"/>
                   <text x="96" y="22" font-size="9" fill="#1C1914">★</text>
-                  <text x="104" y="24" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914">TN</text>
+                  <text id="lbl-north-true" x="104" y="24" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914"></text>
                   <line x1="85" y1="68" x2="62" y2="12" stroke="#1C1914" stroke-width="1.2"/>
                   <polygon points="62,12 58,20 68,16" fill="#1C1914"/>
-                  <text x="40" y="18" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914">MN</text>
+                  <text id="lbl-north-magnetic" x="40" y="18" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914"></text>
                 </svg>
                 <p class="print-gm-fig mono" id="print-gm-angle">G–M 9° 30′ W</p>
                 <p class="print-gm-fig mono" id="print-gm-conv">convergence 1° 17′</p>
@@ -136,6 +144,8 @@
             </footer>
           </div>
         </div>
+
+        <div id="zoom-dock" class="zoom-dock"></div>
 
         <div id="map-status" class="map-status" hidden>
           <span class="status-text"></span>

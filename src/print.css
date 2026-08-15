@@ -53,6 +53,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   padding: 0.08in 0;
   display: flex;
   align-items: stretch;
+  overflow: visible;
 }
 
 #print-footer .print-col {
@@ -99,7 +100,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 .print-series { margin: 2px 0 0; font-size: 7.5pt; line-height: 1.2; }
 .print-subtitle { margin: 0; font-size: 7pt; color: #4A4036; line-height: 1.2; }
 
-.print-spec { margin: 6px 0 0; display: grid; gap: 0; }
+.print-spec { margin: 3px 0 4px; display: grid; gap: 0; }
 .print-spec div {
   display: flex;
   height: 0.16in;
@@ -444,3 +445,12 @@ body.printing #sheet {
 .print-col-a .print-subtitle { margin: 0; font-size: 6pt; }
 .print-ident-extra { margin: 0.02in 0; }
 #print-scale, #print-grid-value, #print-grid-interval, #print-datum-value { color: #1C1914; }
+
+#print-footer .print-col-c li,
+#print-footer .print-col-c li span,
+#leg-roads, #leg-water, #leg-contours, #leg-grid, #leg-places, #leg-relief {
+  color: #1C1914;
+}
+#print-legal { overflow: visible; }
+#print-disclaimer { color: #1C1914; white-space: nowrap; }
+#print-attr { display: none; }
