@@ -63,7 +63,7 @@ function rebuild(map, host) {
     tick(host, { left: x, top: `${((TOP - OUT) / 11) * 100}%`, width: '0.6pt', height: `${((OUT + INN) / 11) * 100}%` });
     tick(host, { left: x, top: `${((TOP + MAP_H - INN) / 11) * 100}%`, width: '0.6pt', height: `${((OUT + INN) / 11) * 100}%` });
     const text = edgeLabel(e, step);
-    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP - OUT - LAB - 0.08) / 11) * 100}%` });
+    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP - OUT - 0.06) / 11) * 100}%` });
     lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + MAP_H + OUT + 0.02) / 11) * 100}%` });
   }
 

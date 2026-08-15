@@ -8,10 +8,10 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-upper {
   position: absolute;
-  top: calc(100% * 0.25 / 11);
+  top: calc(100% * 0.14 / 11);
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
-  height: calc(100% * 0.33 / 11);
+  height: calc(100% * 0.24 / 11);
   background: #FFFFFF;
   display: flex;
   align-items: flex-end;
