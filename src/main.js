@@ -496,6 +496,33 @@ function fillPrintBlock(map) {
   return rfBand;
 }
 
+
+function snapshotPrintMapFace(map) {
+  const mapEl = document.getElementById('map');
+  if (!mapEl || !map) return;
+  let img = document.getElementById('print-map-face');
+  if (!img) {
+    img = document.createElement('img');
+    img.id = 'print-map-face';
+    img.alt = '';
+    img.setAttribute('aria-hidden', 'true');
+    mapEl.appendChild(img);
+  }
+  try {
+    const canvas = typeof map.getCanvas === 'function' ? map.getCanvas() : null;
+    if (canvas && typeof canvas.toDataURL === 'function') {
+      img.src = canvas.toDataURL('image/png');
+    }
+  } catch {
+    if (img.parentNode) img.parentNode.removeChild(img);
+  }
+}
+
+function removePrintMapFace() {
+  const img = document.getElementById('print-map-face');
+  if (img && img.parentNode) img.parentNode.removeChild(img);
+}
+
 function attachPrint(map) {
   const btn = document.getElementById('print-btn');
   if (!btn) return;
@@ -554,6 +581,7 @@ function attachPrint(map) {
     restored = true;
     printArmed = false;
     window.__mgrsAllowPrint = false;
+    removePrintMapFace();
     setPrintInterval(null);
     document.body.classList.remove('printing');
     document.documentElement.classList.remove('printing');
@@ -624,6 +652,7 @@ function attachPrint(map) {
       try {
         if (typeof map.triggerRepaint === 'function') map.triggerRepaint();
       } catch { /* */ }
+      snapshotPrintMapFace(map);
       if (!printArmed) return;
       try {
         REAL_PRINT.call(window);

@@ -1,3 +1,9 @@
+html, body, #sheet, #map, #map canvas, .maplibregl-canvas, .maplibregl-canvas-container {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  color-adjust: exact !important;
+}
+
 html.printing, html.printing body { background: #FFFFFF !important; }
 @page {
   size: 8.5in 11in;
@@ -530,3 +536,43 @@ body.printing #map canvas {
   font-size: 0.78cqh;
 }
 #print-sheet { overflow: hidden; }
+
+/* Snapshot of the WebGL face. Chrome skips WebGL when Background graphics is off;
+   an <img> prints as content. Do not display:none the live canvas. */
+#print-map-face {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  z-index: 4;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  color-adjust: exact !important;
+}
+body.printing #print-map-face,
+html.printing #print-map-face {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+@media print {
+  html, body, #sheet, #map, #map canvas, .maplibregl-canvas, .maplibregl-canvas-container, #print-map-face {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  #print-map-face {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: fill;
+    z-index: 4;
+  }
+}
