@@ -37,9 +37,7 @@
       ],
       "category": "Education",
       "artifactName": "MGRS-Viewer-${version}-linux.${ext}",
-      "icon": "electron/app-icon-512.png",
-      "desktopName": "mgrs-viewer",
-      "synopsis": "MGRS Viewer"
+      "icon": "electron/app-icon-512.png"
     },
     "icon": "electron/app-icon-512.png"
   }
