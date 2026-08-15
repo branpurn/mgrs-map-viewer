@@ -36,6 +36,12 @@ const FALLBACKS = {
   'print.legend.relief': 'Relief',
   'app.name': 'MGRS Viewer',
   'print.attribution.notUsgs': 'Not a USGS map.',
+  'chrome.wysiwyg': 'WYSIWYG',
+  'chrome.wysiwygOn': 'On',
+  'chrome.wysiwygOff': 'Off',
+  'chrome.ariaWysiwyg': 'WYSIWYG. Default on.',
+  'chrome.ariaWysiwygOn': 'WYSIWYG on. Screen matches the printed sheet.',
+  'chrome.ariaWysiwygOff': 'WYSIWYG off.',
 };
 
 /**

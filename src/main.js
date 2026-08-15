@@ -111,6 +111,9 @@ function applyChromeCopy() {
     printBtn.title = t('chrome.printTitle');
     printBtn.setAttribute('aria-label', t('chrome.ariaPrint'));
   }
+  setText('lbl-wysiwyg', t('chrome.wysiwyg'));
+  const wy = document.getElementById('wysiwyg-btn');
+  if (wy) wy.setAttribute('aria-label', t('chrome.ariaWysiwyg'));
   setText('search-helper', t('search.helper'));
   const retry = document.getElementById('tile-retry');
   if (retry) retry.textContent = t('chrome.retry');
@@ -178,12 +181,65 @@ function formatConvergence(lon, lat) {
 
 let sheetLayoutBusy = false;
 let lastSheetBox = '';
+let liveMap = null;
+
+function isWysiwyg() {
+  return !document.body.classList.contains('wysiwyg-off');
+}
+
+function setWysiwyg(on) {
+  document.body.classList.toggle('wysiwyg-off', !on);
+  const btn = document.getElementById('wysiwyg-btn');
+  if (btn) {
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.setAttribute('aria-label', on ? t('chrome.ariaWysiwygOn') : t('chrome.ariaWysiwygOff'));
+  }
+  setText('wysiwyg-state', on ? t('chrome.wysiwygOn') : t('chrome.wysiwygOff'));
+  lastSheetBox = '';
+  layoutSheet(liveMap);
+}
+
+function attachWysiwyg() {
+  const btn = document.getElementById('wysiwyg-btn');
+  if (!btn) return;
+  setWysiwyg(true);
+  btn.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    setWysiwyg(!isWysiwyg());
+  });
+}
 
 function layoutSheet(map) {
   const desk = document.getElementById('desk');
   const sheet = document.getElementById('sheet');
   if (!desk || !sheet || document.body.classList.contains('printing')) return;
   if (sheetLayoutBusy) return;
+  if (!isWysiwyg()) {
+    sheet.style.left = '0px';
+    sheet.style.top = '0px';
+    sheet.style.width = '100%';
+    sheet.style.height = '100%';
+    sheet.style.transform = 'none';
+    sheet.style.aspectRatio = 'auto';
+    const hud = document.getElementById('hud');
+    const dock = document.getElementById('zoom-dock');
+    if (hud) {
+      hud.style.right = '18px';
+      hud.style.bottom = '18px';
+    }
+    if (dock) {
+      dock.style.left = '18px';
+      dock.style.bottom = '18px';
+    }
+    lastSheetBox = 'full';
+    if (map) {
+      sheetLayoutBusy = true;
+      try { map.resize(); } catch { /* off */ }
+      sheetLayoutBusy = false;
+    }
+    return;
+  }
   const hud = document.getElementById('hud');
   const dock = document.getElementById('zoom-dock');
   const hudW = hud && !hud.hidden ? hud.offsetWidth : 168;
@@ -412,11 +468,13 @@ function attachPrint(map) {
 
 async function main() {
   applyChromeCopy();
+  attachWysiwyg();
   layoutSheet();
   window.addEventListener('resize', () => layoutSheet());
 
   const map = await createMap('map');
   if (!map) return;
+  liveMap = map;
   layoutSheet(map);
   try {
     map.resize();
