@@ -213,6 +213,7 @@ function readSheetOn() {
 }
 
 function writeSheetOn(on) {
+  // Only setWysiwyg (Sheet click). Zoom / print-cancel must never call this.
   try { sessionStorage.setItem('mgrs-sheet', on ? 'on' : 'off'); } catch { /* */ }
 }
 
@@ -251,15 +252,6 @@ function attachWysiwyg() {
   sheetOn = readSheetOn();
   document.body.classList.toggle('wysiwyg-off', !sheetOn);
   paintSheetToggle();
-  const zoomDock = document.getElementById('zoom-dock');
-  if (zoomDock) {
-    ['pointerdown', 'mousedown', 'click'].forEach((type) => {
-      zoomDock.addEventListener(type, (ev) => ev.stopPropagation());
-    });
-    zoomDock.querySelectorAll('button').forEach((b) => {
-      b.setAttribute('type', 'button');
-    });
-  }
   btn.addEventListener('pointerdown', (ev) => {
     ev.stopPropagation();
   });
@@ -267,12 +259,10 @@ function attachWysiwyg() {
     ev.preventDefault();
     ev.stopPropagation();
     ev.stopImmediatePropagation();
-    if (ev.target && ev.target.closest('#search-form, #search-input, #search-clear, #clear, #zoom-dock, #print-btn')) return;
+    // Zoom / search / Print never write sheetOn. Only this control does.
+    if (ev.target && ev.target.closest('#zoom-dock, #search-form, #search-input, #search-clear, #clear, #print-btn')) return;
     if (!btn.contains(ev.target)) return;
     setWysiwyg(!sheetOn);
-  });
-  btn.querySelectorAll('.sheet-track, .sheet-thumb, #lbl-wysiwyg, #wysiwyg-state').forEach((el) => {
-    el.style.pointerEvents = 'auto';
   });
 }
 

@@ -117,37 +117,34 @@ html, body {
   pointer-events: auto;
 }
 #zoom-dock {
-  position: relative !important;
-  left: auto !important;
-  top: auto !important;
-  bottom: auto !important;
-  flex: 0 0 64px;
-  width: 64px;
-  min-width: 64px;
-  max-width: 64px;
-  height: 32px;
-  overflow: hidden;
-  z-index: 1;
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  left: auto;
+  bottom: auto;
+  z-index: 20;
   pointer-events: auto;
   isolation: isolate;
-  margin-right: 4px;
 }
-#chrome #zoom-dock .maplibregl-ctrl-group {
+body.wysiwyg-off #zoom-dock {
+  right: 18px;
+  top: 18px;
+  left: auto;
+  bottom: auto;
+}
+#desk #zoom-dock .maplibregl-ctrl-group {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   position: relative !important;
   left: auto !important;
   top: auto !important;
-  background: var(--paper);
-  border: 1px solid var(--ink);
+  margin: 0;
+  background: var(--chrome);
+  border: 1px solid rgba(28, 25, 20, 0.4);
 }
-#chrome #zoom-dock .maplibregl-ctrl-group button {
-  width: 32px !important;
-  height: 32px !important;
-}
-#chrome #zoom-dock .maplibregl-ctrl-group button + button {
-  border-top: 0 !important;
-  border-left: 1px solid var(--ink) !important;
+#desk #zoom-dock .maplibregl-ctrl-group button {
+  width: 36px !important;
+  height: 36px !important;
 }
 #map .maplibregl-ctrl,
 #map .maplibregl-ctrl-top-left,

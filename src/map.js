@@ -352,10 +352,18 @@ export function dockZoom(map) {
     if (!dock.contains(el)) el.style.display = 'none';
   });
   dock.style.pointerEvents = 'auto';
+  dock.querySelectorAll('button').forEach((b) => {
+    b.setAttribute('type', 'button');
+    b.removeAttribute('form');
+  });
+  // Zoom +/− must not reach #wysiwyg-btn and must never write sheetOn.
   if (!dock.dataset.mgrsIsolated) {
     dock.dataset.mgrsIsolated = '1';
-    dock.addEventListener('click', (ev) => ev.stopPropagation());
-    dock.addEventListener('pointerdown', (ev) => ev.stopPropagation());
+    ['pointerdown', 'mousedown', 'click', 'touchstart'].forEach((type) => {
+      dock.addEventListener(type, (ev) => {
+        ev.stopPropagation();
+      });
+    });
   }
 }
 
