@@ -9,6 +9,8 @@ Field use. No account. No wizard.
 3. Pan and zoom the map under that frame until the ground you want is inside it.
 4. Print. The browser print dialog is the sheet. Default name follows `mgrs-viewer-{mgrs}-{yyyy-mm-dd}`.
 
+Print still makes the US Letter sheet when Sheet is Off.
+
 Empty or ocean frames still print. The title is UNTITLED SHEET.
 
 `P` prints. `+` / `-` zoom. `/` focuses search.
