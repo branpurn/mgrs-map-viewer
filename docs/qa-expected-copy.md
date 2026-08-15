@@ -45,6 +45,12 @@ Sheet row is still **Sheet**. Unchanged. DATUM is **NAD 83**. SCALE, GRID ZONE, 
 
 Fail: WGS 84. Blank DATUM, SCALE, or GRID. Legend heading missing or the raw key. Unlabeled legend. Footer split (product in the collar, “Not a USGS map.” only on attribution). Any raw key on screen.
 
+## G–M
+
+On the DC / 18S UJ sheet: **G–M 9° 30′ W** and **convergence 1° 17′**.
+
+Fail: garbled `0.4° 7' 93' W`. Truncated G–M. Missing convergence.
+
 ## Print sheet
 
 | When | Key | Expected |
