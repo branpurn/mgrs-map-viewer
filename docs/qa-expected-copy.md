@@ -41,7 +41,7 @@ Visible toolbar label is **Sheet**, left of Print. On is the Letter sheet. Off i
 
 ## Collar (print sheet)
 
-Sheet row is still **Sheet**. Unchanged. DATUM is **NAD 83**. SCALE, GRID ZONE, EXAMPLE, and the grid interval must be filled. Legend heading is **Legend**. Legend rows have labels. Footer is one line: `MGRS Viewer · Not a USGS map.`
+Sheet row is still **Sheet**. Unchanged. DATUM is **NAD 83**. SCALE, GRID ZONE, EXAMPLE, and the grid interval must be filled. Legend heading is **Legend**. Legend rows have labels. Legend heading must be the resolved string; fail on raw print.legend. Footer is one line: `MGRS Viewer · Not a USGS map.`
 
 Fail: WGS 84. Blank DATUM, SCALE, or GRID. Legend heading missing or the raw key. Unlabeled legend. Footer split (product in the collar, “Not a USGS map.” only on attribution). Any raw key on screen.
 
