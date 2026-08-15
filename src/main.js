@@ -363,19 +363,23 @@ function attachPrint(map) {
   });
 
   document.addEventListener('keydown', (ev) => {
-    if (ev.key === 'p' || ev.key === 'P') {
-      if (ev.target && (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA')) return;
+    const key = ev.key;
+    const inField = ev.target && (
+      ev.target.tagName === 'INPUT'
+      || ev.target.tagName === 'TEXTAREA'
+      || ev.target.tagName === 'SELECT'
+      || ev.target.tagName === 'BUTTON'
+      || ev.target.isContentEditable
+    );
+    // Print only from #print-btn. Block Ctrl/Cmd+P (native dialog).
+    // Bare P must still type in search — never call print from a key.
+    if ((ev.ctrlKey || ev.metaKey) && (key === 'p' || key === 'P')) {
       ev.preventDefault();
-      btn.click();
+      return;
     }
-    if (ev.key === '+' || ev.key === '=') {
-      if (ev.target && ev.target.tagName === 'INPUT') return;
-      map.zoomIn();
-    }
-    if (ev.key === '-' || ev.key === '_') {
-      if (ev.target && ev.target.tagName === 'INPUT') return;
-      map.zoomOut();
-    }
+    if (inField) return;
+    if (key === '+' || key === '=') map.zoomIn();
+    if (key === '-' || key === '_') map.zoomOut();
   });
 }
 

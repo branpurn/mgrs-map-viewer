@@ -200,6 +200,7 @@ body.no-webgl-active #print-sheet {
   min-width: 0;
   height: 32px;
   position: relative;
+  z-index: 2;
 }
 
 #search-input {
@@ -259,6 +260,8 @@ body.no-webgl-active #print-sheet {
   flex: 0 0 88px;
   width: 88px;
   height: 32px;
+  position: relative;
+  z-index: 1;
   background: var(--paper);
   color: var(--ink);
 }
