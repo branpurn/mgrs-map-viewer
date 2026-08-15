@@ -2,6 +2,16 @@
 
 Source: strings.json. No new product copy. Fail if the UI shows different words.
 
+## This pass
+
+Toolbar: **Sheet**, **On** / **Off**. Default On. Fail if the control says WYSIWYG On, or a raw key.
+
+Print is still US Letter (8.5 × 11 in) either way.
+
+Collar sheet row: still **Sheet**. Unchanged. Size still 8.5 × 11 in.
+
+DATUM is **NAD 83**. Fail: WGS 84. Any raw key on screen.
+
 ## Search
 
 | When | Key | Expected |
@@ -23,6 +33,17 @@ Source: strings.json. No new product copy. Fail if the UI shows different words.
 | Polar / UPS | chrome.gridUnavailable / lbl.gridUnavailable | MGRS grid unavailable at this latitude. |
 | Print button | lbl.print / chrome.print | Print |
 | Preparing | chrome.printing | Preparing sheet… |
+| Toolbar switch | chrome.sheet | Sheet |
+| Switch on | chrome.wysiwygOn | On |
+| Switch off | chrome.wysiwygOff | Off |
+
+Visible toolbar label is **Sheet**, left of Print. Switch reads **On** / **Off**. Default On. Print is still Letter either way. Fail if it says WYSIWYG On, or a raw key.
+
+## Collar (print sheet)
+
+Sheet row is still **Sheet**. Unchanged. DATUM is **NAD 83**. SCALE, GRID ZONE, EXAMPLE, and the grid interval must be filled. Legend rows have labels. Footer is one line: `MGRS Viewer · Not a USGS map.`
+
+Fail: WGS 84. Blank DATUM, SCALE, or GRID. Unlabeled legend. Footer split (product in the collar, “Not a USGS map.” only on attribution). Any raw key on screen.
 
 ## Print sheet
 

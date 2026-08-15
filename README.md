@@ -38,6 +38,8 @@ Compact MGRS (`18TWK87120415`) is accepted. Enter submits. Esc clears.
 2. Pan and zoom. The map moves under a fixed dashed US Letter frame.
 3. Print. The browser prints that frame as an 8.5 × 11 in sheet.
 
+Toolbar **Sheet** is On or Off. Print is still Letter either way. The collar sheet row stays **Sheet**.
+
 See [docs/print-howto.md](docs/print-howto.md).
 
 ![US Letter print sheet](docs/images/print-sheet.png)
