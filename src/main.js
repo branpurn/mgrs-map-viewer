@@ -118,7 +118,7 @@ function applyChromeCopy() {
     printBtn.title = t('chrome.printTitle');
     printBtn.setAttribute('aria-label', t('chrome.ariaPrint'));
   }
-  setText('lbl-wysiwyg', t('chrome.wysiwyg'));
+  setText('lbl-wysiwyg', t('chrome.sheet') || t('print.sheet'));
   const wy = document.getElementById('wysiwyg-btn');
   if (wy) wy.setAttribute('aria-label', t('chrome.ariaWysiwyg'));
   setText('search-helper', t('search.helper'));
@@ -199,9 +199,10 @@ function setWysiwyg(on) {
   const btn = document.getElementById('wysiwyg-btn');
   if (btn) {
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.classList.toggle('on', on);
+    btn.classList.toggle('off', !on);
     btn.setAttribute('aria-label', on ? t('chrome.ariaWysiwygOn') : t('chrome.ariaWysiwygOff'));
   }
-  setText('wysiwyg-state', on ? t('chrome.wysiwygOn') : t('chrome.wysiwygOff'));
   lastSheetBox = '';
   layoutSheet(liveMap);
 }

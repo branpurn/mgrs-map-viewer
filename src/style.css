@@ -559,28 +559,41 @@ body.no-webgl-active #print-sheet {
   display: none !important;
 }
 
-.wysiwyg-toggle {
+.sheet-toggle {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--paper);
-  border-radius: 2px;
-  background: var(--chrome-inset);
-  color: var(--paper);
-  font: 600 12px/1 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
-  letter-spacing: 0.04em;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: 600 13px/1 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   cursor: pointer;
 }
-.wysiwyg-toggle[aria-pressed="true"] {
-  background: var(--paper);
-  color: var(--ink);
+.sheet-toggle.off { color: rgba(255, 255, 255, 0.7); }
+.sheet-track {
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  position: relative;
+  background: #fff;
 }
-#wysiwyg-state {
-  font-weight: 700;
-  min-width: 1.6em;
+.sheet-toggle.off .sheet-track { background: #3A3731; }
+.sheet-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 23px;
+  background: #1C1914;
+}
+.sheet-toggle.off .sheet-thumb {
+  left: 3px;
+  background: rgba(255, 255, 255, 0.7);
 }
 body.wysiwyg-off #print-sheet,
 body.wysiwyg-off #print-ticks {
