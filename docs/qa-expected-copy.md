@@ -49,7 +49,7 @@ Fail: WGS 84. Blank DATUM, SCALE, or GRID. Legend heading missing or the raw key
 
 On the DC / 18S UJ sheet: **G–M 9° 30′ W** and **convergence 1° 17′**. At first-load too.
 
-Fail: garbled `0.4° 7' 93' W`. **0°38′W**. Truncated G–M. Missing convergence.
+Fail: garbled `0.4° 7' 93' W`. **0°38′W**. First-load Jefferson Pier **9° 36′** / **1° 47′** (that is the 1:50 000 pair). Truncated G–M. Missing convergence.
 
 ## RF
 
