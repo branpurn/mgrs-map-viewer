@@ -8,20 +8,21 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-upper {
   position: absolute;
-  top: calc(100% * 0.14 / 11);
+  top: calc(100% * 0.06 / 11);
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
-  height: calc(100% * 0.24 / 11);
+  height: calc(100% * 0.28 / 11);
   background: #FFFFFF;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 0 0.08in 0.04in;
+  padding: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 #print-upper .print-product {
-  font-size: 7.5pt;
+  font-size: 0.95cqh;
   color: #4A4036;
   line-height: 1.2;
 }
@@ -29,7 +30,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 #print-title-upper {
   margin: 0;
   font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
-  font-size: 11pt;
+  font-size: 1.39cqh;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #1C1914;
@@ -37,7 +38,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 5.2in;
+  max-width: 61%;
 }
 
 #print-footer {
@@ -45,27 +46,27 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   top: calc(100% * 8.72 / 11);
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
-  height: calc(100% * 2.00 / 11);
+  height: calc(100% * 2.06 / 11);
   background: #FFFFFF;
   box-sizing: border-box;
   border-top: 0.75pt solid #000000;
   border-bottom: 0.35pt solid #000000;
-  padding: 0.08in 0;
+  padding: 0.6cqh 0 0.3cqh;
   display: flex;
   align-items: stretch;
-  overflow: hidden;
+  overflow: visible;
 }
 
 #print-footer .print-col {
   box-sizing: border-box;
-  padding: 0 0.08in;
+  padding: 0 1.1%;
   min-width: 0;
 }
 
-#print-footer .print-col-a { width: 2.40in; flex: 0 0 2.40in; overflow: hidden; }
+#print-footer .print-col-a { width: 31.008%; flex: 0 0 31.008%; overflow: visible; }
 #print-footer .print-col-b {
-  width: 1.90in;
-  flex: 0 0 1.90in;
+  width: 24.547%;
+  flex: 0 0 24.547%;
   border-left: 0.35pt solid #000000;
   display: flex;
   flex-direction: column;
@@ -73,24 +74,24 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   text-align: left;
 }
 #print-footer .print-col-c {
-  width: 1.40in;
-  flex: 0 0 1.40in;
+  width: 18.088%;
+  flex: 0 0 18.088%;
   border-left: 0.35pt solid #000000;
 }
 #print-footer .print-col-d {
   width: auto;
   flex: 1 1 0;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
   border-left: 0.35pt solid #000000;
-  font-size: 7pt;
+  font-size: 0.88cqh;
   line-height: 1.2;
 }
 
 #print-title {
   margin: 0;
   font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
-  font-size: 12pt;
+  font-size: 1.27cqh;
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.1;
@@ -99,20 +100,20 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   text-overflow: ellipsis;
 }
 
-.print-series { margin: 2px 0 0; font-size: 7.5pt; line-height: 1.2; }
-.print-subtitle { margin: 0; font-size: 7pt; color: #4A4036; line-height: 1.2; }
+.print-series { margin: 0.15cqh 0 0; font-size: 0.95cqh; line-height: 1.2; }
+.print-subtitle { margin: 0; font-size: 0.88cqh; color: #4A4036; line-height: 1.2; }
 
-.print-spec { margin: 3px 0 4px; display: grid; gap: 0; }
+.print-spec { margin: 0.2cqh 0 0.3cqh; display: grid; gap: 0; }
 .print-spec div {
   display: flex;
-  height: 0.16in;
+  height: 1.15cqh;
   align-items: center;
-  font-size: 7pt;
+  font-size: 0.88cqh;
   line-height: 1.2;
 }
 .print-spec dt {
-  width: 0.95in;
-  flex: 0 0 0.95in;
+  width: 40%;
+  flex: 0 0 40%;
   margin: 0;
   color: #4A4036;
   font-weight: 400;
@@ -121,15 +122,15 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   margin: 0;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-weight: 500;
-  font-size: 7pt;
+  font-size: 0.88cqh;
   color: #1C1914;
 }
 
 .print-north-label,
 .print-col-h,
 .legend-h {
-  margin: 0 0 4px;
-  font-size: 7.5pt;
+  margin: 0 0 0.3cqh;
+  font-size: 0.95cqh;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -139,8 +140,8 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-scale-bar,
 .print-scale-bar {
-  width: 1.84in;
-  max-width: 1.84in;
+  width: 21.65%;
+  max-width: 21.65%;
 }
 
 .psb-track {
@@ -168,8 +169,8 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 0.20in;
-  font-size: 7pt;
+  height: 1.55cqh;
+  font-size: 0.88cqh;
   line-height: 1.2;
 }
 
@@ -218,7 +219,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   border: 0.35pt solid #1C1914;
 }
 
-.print-meta-block { margin: 0 0 10px; font-size: 7pt; line-height: 1.2; }
+.print-meta-block { margin: 0 0 0.8cqh; font-size: 0.88cqh; line-height: 1.2; }
 .print-meta-block .meta-lbl,
 .print-meta-block span { display: block; color: #4A4036; }
 .print-meta-block strong { display: block; font-weight: 500; color: #1C1914; }
@@ -230,10 +231,10 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-legal {
   position: absolute;
-  top: calc(100% * 10.80 / 11);
+  top: calc(100% * 10.84 / 11);
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
-  height: calc(100% * 0.18 / 11);
+  height: calc(100% * 0.14 / 11);
   overflow: hidden;
   z-index: 6;
 }
@@ -243,7 +244,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 #print-disclaimer,
 #print-attr {
   margin: 0;
-  font-size: 6pt;
+  font-size: 0.76cqh;
   line-height: 1.15;
   color: #4A4036;
 }
@@ -403,31 +404,31 @@ body.printing #map {
 }
 
 
-.print-ident-extra { margin: 0.03in 0 0.04in; }
+.print-ident-extra { margin: 0.25cqh 0 0.2cqh; }
 .print-ident-extra .print-k,
-.print-k { margin: 0.02in 0 0; font-size: 6.5pt; line-height: 1.15; color: #4A4036; }
+.print-k { margin: 0.15cqh 0 0; font-size: 0.82cqh; line-height: 1.15; color: #4A4036; }
 .print-ident-extra .print-v,
-.print-v { margin: 0; font-size: 7pt; line-height: 1.15; color: #1C1914; }
+.print-v { margin: 0; font-size: 0.88cqh; line-height: 1.15; color: #1C1914; }
 .print-v.mono, .print-gm-fig { font-family: "IBM Plex Mono", ui-monospace, monospace; }
-.print-v.bold { font-weight: 700; font-size: 8.5pt; }
-.print-note { margin: 0; font-size: 6pt; line-height: 1.15; color: #4A4036; }
-.print-gm { display: block; margin: 0 0 0.02in; }
-.print-gm-fig { margin: 0; font-size: 6.5pt; line-height: 1.2; text-align: left; }
-.print-col-a { overflow: hidden; }
-.print-col-a .print-title { font-size: 11pt; }
-.print-spec div { height: 0.14in; }
+.print-v.bold { font-weight: 700; font-size: 1.07cqh; }
+.print-note { margin: 0; font-size: 0.76cqh; line-height: 1.15; color: #4A4036; }
+.print-gm { display: block; margin: 0 0 0.18cqh; width: 20cqw; height: 5.6cqh; }
+.print-gm-fig { margin: 0; font-size: 0.82cqh; line-height: 1.2; text-align: left; }
+.print-col-a { overflow: visible; }
+.print-col-a .print-title { font-size: 1.27cqh; }
+.print-spec div { height: 1.05cqh; }
 .psb-track { gap: 0; }
 .psb-track .psb-gap {
   flex: 0 0 0.08in;
   background: transparent !important;
   border: 0;
 }
-#print-ticks .tick { position: absolute; background: #000; }
+#print-ticks .tick { position: absolute; background: #000000; }
 #print-ticks .lab {
   position: absolute;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 7pt;
-  color: #000;
+  font-size: 0.88cqh;
+  color: #000000;
   line-height: 1;
 }
 
@@ -441,12 +442,14 @@ body.printing #sheet {
   width: 8.5in !important;
   height: 11in !important;
   box-shadow: none !important;
+  container-type: size;
+  container-name: letter;
 }
 
-.print-col-a .print-title { font-size: 10pt; margin: 0; }
-.print-col-a .print-series { margin: 0; font-size: 6.5pt; }
-.print-col-a .print-subtitle { margin: 0; font-size: 6pt; }
-.print-ident-extra { margin: 0.02in 0; }
+.print-col-a .print-title { font-size: 1.15cqh; margin: 0; }
+.print-col-a .print-series { margin: 0; font-size: 0.82cqh; }
+.print-col-a .print-subtitle { margin: 0; font-size: 0.76cqh; }
+.print-ident-extra { margin: 0.18cqh 0; }
 #print-scale, #print-grid-value, #print-grid-interval, #print-datum-value { color: #1C1914; }
 
 #print-footer .print-col-c li,

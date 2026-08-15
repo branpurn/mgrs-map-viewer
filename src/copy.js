@@ -42,6 +42,9 @@ const FALLBACKS = {
   'chrome.ariaWysiwyg': 'WYSIWYG. Default on.',
   'chrome.ariaWysiwygOn': 'WYSIWYG on. Screen matches the printed sheet.',
   'chrome.ariaWysiwygOff': 'WYSIWYG off.',
+  'chrome.sheet': 'Sheet',
+  'chrome.ariaSheet': 'Sheet view. On is the Letter sheet. Off is the full map.',
+  'print.sheet': 'Sheet',
 };
 
 /**

@@ -52,6 +52,8 @@ html, body {
   overflow: hidden;
   box-shadow: 0 1px 8px rgba(28, 25, 20, 0.18);
   z-index: 2;
+  container-type: size;
+  container-name: letter;
 }
 
 #sheet #map {
@@ -604,6 +606,11 @@ body.no-webgl-active #print-sheet {
 .sheet-toggle.off .sheet-thumb {
   left: 3px;
   background: rgba(255, 255, 255, 0.7);
+}
+#wysiwyg-state {
+  min-width: 1.4em;
+  font: 600 13px/1 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  color: inherit;
 }
 body.wysiwyg-off #print-sheet,
 body.wysiwyg-off #print-ticks {

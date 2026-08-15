@@ -119,8 +119,9 @@ function applyChromeCopy() {
     printBtn.setAttribute('aria-label', t('chrome.ariaPrint'));
   }
   setText('lbl-wysiwyg', t('chrome.sheet') || t('print.sheet'));
+  setText('wysiwyg-state', t('chrome.wysiwygOn'));
   const wy = document.getElementById('wysiwyg-btn');
-  if (wy) wy.setAttribute('aria-label', t('chrome.ariaWysiwyg'));
+  if (wy) wy.setAttribute('aria-label', t('chrome.ariaSheet') || t('chrome.ariaWysiwyg'));
   setText('search-helper', t('search.helper'));
   const retry = document.getElementById('tile-retry');
   if (retry) retry.textContent = t('chrome.retry');
@@ -201,7 +202,9 @@ function setWysiwyg(on) {
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     btn.classList.toggle('on', on);
     btn.classList.toggle('off', !on);
-    btn.setAttribute('aria-label', on ? t('chrome.ariaWysiwygOn') : t('chrome.ariaWysiwygOff'));
+    setText('lbl-wysiwyg', t('chrome.sheet') || t('print.sheet'));
+    setText('wysiwyg-state', on ? t('chrome.wysiwygOn') : t('chrome.wysiwygOff'));
+    btn.setAttribute('aria-label', t('chrome.ariaSheet') || (on ? t('chrome.ariaWysiwygOn') : t('chrome.ariaWysiwygOff')));
   }
   lastSheetBox = '';
   layoutSheet(liveMap);

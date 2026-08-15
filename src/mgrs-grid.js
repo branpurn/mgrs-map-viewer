@@ -724,7 +724,7 @@ const VIS_LAYERS = [
 ];
 
 const INK = '#000000';
-const GZD = '#8B1E1E';
+const GZD = '#000000';
 const PAPER = '#FFFFFF';
 
 function setOverlayVisible(map, on) {
