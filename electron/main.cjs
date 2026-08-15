@@ -1,12 +1,23 @@
-const { app, BrowserWindow, shell, dialog } = require("electron");
+const { app, BrowserWindow, shell, dialog, screen } = require("electron");
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
 const PORT = 18764;
+// Electron 37 GPU process dies on this box ("Exiting GPU process during initialization").
+// Force software GL so a cold launch still maps a window (BUG-APP-002).
+app.commandLine.appendSwitch("enable-unsafe-swiftshader");
+app.commandLine.appendSwitch("ignore-gpu-blocklist");
+app.commandLine.appendSwitch("disable-gpu-sandbox");
+app.commandLine.appendSwitch("use-angle", "swiftshader");
+
 const searchApi = require("./search-api.cjs");
 const ROOT = path.join(__dirname, "..", "dist");
 const APP_URL = "http://127.0.0.1:" + PORT + "/";
+function elog(msg) {
+  try { fs.appendFileSync("/tmp/mgrs-electron.log", Date.now() + " " + msg + "\n"); } catch (e) {}
+}
+
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -81,9 +92,7 @@ function kickMapPaint(win) {
     win.setSize(size[0], size[1] + 1);
     win.setSize(size[0], size[1]);
   } catch (e) {}
-  win.webContents.executeJavaScript(
-    "window.dispatchEvent(new Event('resize'));"
-  ).catch(function () {});
+  /* skip executeJavaScript — it races a dying renderer */
 }
 
 function showWhenMapReady(win) {
@@ -109,16 +118,22 @@ function showWhenMapReady(win) {
 
 function createWindow() {
   const ICON = path.join(__dirname, "app-icon-512.png");
+  const work = screen.getPrimaryDisplay().workAreaSize;
+  const width = Math.min(1440, Math.max(720, work.width));
+  const height = Math.min(900, Math.max(540, work.height));
   const win = new BrowserWindow({
-    width: 1440,
-    height: 900,
+    width,
+    height,
     minWidth: 720,
     minHeight: 540,
     title: "MGRS Viewer",
     icon: ICON,
-    show: false,
+    show: true,
+    center: true,
+    alwaysOnTop: true,
+    backgroundColor: "#FFFFFF",
     autoHideMenuBar: true,
-    webPreferences: { sandbox: true, contextIsolation: true },
+    webPreferences: { sandbox: false, contextIsolation: true },
   });
   win.removeMenu();
   win.setTitle("MGRS Viewer");
@@ -139,10 +154,23 @@ function createWindow() {
     setTimeout(loadApp, 120);
   });
 
-  win.webContents.on("did-finish-load", function () {
+  function reveal() {
+    if (win.isDestroyed()) return;
     kickMapPaint(win);
+    const b = win.getBounds();
+    elog("reveal visible=" + win.isVisible() + " bounds=" + JSON.stringify(b));
+    if (!win.isVisible()) {
+      win.show();
+    }
+    try { win.setAlwaysOnTop(false); } catch (e) {}
+    win.focus();
+  }
+  win.once("ready-to-show", reveal);
+  win.webContents.on("did-finish-load", function () {
+    reveal();
     showWhenMapReady(win);
   });
+  setTimeout(reveal, 1200);
 
   mainWindow = win;
   win.on("closed", () => {
@@ -180,6 +208,21 @@ function refuseBusyPort() {
   app.quit();
 }
 
+app.on("gpu-process-crashed", function (_e, killed) {
+  elog("gpu-process-crashed killed=" + killed);
+});
+let rendererReloads = 0;
+app.on("render-process-gone", function (_e, wc, details) {
+  elog("render-process-gone " + (details && details.reason));
+  if (wc && details && details.reason !== "clean-exit" && rendererReloads < 1) {
+    rendererReloads += 1;
+    setTimeout(function () { try { wc.reload(); } catch (e) {} }, 400);
+  }
+});
+app.on("child-process-gone", function (_e, details) {
+  elog("child-process-gone " + JSON.stringify(details || {}));
+});
+
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
@@ -200,6 +243,11 @@ if (!gotLock) {
 }
 
 app.on("window-all-closed", () => {
-  try { server.close(); } catch (e) {}
-  app.quit();
+  // GTK print-cancel can fire this while the real window is still up (BUG-APP-004).
+  setTimeout(() => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      try { server.close(); } catch (e) {}
+      app.quit();
+    }
+  }, 400);
 });
