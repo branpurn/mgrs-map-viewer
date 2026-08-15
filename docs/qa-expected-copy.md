@@ -6,7 +6,7 @@ Source: strings.json. No new product copy. Fail if the UI shows different words.
 
 Toolbar label is **Sheet**. On is the Letter sheet. Off is the full map. Default On.
 
-Print is still US Letter (8.5 × 11 in) either way.
+Print is still US Letter (8.5 × 11 in) either way. Print must stay **one tab**. Fail if Print opens a second MGRS Viewer tab.
 
 Collar unchanged: **NAD 83**, **GRID ZONE**, **G–M**. Sheet row still **Sheet**.
 
@@ -49,7 +49,7 @@ Fail: WGS 84. Blank DATUM, SCALE, or GRID. Legend heading missing or the raw key
 
 On the DC / 18S UJ sheet: **G–M 9° 30′ W** and **convergence 1° 17′**. At first-load too.
 
-Fail: garbled `0.4° 7' 93' W`. **0°38′W**. First-load Jefferson Pier **9° 36′** / **1° 47′** (that is the 1:50 000 pair). Truncated G–M. Missing convergence.
+Fail: garbled `0.4° 7' 93' W`. **0°38′W**. **9° 38′ W**. First-load Jefferson Pier **9° 36′** / **1° 47′** (that is the 1:50 000 pair). Truncated G–M. Missing convergence.
 
 ## RF
 
