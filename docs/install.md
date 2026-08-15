@@ -17,9 +17,13 @@ For someone who does not write software. No Node. No make.
 
 ## Mac
 
-1. Download [MGRS-Viewer-0.1.0-mac.zip](https://github.com/branpurn/mgrs-map-viewer/releases/tag/v0.1.0).
-2. Unzip it.
-3. Double-click `MGRS Viewer`. If the computer says the app is from an unidentified developer, open System Settings → Privacy & Security and choose Open Anyway.
+1. Download the file for your Mac from the [release page](https://github.com/branpurn/mgrs-map-viewer/releases/tag/v0.1.0):
+   - `MGRS-Viewer-0.1.0-mac-arm64.zip` — Macs from 2020 or newer (Apple chip). Apple menu → About This Mac says "Chip: Apple …".
+   - `MGRS-Viewer-0.1.0-mac-x64.zip` — older Intel Macs. About This Mac says "Processor: Intel …".
+   - Neither needs Rosetta.
+2. Unzip it. Drag `MGRS Viewer` into Applications (or keep it anywhere).
+3. Double-click `MGRS Viewer`. The first time, the computer says it cannot verify the app. Click Done (or OK), then open System Settings → Privacy & Security, scroll down, and click Open Anyway next to MGRS Viewer. Confirm. This happens once.
+4. If the computer instead says the app is damaged: open Terminal (Cmd-Space, type Terminal), paste `xattr -cr "/Applications/MGRS Viewer.app"` (change the path if you put it elsewhere), press Return, and double-click the app again.
 
 If you are using a tunnel, the app is at http://localhost:18764
 

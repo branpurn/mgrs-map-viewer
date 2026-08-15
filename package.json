@@ -9,6 +9,7 @@
     "preview": "vite preview --host 0.0.0.0 --port 5173 --strictPort",
     "desktop": "electron .",
     "build:desktop": "VITE_API_BASE= vite build --base=./ && electron-builder --linux AppImage",
+    "build:desktop:mac": "VITE_API_BASE= vite build --base=./ && electron-builder --mac --arm64 --x64 && bash infra/package-mac.sh",
     "test": "npm run test:search",
     "test:search": "node electron/search-api.test.cjs",
     "prebuild:desktop": "npm test"
@@ -41,6 +42,21 @@
       "category": "Education",
       "artifactName": "MGRS-Viewer-${version}-linux.${ext}",
       "icon": "electron/app-icon-512.png"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.education",
+      "icon": "electron/app-icon-512.png",
+      "identity": null,
+      "artifactName": "MGRS-Viewer-${version}-mac-${arch}.${ext}"
     },
     "icon": "electron/app-icon-512.png",
     "beforePack": "./electron/before-pack.cjs"

@@ -1,4 +1,4 @@
-Download [MGRS-Viewer-0.1.0-linux.AppImage](https://github.com/branpurn/mgrs-map-viewer/releases/tag/v0.1.0), [MGRS-Viewer-0.1.0-win.zip](https://github.com/branpurn/mgrs-map-viewer/releases/tag/v0.1.0), or [MGRS-Viewer-0.1.0-mac.zip](https://github.com/branpurn/mgrs-map-viewer/releases/tag/v0.1.0). Double-click. [Install](docs/install.md).
+Download [MGRS-Viewer-0.1.0-linux.AppImage](https://github.com/branpurn/mgrs-map-viewer/releases/tag/v0.1.0), [MGRS-Viewer-0.1.0-win.zip](https://github.com/branpurn/mgrs-map-viewer/releases/tag/v0.1.0), [MGRS-Viewer-0.1.0-mac-arm64.zip](https://github.com/branpurn/mgrs-map-viewer/releases/tag/v0.1.0) (Apple chip, no Rosetta), or [MGRS-Viewer-0.1.0-mac-x64.zip](https://github.com/branpurn/mgrs-map-viewer/releases/tag/v0.1.0) (Intel Mac). Double-click. [Install](docs/install.md).
 Self-host for a tunnel: http://localhost:18764
 
 If it does not open:
