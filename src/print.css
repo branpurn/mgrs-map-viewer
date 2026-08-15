@@ -122,10 +122,10 @@ html.printing, html.printing body { background: var(--paper) !important; }
 }
 
 #print-title {
-  margin: 0.28cqh 0 0.1cqh;
-  padding-top: 0.20cqh;
+  margin: 0.04in 0 0.03in;
+  padding-top: 0;
   font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
-  font-size: 1.27cqh;
+  font-size: 11pt;
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.1;
@@ -137,26 +137,29 @@ html.printing, html.printing body { background: var(--paper) !important; }
 .print-series { margin: 0.15cqh 0 0; font-size: 0.95cqh; line-height: 1.2; }
 .print-subtitle { margin: 0; font-size: 0.88cqh; color: #4A4036; line-height: 1.2; }
 
-.print-spec { margin: 0.2cqh 0 0.3cqh; display: grid; gap: 0; }
+.print-spec { margin: 0.04in 0 0.06in; display: grid; gap: 0; }
 .print-spec div {
   display: flex;
-  height: 1.15cqh;
+  height: 0.16in;
   align-items: center;
-  font-size: 0.88cqh;
+  font-size: 7pt;
   line-height: 1.2;
 }
 .print-spec dt {
-  width: 40%;
-  flex: 0 0 40%;
+  width: 0.95in;
+  flex: 0 0 0.95in;
   margin: 0;
   color: #4A4036;
   font-weight: 400;
+  font-size: 7pt;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .print-spec dd {
   margin: 0;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-weight: 500;
-  font-size: 0.88cqh;
+  font-size: 7.5pt;
   color: #1C1914;
 }
 
@@ -170,6 +173,14 @@ html.printing, html.printing body { background: var(--paper) !important; }
 }
 
 .print-north-arrow { width: 0.28in; height: 0.42in; display: block; margin: 0.08in 0 0.04in; }
+.print-gm { display: block; width: 1.28in; height: 0.88in; margin: 0.04in 0 0.06in; }
+.print-gm-fig {
+  margin: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 7pt;
+  line-height: 1.2;
+  white-space: nowrap;
+}
 .print-true-north { margin: 1px 0 0; font-size: 6.5pt; color: #4A4036; }
 .print-rf {
   margin: 0.08in 0 0.12in;
@@ -477,9 +488,10 @@ body.printing #map {
 #print-ticks .lab {
   position: absolute;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.88cqh;
-  color: #000000;
+  font-size: 7pt;
+  color: #1C1914;
   line-height: 1;
+  white-space: nowrap;
 }
 
 body.printing #print-ticks { display: block !important; z-index: 21; }
@@ -496,10 +508,10 @@ body.printing #sheet {
   container-name: letter;
 }
 
-.print-col-a .print-title { font-size: 1.05cqh; margin: 0.32cqh 0 0.12cqh; padding-top: 0.18cqh; }
-.print-col-a .print-series { margin: 0; font-size: 0.76cqh; }
-.print-col-a .print-subtitle { margin: 0; font-size: 0.70cqh; }
-.print-ident-extra { margin: 0.22cqh 0 0.08cqh; }
+.print-col-a .print-title { font-size: 11pt; margin: 0.04in 0 0.03in; padding-top: 0; }
+.print-col-a .print-series { margin: 0.04in 0 0; font-size: 7.5pt; }
+.print-col-a .print-subtitle { margin: 0; font-size: 7pt; color: #4A4036; }
+.print-ident-extra { margin: 0.06in 0 0; }
 #print-scale, #print-grid-value, #print-grid-interval, #print-datum-value { color: #1C1914; }
 
 #print-footer .print-col-c li,
@@ -552,28 +564,26 @@ body.printing:not(.has-print-face) #map .maplibregl-canvas {
 }
 #print-title,
 .print-col-a .print-title {
-  font-size: 0.98cqh;
-  margin: 0.45cqh 0 0.12cqh;
-  padding-top: 0.15cqh;
+  font-size: 11pt;
+  margin: 0.04in 0 0.03in;
+  padding-top: 0;
 }
-.print-spec { margin: 0.06cqh 0 0.06cqh; }
-.print-spec div { height: 0.78cqh; font-size: 0.80cqh; }
-.print-spec dt, .print-spec dd { font-size: 0.80cqh; }
-.print-ident-extra { margin: 0.10cqh 0 0.04cqh; flex: 1 1 auto; min-height: 0; overflow: visible; }
+.print-spec { margin: 0.04in 0 0.04in; }
+.print-spec div { height: 0.16in; font-size: 7pt; }
+.print-spec dt, .print-spec dd { font-size: 7pt; }
+.print-ident-extra { margin: 0.05in 0 0; flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .print-ident-extra .print-k,
-.print-k { margin: 0.08cqh 0 0; font-size: 0.72cqh; line-height: 1.1; }
+.print-k { margin: 0.04in 0 0; font-size: 6.5pt; line-height: 1.15; color: #4A4036; text-transform: uppercase; letter-spacing: 0.04em; }
 .print-ident-extra .print-v,
-.print-v { margin: 0; font-size: 0.78cqh; line-height: 1.1; }
-.print-v.bold { font-size: 0.92cqh; }
-.print-col-a .print-series { margin: 0.06cqh 0 0; font-size: 0.66cqh; }
-.print-col-a .print-subtitle { margin: 0; font-size: 0.62cqh; }
-#print-footer .print-col-c li { height: 1.22cqh; font-size: 0.80cqh; }
-.legend-h { margin: 0 0 0.16cqh; font-size: 0.86cqh; }
+.print-v { margin: 0; font-size: 7.5pt; line-height: 1.15; }
+.print-v.bold { font-size: 8pt; font-weight: 700; }
+.print-col-a .print-series { margin: 0.04in 0 0; font-size: 7.5pt; }
+.print-col-a .print-subtitle { margin: 0; font-size: 7pt; }
 #print-gm-angle, #print-gm-conv, .print-gm-fig {
   white-space: nowrap;
-  overflow: visible;
-  max-width: none;
-  font-size: 0.78cqh;
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 7pt;
 }
 #print-sheet { overflow: hidden; }
 

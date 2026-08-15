@@ -10,18 +10,20 @@
     "desktop": "electron .",
     "build:desktop": "VITE_API_BASE= vite build --base=./ && electron-builder --linux AppImage",
     "build:desktop:mac": "VITE_API_BASE= vite build --base=./ && electron-builder --mac --arm64 --x64 && bash infra/package-mac.sh",
-    "test": "npm run test:search",
+    "test": "npm run test:search && npm run test:north",
     "test:search": "node electron/search-api.test.cjs",
+    "test:north": "node src/north.test.cjs",
     "prebuild:desktop": "npm test"
   },
   "dependencies": {
+    "magvar": "^2.2.0",
     "maplibre-gl": "^5.7.3",
     "mgrs": "^2.1.0"
   },
   "devDependencies": {
-    "vite": "^7.1.3",
     "electron": "^37.2.0",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "vite": "^7.1.3"
   },
   "main": "electron/main.cjs",
   "build": {

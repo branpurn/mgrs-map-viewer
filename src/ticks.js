@@ -5,9 +5,10 @@ const LEFT = 0.38;
 const TOP = 0.58;
 const MAP_W = 7.74;
 const MAP_H = 8.14;
-const OUT = 0.12;
-const INN = 0.08;
-const LAB = 0.04;
+const PAGE_W = 8.5;
+const PAGE_H = 11;
+const SAFE = 0.26;
+const INN = 0.10;
 
 function snapUp(v, step) {
   return Math.ceil(v / step) * step;
@@ -43,7 +44,14 @@ function dms(value, pos, neg) {
     d += 1;
   }
   const pad = (n) => String(n).padStart(2, '0');
-  return `${d}° ${pad(m)}′ ${pad(s)}″ ${hemi}`;
+  return `${d}°\u202f${pad(m)}′\u202f${pad(s)}″\u202f${hemi}`;
+}
+
+function pctX(xIn) {
+  return `${(xIn / PAGE_W) * 100}%`;
+}
+function pctY(yIn) {
+  return `${(yIn / PAGE_H) * 100}%`;
 }
 
 function tick(el, style) {
@@ -74,8 +82,8 @@ function rebuild(map, host) {
 
   const mapEl = map.getContainer();
   const sheet = document.getElementById('sheet');
-  const mw = mapEl.clientWidth || (sheet ? sheet.clientWidth * (MAP_W / 8.5) : 0);
-  const mh = mapEl.clientHeight || (sheet ? sheet.clientHeight * (MAP_H / 11) : 0);
+  const mw = mapEl.clientWidth || (sheet ? sheet.clientWidth * (MAP_W / PAGE_W) : 0);
+  const mh = mapEl.clientHeight || (sheet ? sheet.clientHeight * (MAP_H / PAGE_H) : 0);
   if (mw < 8 || mh < 8) return;
 
   const c = map.getCenter();
@@ -92,81 +100,91 @@ function rebuild(map, host) {
   const maxN = Math.max(sw.northing, ne.northing, nw.northing, se.northing);
   host.replaceChildren();
   const north = c.lat >= 0;
-
   const firstE = snapUp(minE, 10000);
   const firstN = snapUp(minN, 10000);
 
   for (let e = snapUp(minE, step); e <= maxE; e += step) {
     const p = utmToLatLon(zone, e, utm.northing, north);
     const px = map.project([p.lon, p.lat]);
-    if (px.x < -2 || px.x > mw + 2) continue;
+    if (px.x < 8 || px.x > mw - 8) continue;
     const xIn = LEFT + (px.x / mw) * MAP_W;
-    const x = `${(xIn / 8.5) * 100}%`;
+    if (xIn < LEFT + 0.16 || xIn > LEFT + MAP_W - 0.16) continue;
     const principal = Math.abs(e - firstE) % 10000 < 1 || e === firstE;
-    tick(host, { left: x, top: `${((TOP - OUT) / 11) * 100}%`, width: principal ? '0.9pt' : '0.6pt', height: `${((OUT + INN) / 11) * 100}%` });
-    tick(host, { left: x, top: `${((TOP + MAP_H - INN) / 11) * 100}%`, width: principal ? '0.9pt' : '0.6pt', height: `${(INN / 11) * 100}%` });
+    tick(host, {
+      left: pctX(xIn),
+      top: pctY(TOP),
+      width: principal ? '0.9pt' : '0.6pt',
+      height: `${(INN / PAGE_H) * 100}%`,
+    });
+    tick(host, {
+      left: pctX(xIn),
+      top: pctY(TOP + MAP_H - INN),
+      width: principal ? '0.9pt' : '0.6pt',
+      height: `${(INN / PAGE_H) * 100}%`,
+    });
     const text = edgeLabel(e, step);
-    lab(host, text, {
-      left: `${((xIn - 0.08) / 8.5) * 100}%`,
-      top: `${((TOP + 0.03) / 11) * 100}%`,
-      fontSize: '9pt',
-    });
-    lab(host, text, {
-      left: `${((xIn - 0.08) / 8.5) * 100}%`,
-      top: `${((TOP + MAP_H - 0.13) / 11) * 100}%`,
-      fontSize: '9pt',
-    });
+    lab(host, text, { left: pctX(xIn - 0.07), top: pctY(TOP + 0.02), fontSize: '7pt' });
+    lab(host, text, { left: pctX(xIn - 0.07), top: pctY(TOP + MAP_H - 0.12), fontSize: '7pt' });
   }
 
   for (let n = snapUp(minN, step); n <= maxN; n += step) {
     const p = utmToLatLon(zone, utm.easting, n, north);
     const px = map.project([p.lon, p.lat]);
-    if (px.y < -2 || px.y > mh + 2) continue;
+    if (px.y < 8 || px.y > mh - 8) continue;
     const yIn = TOP + (px.y / mh) * MAP_H;
-    const y = `${(yIn / 11) * 100}%`;
+    if (yIn < TOP + 0.16 || yIn > TOP + MAP_H - 0.16) continue;
     const principal = Math.abs(n - firstN) % 10000 < 1 || n === firstN;
-    tick(host, { top: y, left: `${((LEFT - OUT) / 8.5) * 100}%`, height: principal ? '0.9pt' : '0.6pt', width: `${((OUT + INN) / 8.5) * 100}%` });
-    tick(host, { top: y, left: `${((LEFT + MAP_W - INN) / 8.5) * 100}%`, height: principal ? '0.9pt' : '0.6pt', width: `${((INN) / 8.5) * 100}%` });
+    tick(host, {
+      top: pctY(yIn),
+      left: pctX(LEFT),
+      height: principal ? '0.9pt' : '0.6pt',
+      width: `${(INN / PAGE_W) * 100}%`,
+    });
+    tick(host, {
+      top: pctY(yIn),
+      left: pctX(LEFT + MAP_W - INN),
+      height: principal ? '0.9pt' : '0.6pt',
+      width: `${(INN / PAGE_W) * 100}%`,
+    });
     const text = edgeLabel(n, step);
-    lab(host, text, { left: `${((LEFT - OUT - LAB - 0.14) / 8.5) * 100}%`, top: `${((yIn - 0.06) / 11) * 100}%`, fontSize: '9pt' });
-    lab(host, text, { left: `${((LEFT + MAP_W + OUT + 0.02) / 8.5) * 100}%`, top: `${((yIn - 0.06) / 11) * 100}%`, fontSize: '9pt' });
+    lab(host, text, { left: pctX(LEFT + 0.02), top: pctY(yIn - 0.055), fontSize: '7pt' });
+    lab(host, text, { left: pctX(LEFT + MAP_W - 0.16), top: pctY(yIn - 0.055), fontSize: '7pt' });
   }
 
   const corners = [
-    { utm: nw, xIn: LEFT, yIn: TOP, eAlign: 'left', nAlign: 'top' },
-    { utm: ne, xIn: LEFT + MAP_W, yIn: TOP, eAlign: 'right', nAlign: 'top' },
-    { utm: sw, xIn: LEFT, yIn: TOP + MAP_H, eAlign: 'left', nAlign: 'bottom' },
-    { utm: se, xIn: LEFT + MAP_W, yIn: TOP + MAP_H, eAlign: 'right', nAlign: 'bottom' },
+    { utm: nw, xIn: LEFT + 0.02, yIn: TOP + 0.14, eAlign: 'left', nAlign: 'top' },
+    { utm: ne, xIn: LEFT + MAP_W - 0.02, yIn: TOP + 0.14, eAlign: 'right', nAlign: 'top' },
+    { utm: sw, xIn: LEFT + 0.02, yIn: TOP + MAP_H - 0.22, eAlign: 'left', nAlign: 'bottom' },
+    { utm: se, xIn: LEFT + MAP_W - 0.02, yIn: TOP + MAP_H - 0.22, eAlign: 'right', nAlign: 'bottom' },
   ];
   for (const corner of corners) {
     const eText = utmCornerText(corner.utm.easting, 'E');
     const nText = utmCornerText(corner.utm.northing, 'N');
-    const eLeft = corner.eAlign === 'left'
-      ? `${((corner.xIn) / 8.5) * 100}%`
-      : `${((corner.xIn - 0.72) / 8.5) * 100}%`;
-    const eTop = corner.nAlign === 'top'
-      ? `${((TOP - 0.20) / 11) * 100}%`
-      : `${((TOP + MAP_H - 0.16) / 11) * 100}%`;
-    lab(host, eText, { left: eLeft, top: eTop, fontSize: '6.5pt', className: 'lab lab-utm' });
-    const nLeft = corner.eAlign === 'left'
-      ? `${((LEFT - 0.36) / 8.5) * 100}%`
-      : `${((LEFT + MAP_W + 0.02) / 8.5) * 100}%`;
-    const nTop = corner.nAlign === 'top'
-      ? `${((corner.yIn) / 11) * 100}%`
-      : `${((corner.yIn - 0.10) / 11) * 100}%`;
-    lab(host, nText, { left: nLeft, top: nTop, fontSize: '6.5pt' });
+    const eLeft = corner.eAlign === 'left' ? corner.xIn : corner.xIn - 0.62;
+    const nLeft = corner.eAlign === 'left' ? corner.xIn : corner.xIn - 0.62;
+    const eTop = corner.nAlign === 'top' ? TOP + 0.02 : TOP + MAP_H - 0.12;
+    const nTop = corner.nAlign === 'top' ? TOP + 0.12 : TOP + MAP_H - 0.22;
+    lab(host, eText, { left: pctX(eLeft), top: pctY(eTop), fontSize: '6pt' });
+    lab(host, nText, { left: pctX(nLeft), top: pctY(nTop), fontSize: '6pt' });
   }
 
-  const geos = [
-    { lon: b.getWest(), lat: b.getNorth(), left: `${((LEFT - 0.02) / 8.5) * 100}%`, top: `${((TOP - 0.32) / 11) * 100}%` },
-    { lon: b.getEast(), lat: b.getNorth(), left: `${((LEFT + MAP_W - 0.70) / 8.5) * 100}%`, top: `${((TOP - 0.32) / 11) * 100}%` },
-    { lon: b.getWest(), lat: b.getSouth(), left: `${((LEFT + 0.04) / 8.5) * 100}%`, top: `${((TOP + MAP_H - 0.22) / 11) * 100}%` },
-    { lon: b.getEast(), lat: b.getSouth(), left: `${((LEFT + MAP_W - 0.70) / 8.5) * 100}%`, top: `${((TOP + MAP_H - 0.22) / 11) * 100}%` },
+  // Split geographic ticks: longitude on the top/bottom *inside* the neatline,
+  // latitude on the left/right *inside* the neatline. Never a combined pair
+  // hanging off the top-left into the page margin.
+  const geo = [
+    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT + 0.02, top: TOP + 0.22, side: 'left' },
+    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT + MAP_W - 0.72, top: TOP + 0.22, side: 'right' },
+    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.02, top: TOP + 0.32, side: 'top-left' },
+    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.72, top: TOP + 0.32, side: 'top-right' },
+    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT + 0.02, top: TOP + MAP_H - 0.32, side: 'left' },
+    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT + MAP_W - 0.72, top: TOP + MAP_H - 0.32, side: 'right' },
+    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.02, top: TOP + MAP_H - 0.42, side: 'bot-left' },
+    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.72, top: TOP + MAP_H - 0.42, side: 'bot-right' },
   ];
-  for (const g of geos) {
-    lab(host, `${dms(g.lat, 'N', 'S')}  ${dms(g.lon, 'E', 'W')}`, {
-      left: g.left,
-      top: g.top,
+  for (const g of geo) {
+    lab(host, g.text, {
+      left: pctX(Math.max(LEFT + 0.02, Math.min(g.left, LEFT + MAP_W - 0.74))),
+      top: pctY(g.top),
       fontSize: '6pt',
       color: '#4A4036',
       whiteSpace: 'nowrap',
@@ -178,13 +196,14 @@ function rebuild(map, host) {
     const midLat = (b.getNorth() + b.getSouth()) / 2;
     const p = utmToLatLon(zone, e, latLonToUtm(c.lng, midLat, zone).northing, north);
     const px = map.project([p.lon, p.lat]);
-    if (px.x < -4 || px.x > mw + 4) continue;
+    if (px.x < 12 || px.x > mw - 12) continue;
     const letters = squareLettersAt(p.lon + 0.01, midLat);
     if (!letters) continue;
     const xIn = LEFT + (px.x / mw) * MAP_W;
+    if (xIn < LEFT + 0.20 || xIn > LEFT + MAP_W - 0.20) continue;
     lab(host, letters, {
-      left: `${((xIn - 0.10) / 8.5) * 100}%`,
-      top: `${((TOP - 0.20) / 11) * 100}%`,
+      left: pctX(xIn - 0.08),
+      top: pctY(TOP + 0.42),
       fontSize: '8pt',
       fontWeight: '700',
       color: '#8B1E1E',
@@ -194,18 +213,20 @@ function rebuild(map, host) {
     const midLon = (b.getWest() + b.getEast()) / 2;
     const p = utmToLatLon(zone, latLonToUtm(midLon, c.lat, zone).easting, n, north);
     const px = map.project([p.lon, p.lat]);
-    if (px.y < -4 || px.y > mh + 4) continue;
+    if (px.y < 12 || px.y > mh - 12) continue;
     const letters = squareLettersAt(midLon, p.lat + 0.01);
     if (!letters) continue;
     const yIn = TOP + (px.y / mh) * MAP_H;
+    if (yIn < TOP + 0.28 || yIn > TOP + MAP_H - 0.28) continue;
     lab(host, letters, {
-      left: `${((LEFT - 0.28) / 8.5) * 100}%`,
-      top: `${((yIn - 0.08) / 11) * 100}%`,
+      left: pctX(LEFT + 0.18),
+      top: pctY(yIn - 0.06),
       fontSize: '8pt',
       fontWeight: '700',
       color: '#8B1E1E',
     });
   }
+  void SAFE;
 }
 
 export function attachCollarTicks(map) {

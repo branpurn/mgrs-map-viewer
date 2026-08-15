@@ -49,9 +49,9 @@ Footer is two 6 pt lines: full `print.disclaimer`, then OTM/OSM attribution + `N
 
 ## North
 
-True north arrow + **True north**. No magnetic / grid-north fork.
+G–M diagram at the frame center: TN / GN / MN, live WMM 2025 declination, UTM convergence, and G–M (magnetic minus grid). DC / 18S is about **9° W**, not a locked `9° 30′ W`. A European or southern-hemisphere sheet must not reuse the DC numbers.
 
-Fail: G–M diagram. Locked `9° 30′ W` / `convergence 1° 17′` as required copy. `0°38′W`.
+Fail: true-north-only arrow. Garbled `0.4° 7' 93' W`. `0°38′W`. Jefferson Pier lock on a non-DC sheet.
 
 ## RF
 

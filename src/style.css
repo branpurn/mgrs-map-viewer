@@ -165,8 +165,14 @@ body:not(.printing) #print-title {
   height: 100%;
   pointer-events: none;
   z-index: 6;
-  /* Clip at neatline bottom (y 8.72) so tick 23 cannot enter Col A. */
-  clip-path: inset(0 0 calc(100% * 2.28 / 11) 0);
+  /* Clip to the neatline. Labels live in a 0.14 in band *inside* the frame
+     so the left / top-left page margin stays empty. */
+  clip-path: inset(
+    calc(100% * 0.58 / 11)
+    calc(100% * 0.38 / 8.5)
+    calc(100% * 2.28 / 11)
+    calc(100% * 0.38 / 8.5)
+  );
   overflow: hidden;
 }
 #print-ticks svg {

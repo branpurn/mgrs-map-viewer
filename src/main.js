@@ -28,6 +28,7 @@ import {
 } from './scale.js';
 import { attachSearch } from './search.js';
 import { attachCollarTicks } from './ticks.js';
+import { northAt, ray } from './north.js';
 
 if (typeof window.__mgrsNativePrint !== 'function') {
   window.__mgrsNativePrint = window.print.bind(window);
@@ -80,6 +81,76 @@ function utmZoneLabel(map) {
   const z = utmZone(c.lng);
   const hemi = c.lat >= 0 ? 'N' : 'S';
   return `UTM ${z}${hemi}`;
+}
+
+function setSvgLine(id, x1, y1, x2, y2) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute('x1', String(x1));
+  el.setAttribute('y1', String(y1));
+  el.setAttribute('x2', String(x2));
+  el.setAttribute('y2', String(y2));
+}
+
+function setSvgPoints(id, pts) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute('points', pts);
+}
+
+function paintNorthDiagram(map) {
+  const svg = document.getElementById('print-gm');
+  if (!svg || !map || typeof map.getCenter !== 'function') return;
+  const c = map.getCenter();
+  if (state.polar || !isGridAvailable(c.lat)) {
+    setText('print-gm-angle', '');
+    setText('print-gm-conv', '');
+    setText('print-gm-note', t('lbl.gridUnavailable'));
+    return;
+  }
+  const n = northAt(c.lng, c.lat);
+  const cx = 70;
+  const by = 88;
+  const tn = ray(cx, by, 0, 78);
+  const gn = ray(cx, by, n.conv, 76);
+  const mn = ray(cx, by, n.decl, 74);
+  setSvgLine('gm-tn', cx, by, tn[0], tn[1]);
+  setSvgLine('gm-gn', cx, by, gn[0], gn[1]);
+  setSvgLine('gm-mn', cx, by, mn[0], mn[1]);
+  const head = (pt, deg) => {
+    const tip = ray(cx, by, deg, 80);
+    const l = ray(cx, by, deg - 12, 70);
+    const r = ray(cx, by, deg + 12, 70);
+    return `${tip[0]},${tip[1]} ${l[0]},${l[1]} ${r[0]},${r[1]}`;
+  };
+  setSvgPoints('gm-tn-head', head(tn, 0));
+  setSvgPoints('gm-mn-head', head(mn, n.decl));
+  const tnLab = document.getElementById('lbl-north-true');
+  const gnLab = document.getElementById('lbl-north-grid');
+  const mnLab = document.getElementById('lbl-north-magnetic');
+  const star = document.getElementById('gm-star');
+  if (tnLab) {
+    tnLab.setAttribute('x', String(tn[0] + 4));
+    tnLab.setAttribute('y', String(tn[1] + 4));
+    tnLab.textContent = t('print.north.true');
+  }
+  if (star) {
+    star.setAttribute('x', String(tn[0] - 10));
+    star.setAttribute('y', String(tn[1] + 4));
+  }
+  if (gnLab) {
+    gnLab.setAttribute('x', String(gn[0] + (n.conv >= 0 ? 3 : -16));
+    gnLab.setAttribute('y', String(gn[1] + 10));
+    gnLab.textContent = t('print.north.grid');
+  }
+  if (mnLab) {
+    mnLab.setAttribute('x', String(mn[0] + (n.decl >= 0 ? 3 : -18));
+    mnLab.setAttribute('y', String(mn[1] + 6));
+    mnLab.textContent = t('print.north.magnetic');
+  }
+  setText('print-gm-angle', n.gmText);
+  setText('print-gm-conv', n.convLine);
+  setText('print-gm-note', t('print.north.note'));
 }
 
 function isoDate(d = new Date()) {
@@ -175,7 +246,10 @@ function applyChromeCopy() {
   setText('lbl-print-projection', t('print.projection'));
   setText('print-projection-value', t('print.projectionValue'));
   setText('lbl-print-north', t('print.north'));
-  setText('print-true-north', t('print.trueNorth'));
+  setText('print-gm-note', t('print.north.note'));
+  setText('lbl-north-true', t('print.north.true'));
+  setText('lbl-north-grid', t('print.north.grid'));
+  setText('lbl-north-magnetic', t('print.north.magnetic'));
   setText('lbl-print-gzd', t('print.gridZone'));
   setText('lbl-print-example', t('print.example'));
   setText('print-example-note', t('print.example.note'));
@@ -586,6 +660,7 @@ function fillPrintBlock(map) {
   setText('print-scale-center', text);
   renderPrintScaleBar(document.getElementById('print-scale-bar'), scale.metersPerPixel, rf);
   writeDatum();
+  paintNorthDiagram(map);
   pinCollarTitle();
   return rfBand;
 }

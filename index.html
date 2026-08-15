@@ -131,11 +131,20 @@
               </div>
               <div class="print-col print-col-c">
                 <p class="print-north-label" id="lbl-print-north" data-i18n="print.north"></p>
-                <svg id="print-north-arrow" class="print-north-arrow" viewBox="0 0 40 56" aria-hidden="true">
-                  <polygon points="20,2 24,22 20,18 16,22" fill="#1C1914"/>
-                  <line x1="20" y1="18" x2="20" y2="54" stroke="#1C1914" stroke-width="1.6"/>
+                <svg id="print-gm" class="print-gm" viewBox="0 0 140 96" aria-hidden="true">
+                  <line id="gm-tn" x1="70" y1="88" x2="70" y2="10" stroke="#1C1914" stroke-width="1.2"/>
+                  <polygon id="gm-tn-head" points="70,4 66.5,13 73.5,13" fill="#1C1914"/>
+                  <text id="lbl-north-true" x="74" y="12" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914">TN</text>
+                  <text id="gm-star" x="62" y="10" font-size="8" fill="#1C1914">★</text>
+                  <line id="gm-gn" x1="70" y1="88" x2="78" y2="12" stroke="#1C1914" stroke-width="1"/>
+                  <text id="lbl-north-grid" x="80" y="22" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914">GN</text>
+                  <line id="gm-mn" x1="70" y1="88" x2="48" y2="16" stroke="#1C1914" stroke-width="1.2"/>
+                  <polygon id="gm-mn-head" points="48,16 44,24 54,20" fill="#1C1914"/>
+                  <text id="lbl-north-magnetic" x="28" y="20" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914">MN</text>
                 </svg>
-                <p class="print-true-north" id="print-true-north" data-i18n="print.trueNorth"></p>
+                <p class="print-gm-fig mono" id="print-gm-angle"></p>
+                <p class="print-gm-fig mono" id="print-gm-conv"></p>
+                <p class="print-note" id="print-gm-note"></p>
               </div>
             </div>
             <footer id="print-legal" class="print-legal">
