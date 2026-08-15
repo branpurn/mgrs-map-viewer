@@ -49,7 +49,7 @@ export function intervalForPrintRf(rf) {
   if (!Number.isFinite(n) || n >= 75000) {
     return { meters: 10000, accuracy: 2, id: '10k', labelKey: 'print.gridInterval.10k' };
   }
-  if (n >= 25000) {
+  if (n >= 20000) {
     return { meters: 1000, accuracy: 3, id: '1k', labelKey: 'print.gridInterval.1k' };
   }
   return { meters: 100, accuracy: 4, id: '100m', labelKey: 'print.gridInterval.100m' };
@@ -98,7 +98,7 @@ function renderScaleBar(el, mpp) {
   if (cap) cap.textContent = label;
 }
 
-export function buildPrintScaleBar(track, endEl, mpp) {
+export function buildPrintScaleBar(track, endEl, mpp, rf) {
   if (!track || mpp == null) return;
   const maxPx = 1.84 * 96;
   const maxM = mpp * maxPx;
@@ -112,6 +112,7 @@ export function buildPrintScaleBar(track, endEl, mpp) {
     }
     if (px <= maxPx) total = n;
   }
+  if (Number.isFinite(rf) && rf >= 15000 && rf <= 40000) total = 2000;
   const segs = 4;
   track.innerHTML = '';
   for (let i = 0; i < segs; i += 1) {
@@ -122,7 +123,8 @@ export function buildPrintScaleBar(track, endEl, mpp) {
       track.appendChild(gap);
     }
   }
-  const widthPx = Math.min(maxPx, total / mpp);
+  let widthPx = Math.min(maxPx, total / mpp);
+  if (total === 2000 && widthPx < 0.9 * 96) widthPx = 1.6 * 96;
   track.parentElement.style.width = `${widthPx}px`;
   if (endEl) {
     endEl.textContent = total >= 1000 ? `${total / 1000} km` : `${total} m`;
@@ -133,7 +135,7 @@ export function buildPrintScaleBar(track, endEl, mpp) {
  * @param {import('maplibre-gl').Map} map
  * @param {HTMLElement} el
  */
-export function renderPrintScaleBar(el, mpp) {
+export function renderPrintScaleBar(el, mpp, rf) {
   if (!el || mpp == null) return;
   let track = el.querySelector('#print-scale-track') || el.querySelector('.psb-track');
   let labels = el.querySelector('.psb-labels');
@@ -154,7 +156,7 @@ export function renderPrintScaleBar(el, mpp) {
     el.appendChild(labels);
   }
   const endEl = el.querySelector('#print-scale-end') || labels.lastElementChild;
-  buildPrintScaleBar(track, endEl, mpp);
+  buildPrintScaleBar(track, endEl, mpp, rf);
 }
 
 export function attachScaleReadout(map, el) {

@@ -578,7 +578,8 @@ function buildGzd(bounds, zoom) {
         const n = bandNorth(letter);
         if (n < bounds.south || s > bounds.north) continue;
         const lat = (Math.max(s, bounds.south) + Math.min(n, bounds.north)) / 2;
-        features.push(pointFeature(lon, lat, `${z}${letter}`, 'gzd'));
+        const sq = gzdSquareLabel(lon, lat);
+        features.push(pointFeature(lon, lat, sq || `${z}${letter}`, 'gzd'));
       }
     }
   }
@@ -796,19 +797,7 @@ export function attachMgrsGrid(map, onUpdate) {
       map.setPaintProperty(
         LINE_LAYER,
         'line-opacity',
-        printing
-          ? 0.85
-          : [
-              'match',
-              ['get', 'level'],
-              '100km',
-              0.75,
-              '10km',
-              0.4,
-              '1km',
-              0.4,
-              0.28,
-            ],
+        1,
       );
     }
     if (map.getLayer(GZD_LABEL_LAYER)) {
@@ -911,17 +900,7 @@ export function attachMgrsGrid(map, onUpdate) {
             0.6,
             0.4,
           ],
-          'line-opacity': [
-            'match',
-            ['get', 'level'],
-            '100km',
-            0.75,
-            '10km',
-            0.4,
-            '1km',
-            0.4,
-            0.28,
-          ],
+          'line-opacity': 1,
         },
       });
 

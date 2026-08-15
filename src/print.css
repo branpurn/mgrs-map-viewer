@@ -409,7 +409,7 @@ body.printing #map {
 .print-note { margin: 0; font-size: 6pt; line-height: 1.15; color: #4A4036; }
 .print-gm { display: block; margin: 0 0 0.02in; }
 .print-gm-fig { margin: 0; font-size: 6.5pt; line-height: 1.2; text-align: left; }
-.print-col-a { overflow: hidden; }
+.print-col-a { overflow: visible; }
 .print-col-a .print-title { font-size: 11pt; }
 .print-spec div { height: 0.14in; }
 .psb-track { gap: 0; }
@@ -438,3 +438,9 @@ body.printing #sheet {
   height: 11in !important;
   box-shadow: none !important;
 }
+
+.print-col-a .print-title { font-size: 10pt; margin: 0; }
+.print-col-a .print-series { margin: 0; font-size: 6.5pt; }
+.print-col-a .print-subtitle { margin: 0; font-size: 6pt; }
+.print-ident-extra { margin: 0.02in 0; }
+#print-scale, #print-grid-value, #print-grid-interval, #print-datum-value { color: #1C1914; }

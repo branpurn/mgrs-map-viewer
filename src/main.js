@@ -146,7 +146,8 @@ function applyChromeCopy() {
   setText('lbl-print-printed', t('print.printed'));
   setText('lbl-print-sheet', t('print.sheet'));
   setText('print-sheet-value', t('print.sheetValue'));
-  setText('print-disclaimer', t('print.disclaimer'));
+  setText('print-disclaimer', `${t('app.name')} · ${t('print.attribution.notUsgs')}`);
+  setText('print-attr', '');
   setText('lbl-north-grid', t('print.north.grid'));
   setText('lbl-north-true', t('print.north.true'));
   setText('lbl-north-magnetic', t('print.north.magnetic'));
@@ -292,10 +293,10 @@ function fillPrintBlock(map) {
   const intervalRow = document.getElementById('print-grid-interval-row');
   if (intervalRow) intervalRow.hidden = !!state.polar;
   setText('print-date', formatPrintedDate());
-  setText('print-attr', attrPrint());
+  setText('print-attr', '');
   setText('print-product', t('app.name'));
   setText('print-sheet-value', t('print.sheetValue'));
-  setText('print-disclaimer', t('print.disclaimer'));
+  setText('print-disclaimer', `${t('app.name')} · ${t('print.attribution.notUsgs')}`);
   const gzd = String(square || '').trim().split(/\s+/)[0] || '';
   setText('print-gzd', gzd ? t('print.gridZoneValue', { gzd }) : '');
   const c = map.getCenter();
@@ -308,7 +309,7 @@ function fillPrintBlock(map) {
     setText('print-example-place', title);
     setText('print-example-grid', square || '');
   }
-  renderPrintScaleBar(document.getElementById('print-scale-bar'), scale.metersPerPixel);
+  renderPrintScaleBar(document.getElementById('print-scale-bar'), scale.metersPerPixel, scale.rf);
   return rfBand;
 }
 

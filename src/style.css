@@ -535,3 +535,8 @@ body.no-webgl-active #print-sheet {
 .grid-unavailable { display: none; }
 
 #search-formats { display: none !important; }
+
+#map .maplibregl-ctrl-attrib,
+#map .maplibregl-ctrl-bottom-right {
+  display: none !important;
+}

@@ -271,10 +271,6 @@ export async function createMap(containerId = 'map') {
     new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }),
     'bottom-left',
   );
-  map.addControl(
-    new maplibregl.AttributionControl({ compact: false }),
-    'bottom-left',
-  );
 
   attachTileFallback(map);
   emitTileSource();
