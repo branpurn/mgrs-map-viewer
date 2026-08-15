@@ -10,7 +10,7 @@ Print is still US Letter (8.5 × 11 in) either way.
 
 Collar unchanged: **NAD 83**, **GRID ZONE**, **G–M**. Sheet row still **Sheet**.
 
-Fail: WYSIWYG On, WGS 84, a raw key on screen.
+Fail: WYSIWYG On, WGS 84, a raw key on screen. Zoom + flips Sheet Off.
 
 ## Search
 
