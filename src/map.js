@@ -14,11 +14,13 @@ export const OT_TILES = [
 
 export const OSM_TILES = ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'];
 
-export const OT_ATTR_SHORT = t('lbl.attribution');
-export const OSM_ATTR_SHORT = t('lbl.attributionOsm');
+export const OT_ATTR_SHORT =
+  'Map data © OpenStreetMap contributors, SRTM. Style © OpenTopoMap (CC-BY-SA). Not a USGS map.';
+export const OSM_ATTR_SHORT = 'Map data © OpenStreetMap contributors. Not a USGS map.';
 
-export const OT_ATTR_PRINT = t('lbl.attribution');
-export const OSM_ATTR_PRINT = t('lbl.attributionOsm');
+export function attrPrint() {
+  return activeTileSource === 'opentopomap' ? t('lbl.attribution') : t('lbl.attributionOsm');
+}
 
 const OT_PROBE = 'https://a.tile.opentopomap.org/12/1171/1566.png';
 
@@ -44,17 +46,14 @@ function emitTileSource() {
         : t('chrome.tiles.osm');
   }
   const attr = document.getElementById('print-attr');
-  if (attr) {
-    attr.textContent =
-      activeTileSource === 'opentopomap' ? OT_ATTR_PRINT : OSM_ATTR_PRINT;
-  }
+  if (attr) attr.textContent = attrPrint();
 }
 
 export function setStatus(text, { retry = false } = {}) {
   const status = document.getElementById('map-status');
   const retryBtn = document.getElementById('tile-retry');
   if (!status) return;
-  if (!text) {
+  if (!retry || !text) {
     status.hidden = true;
     const textEl = status.querySelector('.status-text');
     if (textEl) textEl.textContent = '';
@@ -65,7 +64,7 @@ export function setStatus(text, { retry = false } = {}) {
   const textEl = status.querySelector('.status-text');
   if (textEl) textEl.textContent = text;
   else status.textContent = text;
-  if (retryBtn) retryBtn.hidden = !retry;
+  if (retryBtn) retryBtn.hidden = false;
 }
 
 /**
@@ -153,7 +152,7 @@ export function attachTileFallback(map) {
 }
 
 export async function retryTiles(map) {
-  setStatus(t('chrome.loadingTiles'));
+  setStatus('');
   const id = await detectBaseTiles();
   applyTileSource(map, id);
   try {
@@ -164,22 +163,24 @@ export async function retryTiles(map) {
   }
 }
 
-function hideChromeForNoWebGL() {
+function showNoWebGL() {
+  document.body.classList.add('no-webgl-active');
   const banner = document.getElementById('no-webgl');
   const chrome = document.getElementById('chrome');
   const hud = document.getElementById('hud');
   const frame = document.getElementById('print-frame');
-  const search = document.getElementById('search-form');
-  const printBtn = document.getElementById('print-btn');
+  const mapEl = document.getElementById('map');
+  const status = document.getElementById('map-status');
   if (banner) {
     banner.hidden = false;
-    banner.textContent = t('chrome.noWebGL');
+    const p = banner.querySelector('p');
+    if (p) p.textContent = t('chrome.noWebGL');
   }
   if (chrome) chrome.hidden = true;
   if (hud) hud.hidden = true;
   if (frame) frame.hidden = true;
-  if (search) search.hidden = true;
-  if (printBtn) printBtn.hidden = true;
+  if (mapEl) mapEl.hidden = true;
+  if (status) status.hidden = true;
 }
 
 /**
@@ -188,11 +189,9 @@ function hideChromeForNoWebGL() {
  */
 export async function createMap(containerId = 'map') {
   if (typeof maplibregl.supported === 'function' && !maplibregl.supported()) {
-    hideChromeForNoWebGL();
+    showNoWebGL();
     return null;
   }
-
-  setStatus(t('chrome.loading'));
 
   await detectBaseTiles();
 
@@ -202,7 +201,7 @@ export async function createMap(containerId = 'map') {
     center: [DEFAULT_CENTER.lon, DEFAULT_CENTER.lat],
     zoom: DEFAULT_ZOOM,
     minZoom: 2,
-    maxZoom: 22,
+    maxZoom: 18,
     maxPitch: 0,
     dragRotate: false,
     pitchWithRotate: false,
@@ -230,14 +229,10 @@ export async function createMap(containerId = 'map') {
     });
   }
 
-  map.on('load', () => {
-    setStatus(t('chrome.loadingTiles'));
-  });
   map.on('idle', () => {
-    const status = document.getElementById('map-status');
     const retryBtnEl = document.getElementById('tile-retry');
     const retryVisible = retryBtnEl && !retryBtnEl.hidden;
-    if (status && !retryVisible) setStatus('');
+    if (!retryVisible) setStatus('');
   });
 
   return map;

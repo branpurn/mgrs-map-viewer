@@ -1,5 +1,5 @@
 import { toPoint } from 'mgrs';
-import { API_BASE, t, noPlaceCopy, ambiguousCopy } from './copy.js';
+import { API_BASE, t } from './copy.js';
 
 const DECIMAL = /^(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)$/;
 const HEMI_SUFFIX =
@@ -49,7 +49,6 @@ function mgrsPrecision(compact) {
 
 /**
  * @param {string} raw
- * @returns {{ type: 'll', lat: number, lon: number, zoom: number } | { type: 'mgrs', lat: number, lon: number, mgrs: string, precision: number, zoom: number } | { type: 'place', q: string } | { type: 'empty' } | { type: 'bad' }}
  */
 export function parseQuery(raw) {
   const q = String(raw || '').trim();
@@ -224,32 +223,80 @@ export function attachSearch(map, opts = {}) {
   const form = document.getElementById('search-form');
   const input = document.getElementById('search-input');
   const note = document.getElementById('search-note');
-  const hint = document.getElementById('search-hint');
+  const matches = document.getElementById('search-matches');
   const clearBtn = document.getElementById('search-clear');
   const formats = document.getElementById('search-formats');
 
-  const showNote = (text, isError = false) => {
-    if (!note) return;
-    if (!text) {
-      note.hidden = true;
-      note.textContent = '';
-      note.classList.remove('is-error');
-      return;
-    }
-    note.hidden = false;
-    note.textContent = text;
-    note.classList.toggle('is-error', isError);
+  let missTimer = 0;
+  let fadeTimer = 0;
+
+  const placeOverlay = (el, belowPx = 0) => {
+    if (!el || !input) return;
+    const r = input.getBoundingClientRect();
+    el.style.left = `${r.left}px`;
+    el.style.width = `${r.width}px`;
+    if (belowPx) el.style.top = `${belowPx}px`;
   };
 
-  const showHint = (text) => {
-    if (!hint) return;
-    if (!text) {
-      hint.hidden = true;
-      hint.textContent = '';
+  const hideNote = () => {
+    window.clearTimeout(missTimer);
+    window.clearTimeout(fadeTimer);
+    if (note) {
+      note.hidden = true;
+      note.textContent = '';
+      note.classList.remove('is-fading');
+    }
+    if (input) input.classList.remove('is-miss');
+  };
+
+  const showMiss = (text, { persist = false } = {}) => {
+    if (!note || !text) {
+      hideNote();
       return;
     }
-    hint.hidden = false;
-    hint.textContent = text;
+    window.clearTimeout(missTimer);
+    window.clearTimeout(fadeTimer);
+    placeOverlay(note, 52);
+    note.hidden = false;
+    note.textContent = text;
+    note.classList.remove('is-fading');
+    input.classList.add('is-miss');
+    if (persist) return;
+    missTimer = window.setTimeout(() => {
+      note.classList.add('is-fading');
+      input.classList.remove('is-miss');
+      fadeTimer = window.setTimeout(() => {
+        note.hidden = true;
+        note.classList.remove('is-fading');
+      }, 150);
+    }, 3000);
+  };
+
+  const hideMatches = () => {
+    if (!matches) return;
+    matches.hidden = true;
+    matches.innerHTML = '';
+  };
+
+  const showMatches = (items, q) => {
+    if (!matches) return;
+    placeOverlay(matches, 74);
+    matches.innerHTML = '';
+    items.slice(0, 12).forEach((hit) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = hit.label || hit.query || q;
+      btn.addEventListener('click', () => {
+        hideMatches();
+        hideNote();
+        fitOrFly(map, hit);
+        if (opts.onLocate) {
+          opts.onLocate({ label: hit.label || q, mgrs: hit.mgrs });
+        }
+      });
+      matches.appendChild(btn);
+    });
+    matches.hidden = false;
   };
 
   const syncClear = () => {
@@ -258,28 +305,37 @@ export function attachSearch(map, opts = {}) {
 
   const clear = () => {
     input.value = '';
-    showNote('');
-    showHint('');
+    hideNote();
+    hideMatches();
     syncClear();
     input.focus();
   };
 
+  const missKey = (kind, q) => {
+    if (kind === 'empty') return t('search.error.empty');
+    if (kind === 'unrecognized') return t('search.error.unrecognized');
+    if (kind === 'unrecognizedQuery') return t('search.error.unrecognizedQuery');
+    if (kind === 'noPlace') return t('lbl.searchMiss', { q }) || t('search.error.noPlace', { q });
+    if (kind === 'ambiguous') return t('search.error.ambiguous', { q });
+    if (kind === 'offline') return t('search.error.offline');
+    return t('search.error.failed');
+  };
+
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
+    hideMatches();
     const parsed = parseQuery(input.value);
-    showHint('');
 
     if (parsed.type === 'empty') {
-      showNote(t('search.error.empty'), true);
+      showMiss(missKey('empty'));
       return;
     }
     if (parsed.type === 'bad') {
-      showNote(t('search.error.unrecognized'), true);
-      showHint(t('search.error.unrecognizedHint'));
+      showMiss(missKey('unrecognized'));
       return;
     }
     if (parsed.type === 'll' || parsed.type === 'mgrs') {
-      showNote('');
+      hideNote();
       flyTo(map, parsed.lon, parsed.lat, parsed.zoom);
       if (opts.onLocate) {
         opts.onLocate({
@@ -293,62 +349,56 @@ export function attachSearch(map, opts = {}) {
     try {
       const result = await searchPlace(parsed.q);
       if (result && result.needsApi) {
-        showNote(t('search.error.unrecognizedQuery'), false);
-        showHint(t('search.error.unrecognizedHint'));
+        showMiss(missKey('unrecognizedQuery'));
         return;
       }
-      if (result && result.none) {
-        showNote(noPlaceCopy(parsed.q), true);
+      if (result && (result.none || result.error === 'noPlace')) {
+        showMiss(missKey('noPlace', parsed.q));
         return;
       }
       if (result && result.ambiguous) {
-        showNote(ambiguousCopy(parsed.q), true);
-        return;
-      }
-      if (result && result.error === 'noPlace') {
-        showNote(noPlaceCopy(parsed.q), true);
+        showMiss(missKey('ambiguous', parsed.q), { persist: true });
+        showMatches(result.results || [], parsed.q);
         return;
       }
       if (result && result.error === 'unrecognizedQuery') {
-        showNote(t('search.error.unrecognizedQuery'), true);
-        showHint(t('search.helper'));
+        showMiss(missKey('unrecognizedQuery'));
         return;
       }
       if (result && result.error === 'unrecognized') {
-        showNote(t('search.error.unrecognized'), true);
-        showHint(t('search.error.unrecognizedHint'));
+        showMiss(missKey('unrecognized'));
         return;
       }
       if (result && result.error) {
-        showNote(t('search.error.failed'), true);
+        showMiss(missKey(result.error, parsed.q));
         return;
       }
       if (result && Number.isFinite(result.lat) && Number.isFinite(result.lon)) {
-        showNote('');
+        hideNote();
         fitOrFly(map, result);
         if (opts.onLocate) {
           opts.onLocate({ label: result.label, mgrs: result.mgrs });
         }
         return;
       }
-      showNote(t('search.error.failed'), true);
+      showMiss(missKey('failed'));
     } catch (err) {
-      if (err && err.code === 'offline') {
-        showNote(t('search.error.offline'), true);
-      } else {
-        showNote(t('search.error.failed'), true);
-      }
+      if (err && err.code === 'offline') showMiss(missKey('offline'));
+      else showMiss(missKey('failed'));
     }
   });
 
   input.addEventListener('input', () => {
-    if (note && !note.hidden) showNote('');
-    if (hint && !hint.hidden) showHint('');
+    hideNote();
+    hideMatches();
     syncClear();
   });
 
   input.addEventListener('focus', () => {
-    if (formats) formats.hidden = false;
+    if (formats) {
+      placeOverlay(formats, 52);
+      formats.hidden = false;
+    }
   });
   input.addEventListener('blur', () => {
     window.setTimeout(() => {
@@ -362,6 +412,12 @@ export function attachSearch(map, opts = {}) {
       clear();
     });
   }
+
+  window.addEventListener('resize', () => {
+    if (note && !note.hidden) placeOverlay(note, 52);
+    if (formats && !formats.hidden) placeOverlay(formats, 52);
+    if (matches && !matches.hidden) placeOverlay(matches, 74);
+  });
 
   document.addEventListener('keydown', (ev) => {
     if (ev.key === 'Escape' && (ev.target === input || form.contains(ev.target))) {

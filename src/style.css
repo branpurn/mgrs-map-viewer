@@ -259,18 +259,29 @@ body.no-webgl-active #print-sheet {
 .search-formats p { margin: 0; }
 
 .print-frame {
-  position: absolute;
+  position: fixed;
   z-index: 1;
   pointer-events: none;
-  border: 1px dashed rgba(28, 25, 20, 0.55);
-  box-shadow: 0 0 0 9999px rgba(28, 25, 20, 0.04);
-  top: 72px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(calc(100% - 48px), calc((100% - 200px) * 7.74 / 8.14));
-  height: auto;
-  max-height: calc(100% - 48px - 24px - 24px);
+  box-sizing: border-box;
+  border: none;
   aspect-ratio: 7.74 / 8.14;
+  /* 1px dashed 4 3, ink #1C1914 at 55% */
+  background-image:
+    repeating-linear-gradient(90deg, rgba(28, 25, 20, 0.55) 0 4px, transparent 4px 7px),
+    repeating-linear-gradient(90deg, rgba(28, 25, 20, 0.55) 0 4px, transparent 4px 7px),
+    repeating-linear-gradient(0deg, rgba(28, 25, 20, 0.55) 0 4px, transparent 4px 7px),
+    repeating-linear-gradient(0deg, rgba(28, 25, 20, 0.55) 0 4px, transparent 4px 7px);
+  background-position: top left, bottom left, top left, top right;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size: 100% 1px, 100% 1px, 1px 100%, 1px 100%;
+  top: 72px;
+  left: 24px;
+  right: 24px;
+  bottom: 120px;
+  margin: auto;
+  width: min(calc(100vw - 48px), calc((100vh - 192px) * 7.74 / 8.14));
+  height: auto;
+  max-height: calc(100vh - 192px);
 }
 
 .hud {
@@ -400,3 +411,44 @@ body.no-webgl-active #print-sheet {
   .brand { display: none; }
   .print-frame { width: min(calc(100% - 32px), calc((100% - 80px) * 7.74 / 8.14)); }
 }
+
+.search-helper,
+.search-hint {
+  display: none;
+}
+
+#search-submit {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+#search-formats {
+  top: 48px;
+  left: 12px;
+  right: 112px;
+}
+
+.scale-bar-track {
+  display: flex;
+  height: 6px;
+  width: 100%;
+  border: 1px solid var(--ink);
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.scale-bar-track i {
+  flex: 1;
+  display: block;
+}
+
+.scale-bar-track i:nth-child(odd) { background: var(--ink); }
+.scale-bar-track i:nth-child(even) { background: var(--paper); }
+
+.grid-unavailable { display: none; }

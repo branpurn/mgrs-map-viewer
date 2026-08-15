@@ -15,54 +15,20 @@ export function metersPerPixelAtCenter(map) {
   return meters / 100;
 }
 
-/** Ground width in metres of the viewport-fixed print frame (or 7.74in fallback). */
-export function mapFrameGroundWidth(map) {
+function frameWidthPx() {
   const frame = document.getElementById('print-frame');
-  const canvas = map.getCanvas();
-  if (frame && canvas) {
-    const fr = frame.getBoundingClientRect();
-    const cr = canvas.getBoundingClientRect();
-    if (fr.width > 8 && cr.width > 8) {
-      const y = fr.top + fr.height / 2 - cr.top;
-      const left = map.unproject([fr.left - cr.left, y]);
-      const right = map.unproject([fr.right - cr.left, y]);
-      const meters = left.distanceTo(right);
-      if (Number.isFinite(meters) && meters > 0) return meters;
-    }
+  if (frame) {
+    const w = frame.getBoundingClientRect().width;
+    if (w > 0) return w;
   }
-  const mpp = metersPerPixelAtCenter(map);
-  if (mpp == null) return null;
-  return mpp * 7.74 * 96;
-}
-
-/**
- * Print / HUD RF: groundWidth / (7.74in in metres), then roundToNice.
- */
-export function computePrintScale(map) {
-  const ground = mapFrameGroundWidth(map);
-  if (ground == null) {
-    return { rf: null, text: '', metersPerPixel: null, groundWidth: null };
-  }
-  const rf = ground / (7.74 * 0.0254);
-  const nice = roundToNice(rf);
-  const mpp = metersPerPixelAtCenter(map);
-  return {
-    rf: nice,
-    rawRf: rf,
-    text: formatScaleRatio(nice),
-    metersPerPixel: mpp,
-    groundWidth: ground,
-  };
+  return 7.74 * 96;
 }
 
 export function computeScale(map) {
   return computePrintScale(map);
 }
 
-/**
- * Print principal grid from RF (not screen zoom).
- * RF ≥ 1:75 000 → 10 km; 1:25 000–1:74 999 → 1 km; ≤ 1:24 999 → 100 m.
- */
+/** Print principal grid from RF (not screen zoom). */
 export function intervalForPrintRf(rf) {
   const n = Number(rf);
   if (!Number.isFinite(n) || n >= 75000) {
@@ -74,91 +40,107 @@ export function intervalForPrintRf(rf) {
   return { meters: 100, accuracy: 3, id: '100m', labelKey: 'print.gridInterval.100m' };
 }
 
-const NICE_BAR = [];
-for (let exp = 0; exp < 8; exp += 1) {
-  for (const c of [1, 2, 5]) NICE_BAR.push(c * 10 ** exp);
-}
-
-export function pickScaleBar(mpp, maxPx, minFrac = 0.6, maxFrac = 0.95) {
-  if (mpp == null || mpp <= 0) return null;
-  let best = NICE_BAR[0];
-  for (const m of NICE_BAR) {
-    const px = m / mpp;
-    if (px <= maxPx * maxFrac) best = m;
-    if (px >= maxPx * minFrac && px <= maxPx * maxFrac) best = m;
+/**
+ * Ground width of the printed neatline (7.74 in) at the current view.
+ */
+export function computePrintScale(map, frameWidthIn = 7.74) {
+  const mpp = metersPerPixelAtCenter(map);
+  if (mpp == null) {
+    return { rf: null, rawRf: null, text: '', metersPerPixel: null, groundWidthMeters: null };
   }
-  const width = Math.max(24, Math.min(maxPx, best / mpp));
-  const segs = 5;
-  return { totalM: best, widthPx: width, segs };
-}
-
-function formatBarMeters(m) {
-  if (m >= 1000) return `${m / 1000} km`;
-  return `${m} m`;
-}
-
-function renderSegmentTrack(el, segs) {
-  let track = el.querySelector('.scale-bar-track');
-  if (!track) {
-    track = document.createElement('span');
-    track.className = 'scale-bar-track';
-    el.insertBefore(track, el.firstChild);
-  }
-  track.replaceChildren();
-  for (let i = 0; i < segs; i += 1) {
-    const bit = document.createElement('i');
-    bit.className = i % 2 === 0 ? 'seg-ink' : 'seg-paper';
-    track.appendChild(bit);
-  }
+  const framePx = frameWidthPx();
+  const groundM = mpp * framePx;
+  const rawRf = groundM / (frameWidthIn * 0.0254);
+  const nice = roundToNice(rawRf);
+  return {
+    rf: nice,
+    rawRf,
+    text: formatScaleRatio(nice),
+    metersPerPixel: mpp,
+    groundWidthMeters: groundM,
+  };
 }
 
 function renderScaleBar(el, mpp) {
   if (!el || mpp == null) return;
-  const picked = pickScaleBar(mpp, 148);
-  if (!picked) return;
+  const maxPx = 140;
+  const nice = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
+  let meters = nice[0];
+  for (const n of nice) {
+    if (n / mpp <= maxPx) meters = n;
+  }
+  const width = Math.max(24, Math.min(148, meters / mpp));
   el.hidden = false;
-  el.style.width = `${picked.widthPx}px`;
-  const label = formatBarMeters(picked.totalM);
+  el.style.width = `${width}px`;
+  const label = meters >= 1000 ? `${meters / 1000} km` : `${meters} m`;
   el.dataset.label = label;
-  renderSegmentTrack(el, picked.segs);
+  const track = el.querySelector('.scale-bar-track');
+  if (track) {
+    track.replaceChildren();
+    for (let i = 0; i < 5; i += 1) track.appendChild(document.createElement('i'));
+  }
   const cap = el.querySelector('.scale-bar-label');
   if (cap) cap.textContent = label;
 }
 
-export function renderPrintScaleBar(el, mpp) {
-  if (!el || mpp == null) return;
+export function buildPrintScaleBar(track, endEl, mpp) {
+  if (!track || mpp == null) return;
   const maxPx = 1.84 * 96;
-  const picked = pickScaleBar(mpp, maxPx);
-  if (!picked) {
-    el.replaceChildren();
-    return;
+  const maxM = mpp * maxPx;
+  const nice = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000];
+  let total = nice[0];
+  for (const n of nice) {
+    const px = n / mpp;
+    if (px <= maxPx * 0.95 && n >= maxM * 0.6) {
+      total = n;
+      break;
+    }
+    if (px <= maxPx) total = n;
   }
-  el.style.width = `${picked.widthPx}px`;
-  const track = document.createElement('div');
-  track.className = 'psb-track';
-  for (let i = 0; i < picked.segs; i += 1) {
-    const bit = document.createElement('i');
-    bit.className = i % 2 === 0 ? 'seg-ink' : 'seg-paper';
-    track.appendChild(bit);
+  const segs = 4;
+  track.innerHTML = '';
+  for (let i = 0; i < segs; i += 1) {
+    track.appendChild(document.createElement('i'));
   }
-  const labels = document.createElement('div');
-  labels.className = 'psb-labels';
-  const zero = document.createElement('span');
-  zero.textContent = '0';
-  const end = document.createElement('span');
-  end.textContent = formatBarMeters(picked.totalM);
-  labels.append(zero, end);
-  el.replaceChildren(track, labels);
+  const widthPx = Math.min(maxPx, total / mpp);
+  track.parentElement.style.width = `${widthPx}px`;
+  if (endEl) {
+    endEl.textContent = total >= 1000 ? `${total / 1000} km` : `${total} m`;
+  }
 }
 
 /**
  * @param {import('maplibre-gl').Map} map
  * @param {HTMLElement} el
  */
+export function renderPrintScaleBar(el, mpp) {
+  if (!el || mpp == null) return;
+  let track = el.querySelector('#print-scale-track') || el.querySelector('.psb-track');
+  let labels = el.querySelector('.psb-labels');
+  if (!track) {
+    track = document.createElement('div');
+    track.className = 'psb-track';
+    track.id = 'print-scale-track';
+    el.appendChild(track);
+  }
+  if (!labels) {
+    labels = document.createElement('div');
+    labels.className = 'psb-labels';
+    const zero = document.createElement('span');
+    zero.textContent = '0';
+    const end = document.createElement('span');
+    end.id = 'print-scale-end';
+    labels.append(zero, end);
+    el.appendChild(labels);
+  }
+  const endEl = el.querySelector('#print-scale-end') || labels.lastElementChild;
+  buildPrintScaleBar(track, endEl, mpp);
+}
+
 export function attachScaleReadout(map, el) {
   const bar = document.getElementById('scale-bar');
   const render = () => {
-    const { text, metersPerPixel } = computeScale(map);
+    const { text, metersPerPixel } = computePrintScale(map);
     if (el && text) {
       el.textContent = text;
       el.setAttribute('aria-label', t('chrome.scaleLabel'));

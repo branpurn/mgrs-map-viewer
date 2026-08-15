@@ -1,4 +1,5 @@
 import { forward } from 'mgrs';
+import { t } from './copy.js';
 
 /**
  * Viewport MGRS graticule as a MapLibre GeoJSON source + line/symbol layers.
@@ -145,20 +146,71 @@ export function isGridAvailable(lat) {
   return Number.isFinite(lat) && lat >= -80 && lat <= 84;
 }
 
+export function isPolarLat(lat) {
+  return !isGridAvailable(lat);
+}
+
+/** @type {{ meters: number, accuracy: number, id?: string, labelKey?: string, levels?: string[] } | null} */
+let printOverride = null;
+let gridApply = null;
+
+/** Freeze the print RF band (or null to clear after print). */
+export function setPrintInterval(band) {
+  printOverride = band || null;
+  if (typeof gridApply === 'function') gridApply();
+}
+
+export function setGridPrintMode(band) {
+  setPrintInterval(band);
+}
+
+/** Print principal by RF (not screen zoom). */
+export function intervalForRf(rf) {
+  const n = Number(rf);
+  if (!Number.isFinite(n) || n >= 75000) {
+    return {
+      meters: 10000,
+      accuracy: 1,
+      id: '10k',
+      label: t('print.gridInterval.10k'),
+      labelKey: 'print.gridInterval.10k',
+      levels: ['gzd', '100km', '10km'],
+    };
+  }
+  if (n >= 25000) {
+    return {
+      meters: 1000,
+      accuracy: 2,
+      id: '1k',
+      label: t('print.gridInterval.1k'),
+      labelKey: 'print.gridInterval.1k',
+      levels: ['gzd', '100km', '1km'],
+    };
+  }
+  return {
+    meters: 100,
+    accuracy: 3,
+    id: '100m',
+    label: t('print.gridInterval.100m'),
+    labelKey: 'print.gridInterval.100m',
+    levels: ['gzd', '100km', '1km', '100m'],
+  };
+}
+
 /**
- * Zoom → grid interval. Finest is 100 m (no 10 m).
- * 0–7 hide; 8–10 10 km / prec 1; 11–13 1 km / prec 2; 14+ 100 m / prec 3.
+ * Zoom → principal screen interval. GZD stays at z 0–7. Finest is 100 m.
  */
 export function intervalForZoom(zoom) {
   const z = Math.floor(zoom);
   if (z < 8) {
-    return { meters: 0, accuracy: 0, id: 'none', labelKey: '', hidden: true };
+    return { meters: 0, accuracy: 0, id: 'gzd', label: '', labelKey: '', hidden: false, gzdOnly: true };
   }
   if (z <= 10) {
     return {
       meters: 10000,
       accuracy: 1,
       id: '10k',
+      label: t('print.gridInterval.10k'),
       labelKey: 'print.gridInterval.10k',
       hidden: false,
     };
@@ -168,6 +220,7 @@ export function intervalForZoom(zoom) {
       meters: 1000,
       accuracy: 2,
       id: '1k',
+      label: t('print.gridInterval.1k'),
       labelKey: 'print.gridInterval.1k',
       hidden: false,
     };
@@ -176,6 +229,7 @@ export function intervalForZoom(zoom) {
     meters: 100,
     accuracy: 3,
     id: '100m',
+    label: t('print.gridInterval.100m'),
     labelKey: 'print.gridInterval.100m',
     hidden: false,
   };
@@ -183,7 +237,8 @@ export function intervalForZoom(zoom) {
 
 /** Live MGRS / convert precision from MapLibre zoom. */
 export function precisionForZoom(zoom) {
-  return intervalForZoom(zoom).accuracy;
+  const a = intervalForZoom(zoom).accuracy;
+  return a < 0 ? 1 : a;
 }
 
 function padBounds(b, frac = 0.12) {
@@ -257,14 +312,22 @@ function cssPxForMeters(map, meters) {
 
 /** Levels whose lines are ≥ 24 CSS px apart, plus GZD whenever overlay is on. */
 export function allowedLevels(map) {
-  const z = Math.floor(map.getZoom());
-  if (z < 8) return [];
   const ok = (m) => cssPxForMeters(map, m) >= 24;
   const out = ['gzd'];
+  if (printOverride) {
+    const m = Number(printOverride.meters) || 0;
+    if (m > 0 && ok(100000)) out.push('100km');
+    if (m > 0 && m <= 10000 && ok(10000)) out.push('10km');
+    if (m > 0 && m <= 1000 && ok(1000)) out.push('1km');
+    if (m > 0 && m <= 100 && ok(100)) out.push('100m');
+    return out;
+  }
+  const z = Math.floor(map.getZoom());
+  if (z < 8) return out;
   if (ok(100000)) out.push('100km');
-  if (z >= 8 && ok(10000)) out.push('10km');
-  if (z >= 11 && ok(1000)) out.push('1km');
-  if (z >= 14 && ok(100)) out.push('100m');
+  if (ok(10000)) out.push('10km');
+  if (ok(1000)) out.push('1km');
+  if (ok(100)) out.push('100m');
   return out;
 }
 
@@ -530,23 +593,25 @@ function buildGzd(bounds, zoom) {
 
 export function buildGridGeoJSON(map) {
   const zoom = map.getZoom();
-  const band = intervalForZoom(zoom);
   const center = map.getCenter();
-  const polar = !isGridAvailable(center.lat);
+  const polar = isPolarLat(center.lat);
 
-  if (band.hidden || polar) {
+  if (polar) {
     return {
       data: emptyFC(),
       interval: 0,
-      accuracy: band.accuracy,
+      accuracy: -1,
       hidden: true,
-      polar,
-      labelKey: band.labelKey,
+      polar: true,
+      labelKey: '',
     };
   }
 
+  const band = printOverride || intervalForZoom(zoom);
   const levels = allowedLevels(map);
-  const meters = finestMeters(levels);
+  const meters = printOverride && printOverride.meters
+    ? printOverride.meters
+    : finestMeters(levels);
   const bounds = padBounds(map.getBounds(), 0.1);
   bounds.south = Math.max(-80, bounds.south);
   bounds.north = Math.min(84, bounds.north);
@@ -631,10 +696,6 @@ function setOverlayVisible(map, on) {
  */
 export function attachMgrsGrid(map, onUpdate) {
   const apply = () => {
-    if (document.body.classList.contains('printing')) {
-      // Freeze the band already on the map; do not rebuild from RF.
-      return;
-    }
     const { data, interval, accuracy, hidden, polar, labelKey } = buildGridGeoJSON(map);
     const src = map.getSource(SOURCE_ID);
     if (src) src.setData(data);
@@ -740,6 +801,8 @@ export function attachMgrsGrid(map, onUpdate) {
 
     apply();
   };
+
+  gridApply = apply;
 
   if (map.isStyleLoaded()) addLayers();
   map.on('load', addLayers);
