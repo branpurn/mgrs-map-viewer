@@ -77,12 +77,12 @@ Print. Cancel the system dialog. App stays up.
 
 APP-004.
 
-Raw `print.*` keys or WGS 84 on the sheet: pack is not reading strings.json.
+Raw `print.*` keys or NAD 83 on the sheet: pack is not reading strings.json.
 
-Raw `print.legend` or garbled G–M (`0.4° 7' 93' W`) is a fail. Expect **Legend** and **G–M 9° 30′ W** / **convergence 1° 17′**.
+G–M rose or `9° 30′ W` as required copy is a fail. Expect **WGS 84**, **MGRS**, and **True north**.
 
 Fail: first-load RF ≠ HUD. Print → Cancel leaves **1:12 000**. A 1:12 000 print capture.
 
 ## Out of scope
 
-USNG collar look, tile color. Visual pass is Designer’s USNG spec after Frontend lands it. Copy words: [qa-expected-copy.md](qa-expected-copy.md).
+Worldwide MGRS collar. Not USNG. Copy words: [qa-expected-copy.md](qa-expected-copy.md).

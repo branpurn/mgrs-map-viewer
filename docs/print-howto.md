@@ -22,9 +22,10 @@ Empty or ocean frames still print. The title is UNTITLED SHEET.
 US Letter, 8.5 × 11 in, portrait. USGS-style collar, not a screenshot of the toolbar.
 
 - Map inside a neatline, MGRS overlay frozen at the print scale
-- Upper collar: MGRS MAP VIEWER, sheet title, date
-- Lower collar: feature legend, north (true north only), metric scale bar, RF, MGRS grid legend, title block
-- Footer: attribution (OSM / OpenTopoMap credit, copyright URLs, not a USGS map, not for navigation)
+- Upper collar: MGRS MAP VIEWER, centered sheet title, date
+- Lower collar: ident (scale, MGRS, interval, WGS 84, UTM zone, grid zone, live example) · metric bar + sheet · true north
+- Footer: disclaimer, then OSM / OpenTopoMap credit (not a USGS map, not for navigation)
+- Edge: 2-digit principals, full UTM at the four corners, 100 km letters in the margin. No USNG mark.
 
 Grid interval on the sheet follows RF: 10 km, 1 km, or 100 m. No 10 m grid.
 

@@ -8,7 +8,7 @@ Toolbar label is **Sheet**. On is the Letter sheet. Off is the full map. Default
 
 Print is still US Letter (8.5 × 11 in) either way. Print must stay **one tab**. Fail if Print opens a second MGRS Viewer tab.
 
-Collar unchanged: **NAD 83**, **GRID ZONE**, **G–M**. Sheet row still **Sheet**.
+Collar: **WGS 84**, **GRID ZONE**, **MGRS**, true north. Sheet row still **Sheet**. Fail USNG, NAD 83, or a G–M rose.
 
 Fail: WYSIWYG On, WGS 84, a raw key on screen. Zoom + flips Sheet Off.
 
@@ -41,15 +41,17 @@ Visible toolbar label is **Sheet**, left of Print. On is the Letter sheet. Off i
 
 ## Collar (print sheet)
 
-Sheet row is still **Sheet**. Unchanged. DATUM is **NAD 83**. SCALE, GRID ZONE, EXAMPLE, and the grid interval must be filled. Legend heading is **Legend**. Legend rows have labels. Legend heading must be the resolved string; fail on raw print.legend. Footer is one line: `MGRS Viewer · Not a USGS map.`
+Sheet row is still **Sheet**. DATUM is **WGS 84**. SCALE, GRID (MGRS), GRID ZONE, and the grid interval must be filled. Projection is `UTM {zone}{N|S}` for the frame. EXAMPLE is the current place + current center MGRS, or hidden if polar. North is **True north** only.
 
-Fail: WGS 84. Blank DATUM, SCALE, or GRID. Legend heading missing or the raw key. Unlabeled legend. Footer split (product in the collar, “Not a USGS map.” only on attribution). Any raw key on screen.
+Fail: NAD 83. USNG. G–M rose. `9° 30′ W` on a non-DC sheet. Hardcoded Jefferson Pier on a non-DC sheet. Blank DATUM, SCALE, or GRID. Any raw key on screen.
 
-## G–M
+Footer is two 6 pt lines: full `print.disclaimer`, then OTM/OSM attribution + `Not a USGS map.`
 
-On the DC / 18S UJ sheet: **G–M 9° 30′ W** and **convergence 1° 17′**. At first-load too.
+## North
 
-Fail: garbled `0.4° 7' 93' W`. **0°38′W**. **9° 38′ W**. First-load Jefferson Pier **9° 36′** / **1° 47′** (that is the 1:50 000 pair). Truncated G–M. Missing convergence.
+True north arrow + **True north**. No magnetic / grid-north fork.
+
+Fail: G–M diagram. Locked `9° 30′ W` / `convergence 1° 17′` as required copy. `0°38′W`.
 
 ## RF
 

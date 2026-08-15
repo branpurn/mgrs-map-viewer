@@ -443,6 +443,15 @@ function squareLetters(compact) {
   return m ? m[1] : '';
 }
 
+/** 100 km square letters at a lon/lat (e.g. UJ). Empty if polar / unconverted. */
+export function squareLettersAt(lon, lat) {
+  try {
+    return squareLetters(forward([lon, lat], 0));
+  } catch {
+    return '';
+  }
+}
+
 function buildLabels(zone, northHem, bounds, interval, accuracy) {
   // Corners only (buildCornerLabels). No center 18S UJ / 100 km square letters.
   void zone;
@@ -523,27 +532,9 @@ function gzdSquareLabel(lon, lat) {
 }
 
 function buildCornerLabels(map) {
-  const el = map.getContainer();
-  const w = el.clientWidth;
-  const h = el.clientHeight;
-  if (w < 8 || h < 8) return [];
-  // TL was clipped by the top neatline at pad=10. Keep TR/BL insets.
-  const padX = 16;
-  const padTop = 22;
-  const padBot = 16;
-  const pts = [
-    [padX, padTop, 'top-left'],
-    [w - padX, padTop, 'top-right'],
-    [padX, h - padBot, 'bottom-left'],
-    [w - padX, h - padBot, 'bottom-right'],
-  ];
-  const out = [];
-  for (const [x, y, anchor] of pts) {
-    const ll = map.unproject([x, y]);
-    const label = gzdSquareLabel(ll.lng, ll.lat);
-    if (label) out.push(pointFeature(ll.lng, ll.lat, label, 'corner', { anchor }));
-  }
-  return out;
+  // 100 km letters live in the tick margin (ticks.js). Do not draw 18S UJ on the face.
+  void map;
+  return [];
 }
 
 export function buildGridGeoJSON(map) {
@@ -653,7 +644,7 @@ const VIS_LAYERS = [
 const INK = '#000000';
 const GZD_LINE = '#000000';
 const GZD_LABEL = '#8B1E1E';
-const PAPER = '#FFFFFF';
+const PAPER = '#F4EFE4';
 
 function setOverlayVisible(map, on) {
   const vis = on ? 'visible' : 'none';
