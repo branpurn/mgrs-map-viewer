@@ -67,7 +67,7 @@ function rebuild(map, host) {
     // Inside the map face. Bottom labels sit 0.22" above the neatline so
     // tick 23 cannot kiss the Col A title (ellipsis stays closed).
     lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + 0.03) / 11) * 100}%` });
-    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + MAP_H - 0.22) / 11) * 100}%` });
+    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + MAP_H - 0.32) / 11) * 100}%` });
   }
 
   for (let n = snapUp(minN, step); n <= maxN; n += step) {

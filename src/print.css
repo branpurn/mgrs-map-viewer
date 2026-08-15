@@ -43,6 +43,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-footer {
   position: absolute;
+  z-index: 8;
   top: calc(100% * 8.72 / 11);
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
@@ -51,7 +52,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   box-sizing: border-box;
   border-top: 0.75pt solid #000000;
   border-bottom: 0.35pt solid #000000;
-  padding: 1.05cqh 0 0.35cqh;
+  padding: 1.55cqh 0 0.35cqh;
   display: flex;
   align-items: stretch;
   overflow: hidden;
@@ -89,7 +90,8 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 }
 
 #print-title {
-  margin: 0;
+  margin: 0.28cqh 0 0.1cqh;
+  padding-top: 0.20cqh;
   font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
   font-size: 1.27cqh;
   font-weight: 700;
@@ -456,7 +458,7 @@ body.printing #sheet {
   container-name: letter;
 }
 
-.print-col-a .print-title { font-size: 1.05cqh; margin: 0.15cqh 0 0.1cqh; }
+.print-col-a .print-title { font-size: 1.05cqh; margin: 0.32cqh 0 0.12cqh; padding-top: 0.18cqh; }
 .print-col-a .print-series { margin: 0; font-size: 0.76cqh; }
 .print-col-a .print-subtitle { margin: 0; font-size: 0.70cqh; }
 .print-ident-extra { margin: 0.22cqh 0 0.08cqh; }

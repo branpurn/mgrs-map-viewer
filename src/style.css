@@ -106,18 +106,38 @@ html, body {
   background: #E8D9B8;
 }
 
-#zoom-dock {
-  position: relative;
-  left: auto;
-  top: auto;
-  bottom: auto !important;
+.chrome-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex: 0 0 auto;
-  z-index: 4;
+  position: relative;
+  z-index: 12;
+  isolation: isolate;
   pointer-events: auto;
+}
+#zoom-dock {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  flex: 0 0 64px;
+  width: 64px;
+  min-width: 64px;
+  max-width: 64px;
+  height: 32px;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: auto;
+  isolation: isolate;
+  margin-right: 4px;
 }
 #chrome #zoom-dock .maplibregl-ctrl-group {
   display: flex;
   flex-direction: row;
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
   background: var(--paper);
   border: 1px solid var(--ink);
 }
@@ -293,7 +313,9 @@ body.no-webgl-active #print-sheet {
   width: 88px;
   height: 32px;
   position: relative;
-  z-index: 1;
+  z-index: 12;
+  isolation: isolate;
+  pointer-events: auto;
   background: var(--paper);
   color: var(--ink);
 }
@@ -600,10 +622,19 @@ body.no-webgl-active #print-sheet {
   font: 600 13px/1 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   cursor: pointer;
   position: relative;
-  z-index: 5;
+  z-index: 20;
+  isolation: isolate;
   pointer-events: auto;
 }
 .sheet-toggle.off { color: rgba(255, 255, 255, 0.7); }
+.sheet-track,
+.sheet-thumb,
+#lbl-wysiwyg,
+#wysiwyg-state {
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+}
 .sheet-track {
   display: inline-block;
   width: 44px;

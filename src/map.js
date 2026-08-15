@@ -5,7 +5,7 @@ import { t } from './copy.js';
 /** Jefferson Pier / Washington DC — RF target 1:24 000 after Letter layout. */
 export const DEFAULT_CENTER = { lon: -77.0353, lat: 38.8895 };
 /** 512-based z for 1:24 000 at Letter neatline. Live lock uses #map.clientWidth. */
-export const DEFAULT_ZOOM = 13.23;
+export const DEFAULT_ZOOM = 13;
 
 export const OT_TILES = [
   'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
@@ -249,8 +249,23 @@ export async function createMap(containerId = 'map') {
   // probe in the background and fall back if it fails.
   activeTileSource = 'opentopomap';
 
+  // First paint must not be z14/z15. Size zoom for the Letter neatline
+  // (7.74/8.5 of the laid-out sheet), never a full-bleed #map.clientWidth
+  // (that over-zooms to ~1:6 000).
   const host = document.getElementById(containerId);
-  const hostW = host && host.clientWidth;
+  const desk = document.getElementById('desk');
+  const deskR = desk ? desk.getBoundingClientRect() : { width: 0, height: 0 };
+  const dw = deskR.width > 80 ? deskR.width : (typeof window !== 'undefined' ? window.innerWidth : 816);
+  const dh = deskR.height > 80 ? deskR.height : (typeof window !== 'undefined' ? Math.max(200, window.innerHeight - 48) : 1056);
+  const availW = Math.max(40, dw - 24 - 186);
+  const availH = Math.max(40, dh - 32);
+  const letterScale = Math.min(availW / 816, availH / 1056, 1);
+  const letterMapW = 816 * letterScale * (7.74 / 8.5);
+  const liveW = host && host.clientWidth;
+  const off = typeof document !== 'undefined' && document.body.classList.contains('wysiwyg-off');
+  const hostW = off && liveW > 40
+    ? liveW
+    : (liveW > 40 && liveW < dw * 0.82 ? liveW : letterMapW);
   let startZoom = DEFAULT_ZOOM;
   if (hostW && hostW > 40) {
     const mpp = (24000 * 7.74 * 0.0254) / hostW;
@@ -271,6 +286,8 @@ export async function createMap(containerId = 'map') {
     touchPitch: false,
     attributionControl: false,
     hash: false,
+    preserveDrawingBuffer: true,
+    fadeDuration: 0,
   });
 
   detectBaseTiles().then((id) => {
@@ -323,11 +340,23 @@ export function dockZoom(map) {
   const dock = document.getElementById('zoom-dock');
   if (!dock || !map) return;
   const root = map.getContainer();
-  const group = root.querySelector('.maplibregl-ctrl-group');
+  const group = root.querySelector('.maplibregl-ctrl-group')
+    || dock.querySelector('.maplibregl-ctrl-group');
   if (group && !dock.contains(group)) dock.appendChild(group);
+  if (group) {
+    group.style.position = 'relative';
+    group.style.left = 'auto';
+    group.style.top = 'auto';
+  }
   root.querySelectorAll('.maplibregl-ctrl').forEach((el) => {
     if (!dock.contains(el)) el.style.display = 'none';
   });
+  dock.style.pointerEvents = 'auto';
+  if (!dock.dataset.mgrsIsolated) {
+    dock.dataset.mgrsIsolated = '1';
+    dock.addEventListener('click', (ev) => ev.stopPropagation());
+    dock.addEventListener('pointerdown', (ev) => ev.stopPropagation());
+  }
 }
 
 export function getCenterLngLat(map) {

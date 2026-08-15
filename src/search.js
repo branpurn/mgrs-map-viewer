@@ -381,6 +381,10 @@ export function attachSearch(map, opts = {}) {
     return t('search.error.failed');
   };
 
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+  }, true);
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     ev.stopPropagation();
@@ -473,9 +477,22 @@ export function attachSearch(map, opts = {}) {
   });
 
   input.addEventListener('keydown', (ev) => {
-    if (ev.key !== 'Enter') return;
-    ev.preventDefault();
-    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    const key = ev.key;
+    const ctrlA = (ev.ctrlKey || ev.metaKey) && (key === 'a' || key === 'A');
+    if (ctrlA) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      const v = String(input.value || '');
+      input.setSelectionRange(0, v.length);
+      return;
+    }
+    if (key === 'Enter') {
+      ev.preventDefault();
+      ev.stopPropagation();
+      form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: false }));
+      return;
+    }
+    // letters (including x) just type. No submit, no reload, no sheet flip.
   });
 
 
@@ -508,17 +525,16 @@ export function attachSearch(map, opts = {}) {
     const key = ev.key;
     const ctrlA = (ev.ctrlKey || ev.metaKey) && (key === 'a' || key === 'A');
     if (ctrlA) {
-      if (ev.target === input) return;
       const tag = ev.target && ev.target.tagName;
       const inOther = ev.target
+        && ev.target !== input
         && (tag === 'TEXTAREA' || tag === 'SELECT' || ev.target.isContentEditable);
-      if (!inOther) {
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-        input.focus();
-        const v = String(input.value || '');
-        input.setSelectionRange(0, v.length);
-      }
+      if (inOther) return;
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      input.focus();
+      const v = String(input.value || '');
+      input.setSelectionRange(0, v.length);
       return;
     }
     if (key === 'Escape' && (ev.target === input || form.contains(ev.target))) {

@@ -48,12 +48,17 @@ const state = {
   gridHidden: false,
 };
 
+const PRINT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 function formatPrintedDate(d = new Date()) {
-  return d.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  const dt = d instanceof Date && !Number.isNaN(d.getTime()) ? d : new Date();
+  return `${dt.getDate()} ${PRINT_MONTHS[dt.getMonth()]} ${dt.getFullYear()}`;
+}
+
+function datumValue() {
+  const v = t('print.datumValue');
+  if (!v || v === 'print.datumValue' || /WGS\s*84/i.test(v)) return 'NAD 83';
+  return v;
 }
 
 function isoDate(d = new Date()) {
@@ -141,7 +146,7 @@ function applyChromeCopy() {
   setText('print-grid-value', t('print.gridValue'));
   setText('lbl-print-grid-interval', t('print.gridInterval'));
   setText('lbl-print-datum', t('print.datum'));
-  setText('print-datum-value', t('print.datumValue'));
+  setText('print-datum-value', datumValue());
   setText('lbl-print-projection', t('print.projection'));
   setText('print-projection-value', t('print.projectionValue'));
   setText('lbl-print-north', t('print.north.gm'));
@@ -262,9 +267,12 @@ function attachWysiwyg() {
     ev.preventDefault();
     ev.stopPropagation();
     ev.stopImmediatePropagation();
-    if (ev.target && ev.target.closest('#search-form, #search-input, #search-clear, #clear, #zoom-dock')) return;
+    if (ev.target && ev.target.closest('#search-form, #search-input, #search-clear, #clear, #zoom-dock, #print-btn')) return;
     if (!btn.contains(ev.target)) return;
     setWysiwyg(!sheetOn);
+  });
+  btn.querySelectorAll('.sheet-track, .sheet-thumb, #lbl-wysiwyg, #wysiwyg-state').forEach((el) => {
+    el.style.pointerEvents = 'auto';
   });
 }
 
@@ -366,19 +374,31 @@ function afterLetterLayout(map, fn) {
   });
 }
 
+function letterMapWidth() {
+  const mapEl = document.getElementById('map');
+  if (mapEl) void mapEl.clientWidth;
+  const w = mapEl ? mapEl.clientWidth : 0;
+  if (!w || w < 40) return 0;
+  if (isWysiwyg()) {
+    const desk = document.getElementById('desk');
+    const deskW = desk ? desk.clientWidth : 0;
+    // Full-bleed width is too wide → setZoomForPrintRf over-zooms to z14 / 1:6 000.
+    if (deskW > 80 && w > deskW * 0.82) return 0;
+  }
+  return w;
+}
+
 function lockDemoRf(map) {
   if (!allowAutoRf || printArmed || document.body.classList.contains('printing')) return;
   layoutSheet(map);
   try { map.resize(); } catch { /* lock */ }
-  const mapEl = document.getElementById('map');
-  const w = mapEl && mapEl.clientWidth;
-  if (!w || w < 40) return;
-  allowAutoRf = false;
+  if (!letterMapWidth()) return;
   setZoomForPrintRf(map, 24000);
   fillPrintBlock(map);
+  allowAutoRf = false;
 }
 
-function waitForMapPaint(map, ms = 1800) {
+function waitForMapPaint(map, ms = 2400) {
   return new Promise((resolve) => {
     let done = false;
     const finish = () => {
@@ -386,14 +406,22 @@ function waitForMapPaint(map, ms = 1800) {
       done = true;
       resolve();
     };
+    const painted = () => {
+      try {
+        if (typeof map.areTilesLoaded === 'function' && !map.areTilesLoaded()) {
+          setTimeout(painted, 80);
+          return;
+        }
+      } catch { /* */ }
+      requestAnimationFrame(() => requestAnimationFrame(finish));
+    };
     try {
       if (typeof map.triggerRepaint === 'function') map.triggerRepaint();
     } catch { /* */ }
     try {
-      map.once('idle', finish);
+      map.once('idle', painted);
     } catch {
-      finish();
-      return;
+      painted();
     }
     setTimeout(finish, ms);
   });
@@ -454,7 +482,7 @@ function fillPrintBlock(map) {
   setText('print-upper-title', title);
   setText('print-scale', text);
   setText('print-grid-value', t('print.gridValue'));
-  setText('print-datum-value', t('print.datumValue'));
+  setText('print-datum-value', datumValue());
   setText('print-grid-interval', t(rfBand.labelKey));
   const intervalRow = document.getElementById('print-grid-interval-row');
   if (intervalRow) intervalRow.hidden = !!state.polar;
@@ -487,18 +515,19 @@ function attachPrint(map) {
   window.print = function mgrsPrintDead() { return; };
 
   let prePrint = null;
-  const captureView = () => ({
-    zoom: map.getZoom(),
-    center: map.getCenter(),
-    sheetOn,
-  });
+  let restored = false;
+  const captureView = () => {
+    const c = map.getCenter();
+    return {
+      zoom: map.getZoom(),
+      center: { lng: c.lng, lat: c.lat },
+      sheetOn: !!sheetOn,
+    };
+  };
 
   const applySavedView = (saved) => {
     if (!saved) return;
-    sheetOn = !!saved.sheetOn;
-    writeSheetOn(sheetOn);
-    document.body.classList.toggle('wysiwyg-off', !sheetOn);
-    paintSheetToggle();
+    // Camera only. Print-cancel must not restore/force the Letter sheet.
     if (!saved.center || !Number.isFinite(saved.zoom)) return;
     try {
       const c = saved.center;
@@ -530,7 +559,9 @@ function attachPrint(map) {
   };
 
   const restore = () => {
+    if (restored) return;
     if (!printArmed && !document.body.classList.contains('printing')) return;
+    restored = true;
     printArmed = false;
     window.__mgrsAllowPrint = false;
     setPrintInterval(null);
@@ -539,8 +570,9 @@ function attachPrint(map) {
     document.title = t('app.documentTitle');
     const saved = prePrint || { zoom: null, center: null, sheetOn: printSavedSheetOn };
     prePrint = null;
-    applySavedView(saved);
     lastSheetBox = '';
+    // Layout first, then put the pre-print zoom back. Never setZoomForPrintRf
+    // on this path (that is the 1:12 000 leak). Do not write sheetOn.
     try { map.resize(); } catch { /* restore */ }
     layoutSheet(liveMap);
     dockZoom(map);
@@ -583,21 +615,25 @@ function attachPrint(map) {
 
   btn.addEventListener('click', (ev) => {
     ev.preventDefault();
+    ev.stopPropagation();
     ev.stopImmediatePropagation();
+    const hit = ev.target;
+    if (hit && hit.closest && hit.closest('#search-form, #search-input, #search-clear, #wysiwyg-btn, #zoom-dock')) return;
+    if (ev.currentTarget !== btn || !btn.contains(hit)) return;
+    restored = false;
     prePrint = captureView();
     printSavedSheetOn = sheetOn;
     allowAutoRf = false;
     printArmed = true;
     document.body.classList.add('printing');
     document.documentElement.classList.add('printing');
-    const fire = async () => {
+    const fire = () => {
       if (!printArmed) return;
       prepareSync();
       try { map.resize(); } catch { /* print size */ }
       try {
         if (typeof map.triggerRepaint === 'function') map.triggerRepaint();
       } catch { /* */ }
-      await waitForMapPaint(map);
       if (!printArmed) return;
       try {
         REAL_PRINT.call(window);
@@ -715,7 +751,6 @@ async function main() {
   map.once('idle', () => {
     if (printArmed) return;
     lockDemoRf(map);
-    allowAutoRf = false;
   });
   map.on('move', () => {
     updateCenterHud(map);

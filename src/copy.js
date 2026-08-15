@@ -66,7 +66,7 @@ export function t(key, vars = {}) {
   } else {
     template = key;
   }
-  if (template === 'WGS 84' && key === 'print.datumValue') template = 'NAD 83';
+  if (key === 'print.datumValue' && (!template || /WGS\s*84/i.test(template))) template = 'NAD 83';
   return String(template).replace(/\{(\w+)\}/g, (match, name) =>
     Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : match,
   );

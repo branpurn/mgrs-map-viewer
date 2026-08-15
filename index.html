@@ -44,7 +44,7 @@
         <div class="brand">
           <span class="app-name" id="app-name">MGRS Viewer</span>
         </div>
-        <form id="search-form" autocomplete="off" action="#" method="dialog" onsubmit="return false">
+        <form id="search-form" autocomplete="off" action="" method="get" onsubmit="return false" novalidate>
           <label class="sr-only" for="search-input" id="search-aria-label"></label>
           <input
             id="search-input"
@@ -56,13 +56,15 @@
           <button type="button" id="search-clear" class="ghost" hidden></button>
           <button type="button" id="search-submit" tabindex="-1" hidden></button>
         </form>
-        <div id="zoom-dock" class="zoom-dock"></div>
-        <button type="button" id="wysiwyg-btn" class="sheet-toggle on" aria-pressed="true" aria-label="Sheet view. On is the Letter sheet. Off is the full map." title="Sheet view. On is the Letter sheet. Off is the full map.">
-          <span id="lbl-wysiwyg">Sheet</span>
-          <span class="sheet-track" aria-hidden="true"><span class="sheet-thumb"></span></span>
-          <span id="wysiwyg-state">On</span>
-        </button>
-        <button type="button" id="print-btn">Print</button>
+        <div class="chrome-tools" id="chrome-tools">
+          <div id="zoom-dock" class="zoom-dock"></div>
+          <button type="button" id="wysiwyg-btn" class="sheet-toggle on" aria-pressed="true" aria-label="Sheet view. On is the Letter sheet. Off is the full map." title="Sheet view. On is the Letter sheet. Off is the full map.">
+            <span id="lbl-wysiwyg">Sheet</span>
+            <span class="sheet-track" aria-hidden="true"><span class="sheet-thumb"></span></span>
+            <span id="wysiwyg-state">On</span>
+          </button>
+          <button type="button" id="print-btn">Print</button>
+        </div>
         <p id="search-helper" class="search-helper"></p>
         <p id="search-hint" class="search-hint" hidden></p>
       </header>
