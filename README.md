@@ -4,7 +4,7 @@ Self-host for a tunnel: http://localhost:18764
 If it does not open:
 
 - Double-click MGRS-Viewer-0.1.0-linux.AppImage.
-- Allow execute if the OS asks.
+- Right-click the AppImage, Properties, Permissions, Allow executing file as program.
 - Tunnel: http://localhost:18764
 
 
