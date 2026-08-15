@@ -185,7 +185,7 @@ if (!gotLock) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    if (!focusMain()) createWindow();
+    if (!focusMain()) refuseBusyPort();
   });
 
   app.whenReady().then(() => {
@@ -193,13 +193,6 @@ if (!gotLock) {
       createWindow();
     });
     server.on("error", (err) => {
-      if (err && err.code === "EADDRINUSE") {
-        existingAppIsOurs((ok) => {
-          if (ok) createWindow();
-          else refuseBusyPort();
-        });
-        return;
-      }
       console.error(err);
       refuseBusyPort();
     });
