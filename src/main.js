@@ -162,6 +162,8 @@ function applyChromeCopy() {
     p.textContent = t('chrome.noWebGL');
   }
   setText('print-product', t('lbl.product'));
+  setText('print-title', truncateTitle(state.lastLabel));
+  setText('print-title-upper', truncateTitle(state.lastLabel));
   setText('print-series', t('print.series'));
   setText('print-subtitle', t('print.subtitle'));
   setText('lbl-print-scale', t('print.scale'));
