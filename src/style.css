@@ -153,39 +153,46 @@ body,
   pointer-events: auto;
 }
 #zoom-dock {
-  position: absolute;
-  right: 18px;
-  top: 18px;
-  left: auto;
-  bottom: auto;
-  z-index: 20;
-  pointer-events: auto;
-  isolation: isolate;
-}
-body.wysiwyg-off #zoom-dock {
-  right: 18px;
-  top: 18px;
-  left: auto;
-  bottom: auto;
-}
-#desk #zoom-dock .maplibregl-ctrl-group {
-  display: flex;
-  flex-direction: column;
   position: relative !important;
   left: auto !important;
   top: auto !important;
-  margin: 0;
-  background: var(--chrome);
-  border: 1px solid rgba(28, 25, 20, 0.4);
+  right: auto !important;
+  bottom: auto !important;
+  flex: 0 0 64px;
+  width: 64px;
+  min-width: 64px;
+  max-width: 64px;
+  height: 32px;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: auto;
+  isolation: isolate;
+  margin-right: 4px;
 }
-#desk #zoom-dock .maplibregl-ctrl-group button {
-  width: 36px !important;
-  height: 36px !important;
+#chrome #zoom-dock .maplibregl-ctrl-group {
+  display: flex;
+  flex-direction: row;
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+}
+#chrome #zoom-dock .maplibregl-ctrl-group button {
+  width: 32px !important;
+  height: 32px !important;
+}
+#chrome #zoom-dock .maplibregl-ctrl-group button + button {
+  border-top: 0 !important;
+  border-left: 1px solid var(--ink) !important;
 }
 #map .maplibregl-ctrl,
 #map .maplibregl-ctrl-top-left,
 #map .maplibregl-ctrl-top-right,
-#map .maplibregl-ctrl-bottom-left {
+#map .maplibregl-ctrl-bottom-left,
+#map .maplibregl-ctrl-bottom-right,
+#desk > .maplibregl-ctrl-bottom-left,
+#desk > .maplibregl-ctrl-top-right {
   display: none !important;
 }
 
@@ -660,11 +667,13 @@ body.no-webgl-active #print-sheet {
   pointer-events: auto;
 }
 .sheet-toggle.off { color: rgba(255, 255, 255, 0.7); }
+#wysiwyg-btn,
+#wysiwyg-btn *,
 .sheet-track,
 .sheet-thumb,
 #lbl-wysiwyg,
 #wysiwyg-state {
-  pointer-events: auto;
+  pointer-events: auto !important;
   position: relative;
   z-index: 1;
 }

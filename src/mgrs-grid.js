@@ -567,22 +567,7 @@ function buildGzd(bounds, zoom) {
     }
   }
 
-  if (zoom >= 8) {
-    const zStart = utmZone(bounds.west);
-    const zEnd = utmZone(bounds.east);
-    for (let z = zStart; z <= zEnd; z += 1) {
-      const [a, b] = zoneLonRange(z);
-      const lon = (Math.max(a, bounds.west) + Math.min(b, bounds.east)) / 2;
-      for (const letter of BANDS) {
-        const s = bandSouth(letter);
-        const n = bandNorth(letter);
-        if (n < bounds.south || s > bounds.north) continue;
-        const lat = (Math.max(s, bounds.south) + Math.min(n, bounds.north)) / 2;
-        const sq = gzdSquareLabel(lon, lat);
-        features.push(pointFeature(lon, lat, sq || `${z}${letter}`, 'gzd'));
-      }
-    }
-  }
+  void zoom;
 
   return features.filter(Boolean);
 }

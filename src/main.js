@@ -50,8 +50,9 @@ const state = {
 
 const PRINT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function formatPrintedDate(d = new Date()) {
-  const dt = d instanceof Date && !Number.isNaN(d.getTime()) ? d : new Date();
+function formatPrintedDate() {
+  // Live clock only. Never accept a frozen 2024 argument.
+  const dt = new Date();
   return `${dt.getDate()} ${PRINT_MONTHS[dt.getMonth()]} ${dt.getFullYear()}`;
 }
 
@@ -59,6 +60,11 @@ function datumValue() {
   const v = t('print.datumValue');
   if (!v || v === 'print.datumValue' || /WGS\s*84/i.test(v)) return 'NAD 83';
   return v;
+}
+
+function writeDatum() {
+  // Every #print-datum-value write is t('print.datumValue') NAD 83.
+  setText('print-datum-value', datumValue());
 }
 
 function isoDate(d = new Date()) {
@@ -146,7 +152,7 @@ function applyChromeCopy() {
   setText('print-grid-value', t('print.gridValue'));
   setText('lbl-print-grid-interval', t('print.gridInterval'));
   setText('lbl-print-datum', t('print.datum'));
-  setText('print-datum-value', datumValue());
+  writeDatum();
   setText('lbl-print-projection', t('print.projection'));
   setText('print-projection-value', t('print.projectionValue'));
   setText('lbl-print-north', t('print.north.gm'));
@@ -164,6 +170,7 @@ function applyChromeCopy() {
   setText('leg-places', t('print.legend.places'));
   setText('leg-relief', t('print.legend.relief'));
   setText('lbl-print-printed', t('print.printed'));
+  setText('print-date', formatPrintedDate());
   setText('lbl-print-sheet', t('print.sheet'));
   setText('print-sheet-value', t('print.sheetValue'));
   setText('print-disclaimer', `${t('app.name')} · ${t('print.attribution.notUsgs')}`);
@@ -252,6 +259,19 @@ function attachWysiwyg() {
   sheetOn = readSheetOn();
   document.body.classList.toggle('wysiwyg-off', !sheetOn);
   paintSheetToggle();
+  // Whole control toggles: label + track + thumb. Zoom never writes sheetOn.
+  btn.querySelectorAll('.sheet-track, .sheet-thumb, #lbl-wysiwyg, #wysiwyg-state').forEach((el) => {
+    el.style.pointerEvents = 'auto';
+  });
+  const zoomDock = document.getElementById('zoom-dock');
+  if (zoomDock) {
+    ['pointerdown', 'mousedown', 'click', 'touchstart'].forEach((type) => {
+      zoomDock.addEventListener(type, (ev) => ev.stopPropagation());
+    });
+    zoomDock.querySelectorAll('button').forEach((b) => {
+      b.setAttribute('type', 'button');
+    });
+  }
   btn.addEventListener('pointerdown', (ev) => {
     ev.stopPropagation();
   });
@@ -472,7 +492,7 @@ function fillPrintBlock(map) {
   setText('print-upper-title', title);
   setText('print-scale', text);
   setText('print-grid-value', t('print.gridValue'));
-  setText('print-datum-value', datumValue());
+  writeDatum();
   setText('print-grid-interval', t(rfBand.labelKey));
   const intervalRow = document.getElementById('print-grid-interval-row');
   if (intervalRow) intervalRow.hidden = !!state.polar;
