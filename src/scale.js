@@ -15,28 +15,18 @@ export function metersPerPixelAtCenter(map) {
   return meters / 100;
 }
 
-function frameWidthPx() {
+export function frameWidthPx() {
   const mapEl = document.getElementById('map');
   if (mapEl) {
-    const w = mapEl.getBoundingClientRect().width;
+    const w = mapEl.clientWidth || mapEl.getBoundingClientRect().width;
     if (w > 0) return w;
   }
   return 7.74 * 96;
 }
 
 export function computeViewScale(map) {
-  const mpp = metersPerPixelAtCenter(map);
-  if (mpp == null) {
-    return { rf: null, rawRf: null, text: '', metersPerPixel: null };
-  }
-  const rawRf = (mpp * 96) / 0.0254;
-  const nice = roundToNice(rawRf);
-  return {
-    rf: nice,
-    rawRf,
-    text: formatScaleRatio(nice),
-    metersPerPixel: mpp,
-  };
+  // Same RF as the printed neatline (7.74 in) so HUD and collar match.
+  return computePrintScale(map);
 }
 
 export function computeScale(map) {

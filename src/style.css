@@ -43,9 +43,9 @@ html, body {
   position: absolute;
   top: 16px;
   left: 110px;
-  width: auto;
-  height: calc(100% - 32px);
-  max-width: calc(100% - 220px);
+  width: min(calc(100% - 220px), calc((100% - 48px) * 8.5 / 11));
+  height: auto;
+  max-height: calc(100% - 32px);
   aspect-ratio: 8.5 / 11;
   background: var(--paper);
   transform: none;
@@ -92,7 +92,7 @@ html, body {
   color: #1C1914;
   pointer-events: none;
   z-index: 5;
-  overflow: hidden;
+  overflow: visible;
 }
 
 #map {
@@ -218,6 +218,7 @@ body.no-webgl-active #print-sheet {
   height: 32px;
   position: relative;
   z-index: 2;
+  overflow: hidden;
 }
 
 #search-input {
@@ -573,16 +574,20 @@ body.no-webgl-active #print-sheet {
 
 .sheet-toggle {
   flex: 0 0 auto;
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   height: 32px;
-  padding: 0;
+  padding: 0 2px;
   border: 0;
   background: transparent;
   color: #fff;
   font: 600 13px/1 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   cursor: pointer;
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
 }
 .sheet-toggle.off { color: rgba(255, 255, 255, 0.7); }
 .sheet-track {
@@ -633,4 +638,20 @@ body.wysiwyg-off #sheet #map {
   width: 100%;
   height: 100%;
   outline: none;
+}
+body.printing #print-sheet,
+body.printing #print-ticks,
+html.printing #print-sheet,
+html.printing #print-ticks,
+body.printing.wysiwyg-off #print-sheet,
+body.printing.wysiwyg-off #print-ticks {
+  display: block !important;
+}
+body.printing.wysiwyg-off #sheet #map,
+html.printing body.wysiwyg-off #sheet #map {
+  top: 0.58in !important;
+  left: 0.38in !important;
+  width: 7.74in !important;
+  height: 8.14in !important;
+  outline: 1.25pt solid #000000;
 }

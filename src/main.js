@@ -21,6 +21,7 @@ import {
   intervalForPrintRf,
   buildPrintScaleBar,
   renderPrintScaleBar,
+  frameWidthPx,
 } from './scale.js';
 import { attachSearch } from './search.js';
 import { attachCollarTicks } from './ticks.js';
@@ -118,10 +119,7 @@ function applyChromeCopy() {
     printBtn.title = t('chrome.printTitle');
     printBtn.setAttribute('aria-label', t('chrome.ariaPrint'));
   }
-  setText('lbl-wysiwyg', t('chrome.sheet') || t('print.sheet'));
-  setText('wysiwyg-state', t('chrome.wysiwygOn'));
-  const wy = document.getElementById('wysiwyg-btn');
-  if (wy) wy.setAttribute('aria-label', t('chrome.ariaSheet') || t('chrome.ariaWysiwyg'));
+  paintSheetToggle();
   setText('search-helper', t('search.helper'));
   const retry = document.getElementById('tile-retry');
   if (retry) retry.textContent = t('chrome.retry');
@@ -163,20 +161,18 @@ function applyChromeCopy() {
   setText('lbl-north-grid', t('print.north.grid'));
   setText('lbl-north-true', t('print.north.true'));
   setText('lbl-north-magnetic', t('print.north.magnetic'));
-  setText('print-gm-angle', `${t('print.north.gm')} 9° 30' W`);
-  setText('print-gm-conv', 'convergence 1° 17\'');
+  setText('print-gm-angle', GM_ANGLE());
+  setText('print-gm-conv', GM_CONV_FALLBACK);
   setText('grid-unavailable', t('lbl.gridUnavailable'));
   const mgrsEl = document.getElementById('center-mgrs');
   if (mgrsEl) mgrsEl.setAttribute('aria-label', t('chrome.mgrsAria'));
 }
 
-function formatConvergence(lon, lat) {
-  const zone = utmZone(lon);
-  const lon0 = (zone - 1) * 6 - 180 + 3;
-  const phi = (lat * Math.PI) / 180;
-  const dLon = ((lon - lon0) * Math.PI) / 180;
-  const deg = (Math.atan(Math.tan(dLon) * Math.sin(phi)) * 180) / Math.PI;
-  if (!Number.isFinite(deg)) return "convergence 1° 17'";
+const GM_ANGLE = () => `${t('print.north.gm')} 9° 30' W`;
+const GM_CONV_FALLBACK = "convergence 1° 17'";
+
+function formatDmParts(deg) {
+  if (!Number.isFinite(deg) || Math.abs(deg) > 180) return null;
   const abs = Math.abs(deg);
   let d = Math.floor(abs);
   let m = Math.round((abs - d) * 60);
@@ -184,40 +180,80 @@ function formatConvergence(lon, lat) {
     d += 1;
     m = 0;
   }
-  return `convergence ${d}° ${m}'`;
+  if (!Number.isInteger(d) || !Number.isInteger(m) || m < 0 || m > 59 || d > 180) {
+    return null;
+  }
+  return { d, m };
+}
+
+function formatConvergence(lon, lat) {
+  if (!Number.isFinite(lon) || !Number.isFinite(lat)) return GM_CONV_FALLBACK;
+  const zone = utmZone(lon);
+  const lon0 = (zone - 1) * 6 - 180 + 3;
+  const phi = (lat * Math.PI) / 180;
+  const dLon = ((lon - lon0) * Math.PI) / 180;
+  if (!Number.isFinite(dLon) || Math.abs(dLon) > Math.PI / 2) return GM_CONV_FALLBACK;
+  const deg = (Math.atan(Math.tan(dLon) * Math.sin(phi)) * 180) / Math.PI;
+  const parts = formatDmParts(deg);
+  if (!parts) return GM_CONV_FALLBACK;
+  const out = `convergence ${parts.d}° ${parts.m}'`;
+  if (!/^convergence \d{1,2}° [0-5]?\d'$/.test(out)) return GM_CONV_FALLBACK;
+  return out;
 }
 
 let sheetLayoutBusy = false;
 let lastSheetBox = '';
 let liveMap = null;
+/** User Sheet preference. Default ON. Search / print / layout must not write this. */
+let sheetOn = true;
+let printSavedSheetOn = true;
 
 function isWysiwyg() {
-  return !document.body.classList.contains('wysiwyg-off');
+  return sheetOn;
 }
 
-function setWysiwyg(on) {
-  document.body.classList.toggle('wysiwyg-off', !on);
+function paintSheetToggle() {
   const btn = document.getElementById('wysiwyg-btn');
+  const on = sheetOn;
+  const label = t('chrome.sheet') || t('print.sheet');
   if (btn) {
+    btn.setAttribute('type', 'button');
+    btn.removeAttribute('form');
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     btn.classList.toggle('on', on);
     btn.classList.toggle('off', !on);
-    setText('lbl-wysiwyg', t('chrome.sheet') || t('print.sheet'));
-    setText('wysiwyg-state', on ? t('chrome.wysiwygOn') : t('chrome.wysiwygOff'));
-    btn.setAttribute('aria-label', t('chrome.ariaSheet') || (on ? t('chrome.ariaWysiwygOn') : t('chrome.ariaWysiwygOff')));
+    btn.setAttribute('aria-label', t('chrome.ariaSheet') || t('chrome.ariaWysiwyg'));
+    btn.setAttribute('title', t('chrome.ariaSheet') || t('chrome.ariaWysiwyg'));
   }
+  setText('lbl-wysiwyg', label);
+  setText('wysiwyg-state', on ? t('chrome.wysiwygOn') : t('chrome.wysiwygOff'));
+}
+
+function setWysiwyg(on) {
+  sheetOn = !!on;
+  document.body.classList.toggle('wysiwyg-off', !sheetOn);
+  paintSheetToggle();
   lastSheetBox = '';
-  layoutSheet(liveMap);
+  if (!document.body.classList.contains('printing')) {
+    layoutSheet(liveMap);
+  }
 }
 
 function attachWysiwyg() {
   const btn = document.getElementById('wysiwyg-btn');
   if (!btn) return;
-  setWysiwyg(true);
+  btn.setAttribute('type', 'button');
+  btn.removeAttribute('form');
+  paintSheetToggle();
+  const keepOffSearch = (ev) => {
+    ev.stopPropagation();
+  };
+  btn.addEventListener('pointerdown', keepOffSearch);
   btn.addEventListener('click', (ev) => {
     ev.preventDefault();
     ev.stopPropagation();
-    setWysiwyg(!isWysiwyg());
+    ev.stopImmediatePropagation();
+    setWysiwyg(!sheetOn);
   });
 }
 
@@ -258,6 +294,10 @@ function layoutSheet(map) {
   const topReserve = Math.max(24, 18 + zoomH);
   const bottomReserve = 24;
   const r = desk.getBoundingClientRect();
+  if (r.width < 80 || r.height < 80) {
+    lastSheetBox = '';
+    return;
+  }
   const availW = Math.max(40, r.width - leftReserve - rightReserve);
   const availH = Math.max(40, r.height - topReserve - bottomReserve);
   const natW = 8.5 * 96;
@@ -295,14 +335,31 @@ function setZoomForPrintRf(map, target = 24000) {
   const live = (mapEl && mapEl.clientWidth)
     || (map.getCanvas() && map.getCanvas().clientWidth)
     || 0;
-  // Letter neatline is 7.74in. Do not use a stale desk width after
-  // body.printing (that leaked 1:12 000 in the print preview).
-  const w = printing ? 7.74 * 96 : (live || 7.74 * 96);
-  const groundM = 7.74 * 0.0254 * target;
-  const mpp = groundM / Math.max(1, w);
+  // Same width as frameWidthPx in scale.js. Call AFTER map.resize() so
+  // #map.clientWidth is the Letter neatline, not a stale desk width
+  // (32dc7fb hardcoded 7.74*96 and leaked 1:12 000 on capture).
+  const measured = live > 8 ? live : frameWidthPx();
+  const letterPx = 7.74 * 96;
+  const nearLetter = Math.abs(measured - letterPx) / letterPx < 0.12;
+  // Always the print-neatline formula (same as computePrintScale / HUD).
+  // If printing but #map is still full-bleed, do not use that width (1:12 000 leak).
+  const w = (printing && !nearLetter) ? letterPx : measured;
+  const mpp = (7.74 * 0.0254 * target) / Math.max(1, w);
   const lat = map.getCenter().lat;
   const z = Math.log2((156543.03392804097 * Math.cos((lat * Math.PI) / 180)) / mpp);
   if (Number.isFinite(z)) map.setZoom(Math.min(18, Math.max(2, z)));
+}
+
+function afterLetterLayout(map, fn) {
+  const run = () => {
+    try { map.resize(); } catch { /* layout */ }
+    fn();
+  };
+  try { map.resize(); } catch { /* layout */ }
+  requestAnimationFrame(() => {
+    try { map.resize(); } catch { /* layout */ }
+    requestAnimationFrame(run);
+  });
 }
 
 function setMgrsReadout(text, polar = false) {
@@ -371,7 +428,7 @@ function fillPrintBlock(map) {
   const gzd = String(square || '').trim().split(/\s+/)[0] || '';
   setText('print-gzd', gzd ? t('print.gridZoneValue', { gzd }) : '');
   const c = map.getCenter();
-  setText('print-gm-angle', `${t('print.north.gm')} 9° 30' W`);
+  setText('print-gm-angle', GM_ANGLE());
   setText('print-gm-conv', formatConvergence(c.lng, c.lat));
   if (state.exampleLocked) {
     setText('print-example-place', t('print.example.place'));
@@ -392,8 +449,10 @@ function attachPrint(map) {
 
   window.print = function mgrsPrintDead() { return; };
 
-  const prepare = () => {
+  const prepareSync = () => {
+    printSavedSheetOn = sheetOn;
     document.body.classList.add('printing');
+    document.documentElement.classList.add('printing');
     try { map.resize(); } catch { /* print size */ }
     setZoomForPrintRf(map, 24000);
     setPrintInterval(intervalForPrintRf(24000));
@@ -402,17 +461,35 @@ function attachPrint(map) {
     document.title = printFilename(compact);
   };
 
+  let printArmed = false;
   const restore = () => {
+    if (!printArmed && !document.body.classList.contains('printing')) return;
+    printArmed = false;
     window.__mgrsAllowPrint = false;
     setPrintInterval(null);
     document.body.classList.remove('printing');
+    document.documentElement.classList.remove('printing');
     document.title = t('app.documentTitle');
-    map.resize();
+    sheetOn = printSavedSheetOn;
+    document.body.classList.toggle('wysiwyg-off', !sheetOn);
+    paintSheetToggle();
+    lastSheetBox = '';
+    try { map.resize(); } catch { /* restore */ }
     layoutSheet(liveMap);
+    requestAnimationFrame(() => {
+      try { map.resize(); } catch { /* restore */ }
+      layoutSheet(liveMap);
+    });
   };
 
   window.addEventListener('beforeprint', () => {});
   window.addEventListener('afterprint', restore);
+  if (window.matchMedia) {
+    const mq = window.matchMedia('print');
+    const onMq = (e) => { if (!e.matches && printArmed) restore(); };
+    if (mq.addEventListener) mq.addEventListener('change', onMq);
+    else if (mq.addListener) mq.addListener(onMq);
+  }
 
   const blockNativePrint = (ev) => {
     if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'p' || ev.key === 'P' || ev.code === 'KeyP')) {
@@ -426,17 +503,25 @@ function attachPrint(map) {
   btn.addEventListener('click', (ev) => {
     ev.preventDefault();
     ev.stopImmediatePropagation();
-    prepare();
-    try {
-      REAL_PRINT.call(window);
-    } catch {
-      const note = document.getElementById('search-note');
-      if (note) {
-        note.hidden = false;
-        note.textContent = t('chrome.printBlocked');
-        note.classList.add('is-error');
+    printSavedSheetOn = sheetOn;
+    printArmed = true;
+    document.body.classList.add('printing');
+    document.documentElement.classList.add('printing');
+    const fire = () => {
+      prepareSync();
+      try {
+        REAL_PRINT.call(window);
+      } catch {
+        const note = document.getElementById('search-note');
+        if (note) {
+          note.hidden = false;
+          note.textContent = t('chrome.printBlocked');
+          note.classList.add('is-error');
+        }
+        restore();
       }
-    }
+    };
+    afterLetterLayout(map, fire);
   });
 
   document.addEventListener('keydown', (ev) => {
@@ -458,27 +543,34 @@ async function main() {
   applyChromeCopy();
   attachWysiwyg();
   layoutSheet();
-  window.addEventListener('resize', () => layoutSheet());
+  window.addEventListener('resize', () => {
+    if (document.body.classList.contains('printing')) return;
+    layoutSheet(liveMap);
+  });
 
   const map = await createMap('map');
   if (!map) return;
   liveMap = map;
   layoutSheet(map);
-  try {
-    map.resize();
-  } catch {
-    // first layout
-  }
+  try { map.resize(); } catch { /* first layout */ }
   setZoomForPrintRf(map, 24000);
   attachCollarTicks(map);
   fillPrintBlock(map);
+  afterLetterLayout(map, () => {
+    layoutSheet(map);
+    setZoomForPrintRf(map, 24000);
+    fillPrintBlock(map);
+  });
   if (/[?&]print=1\b/.test(location.search)) {
     const go = async () => {
       document.body.classList.add('printing');
-      try { map.resize(); } catch { /* print layout */ }
+      document.documentElement.classList.add('printing');
+      afterLetterLayout(map, () => {
+        setZoomForPrintRf(map, 24000);
+        fillPrintBlock(map);
+      });
+      try { await map.once('idle'); } catch { /* layout only — never print */ }
       setZoomForPrintRf(map, 24000);
-      fillPrintBlock(map);
-      try { await map.once('idle'); } catch { /* print anyway */ }
       fillPrintBlock(map);
     };
     go();
@@ -510,10 +602,15 @@ async function main() {
 
   const hud = () => {
     updateCenterHud(map);
-    layoutSheet(map);
+    if (!document.body.classList.contains('printing')) layoutSheet(map);
     fillPrintBlock(map);
   };
-  map.on('load', hud);
+  map.on('load', () => {
+    layoutSheet(map);
+    try { map.resize(); } catch { /* load */ }
+    setZoomForPrintRf(map, 24000);
+    hud();
+  });
   map.on('move', () => {
     updateCenterHud(map);
     fillPrintBlock(map);

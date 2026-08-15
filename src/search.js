@@ -459,10 +459,15 @@ export function attachSearch(map, opts = {}) {
   });
 
   form.addEventListener('pointerdown', (ev) => {
+    ev.stopPropagation();
     if (clearBtn && (ev.target === clearBtn || clearBtn.contains(ev.target))) return;
     input.focus();
   }, true);
-  input.addEventListener('pointerdown', () => {
+  form.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+  }, true);
+  input.addEventListener('pointerdown', (ev) => {
+    ev.stopPropagation();
     input.focus();
   });
 

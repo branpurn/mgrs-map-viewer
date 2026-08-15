@@ -4,7 +4,7 @@ import { t } from './copy.js';
 
 /** Jefferson Pier / Washington DC — RF target 1:24 000 after first layout. */
 export const DEFAULT_CENTER = { lon: -77.0353, lat: 38.8895 };
-export const DEFAULT_ZOOM = 14;
+export const DEFAULT_ZOOM = 14.23;
 
 export const OT_TILES = [
   'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',

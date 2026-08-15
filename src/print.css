@@ -4,7 +4,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   margin: 0;
 }
 
-#print-sheet { display: block; }
+#print-sheet { display: block; overflow: visible; }
 
 #print-upper {
   position: absolute;
@@ -46,12 +46,12 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   top: calc(100% * 8.72 / 11);
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
-  height: calc(100% * 2.06 / 11);
+  height: calc(100% * 1.94 / 11);
   background: #FFFFFF;
   box-sizing: border-box;
   border-top: 0.75pt solid #000000;
   border-bottom: 0.35pt solid #000000;
-  padding: 0.6cqh 0 0.3cqh;
+  padding: 0.5cqh 0 0.4cqh;
   display: flex;
   align-items: stretch;
   overflow: visible;
@@ -231,11 +231,11 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-legal {
   position: absolute;
-  top: calc(100% * 10.84 / 11);
+  top: calc(100% * 10.70 / 11);
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
-  height: calc(100% * 0.14 / 11);
-  overflow: hidden;
+  height: calc(100% * 0.26 / 11);
+  overflow: visible;
   z-index: 6;
 }
 
@@ -404,9 +404,9 @@ body.printing #map {
 }
 
 
-.print-ident-extra { margin: 0.25cqh 0 0.2cqh; }
+.print-ident-extra { margin: 0.45cqh 0 0.25cqh; }
 .print-ident-extra .print-k,
-.print-k { margin: 0.15cqh 0 0; font-size: 0.82cqh; line-height: 1.15; color: #4A4036; }
+.print-k { margin: 0.22cqh 0 0; font-size: 0.82cqh; line-height: 1.15; color: #4A4036; }
 .print-ident-extra .print-v,
 .print-v { margin: 0; font-size: 0.88cqh; line-height: 1.15; color: #1C1914; }
 .print-v.mono, .print-gm-fig { font-family: "IBM Plex Mono", ui-monospace, monospace; }
@@ -449,7 +449,7 @@ body.printing #sheet {
 .print-col-a .print-title { font-size: 1.15cqh; margin: 0; }
 .print-col-a .print-series { margin: 0; font-size: 0.82cqh; }
 .print-col-a .print-subtitle { margin: 0; font-size: 0.76cqh; }
-.print-ident-extra { margin: 0.18cqh 0; }
+.print-ident-extra { margin: 0.4cqh 0 0.2cqh; }
 #print-scale, #print-grid-value, #print-grid-interval, #print-datum-value { color: #1C1914; }
 
 #print-footer .print-col-c li,
@@ -457,6 +457,6 @@ body.printing #sheet {
 #leg-roads, #leg-water, #leg-contours, #leg-grid, #leg-places, #leg-relief {
   color: #1C1914;
 }
-#print-legal { overflow: hidden; }
-#print-disclaimer { color: #1C1914; white-space: nowrap; }
+#print-legal { overflow: visible; }
+#print-disclaimer { color: #1C1914; white-space: nowrap; font-size: 0.76cqh; }
 #print-attr { display: none; }

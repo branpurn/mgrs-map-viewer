@@ -59,6 +59,8 @@ export function t(key, vars = {}) {
     template = strings[key];
   } else if (Object.prototype.hasOwnProperty.call(FALLBACKS, key)) {
     template = FALLBACKS[key];
+  } else if (Object.prototype.hasOwnProperty.call(strings, key) && strings[key] === '') {
+    template = '';
   } else {
     template = key;
   }

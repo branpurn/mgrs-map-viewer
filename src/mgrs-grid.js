@@ -603,12 +603,15 @@ function buildCornerLabels(map) {
   const w = el.clientWidth;
   const h = el.clientHeight;
   if (w < 8 || h < 8) return [];
-  const pad = 10;
+  // TL was clipped by the top neatline at pad=10. Keep TR/BL insets.
+  const padX = 16;
+  const padTop = 22;
+  const padBot = 16;
   const pts = [
-    [pad, pad, 'top-left'],
-    [w - pad, pad, 'top-right'],
-    [pad, h - pad, 'bottom-left'],
-    [w - pad, h - pad, 'bottom-right'],
+    [padX, padTop, 'top-left'],
+    [w - padX, padTop, 'top-right'],
+    [padX, h - padBot, 'bottom-left'],
+    [w - padX, h - padBot, 'bottom-right'],
   ];
   const out = [];
   for (const [x, y, anchor] of pts) {
@@ -937,7 +940,24 @@ export function attachMgrsGrid(map, onUpdate) {
           'text-field': ['get', 'label'],
           'text-size': 11,
           'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-          'text-anchor': ['get', 'anchor'],
+          'text-anchor': [
+            'match',
+            ['get', 'anchor'],
+            'top-left', 'top-left',
+            'top-right', 'top-right',
+            'bottom-left', 'bottom-left',
+            'bottom-right', 'bottom-right',
+            'center',
+          ],
+          'text-offset': [
+            'match',
+            ['get', 'anchor'],
+            'top-left', ['literal', [0.15, 0.35]],
+            'top-right', ['literal', [-0.1, 0.2]],
+            'bottom-left', ['literal', [0.1, -0.1]],
+            'bottom-right', ['literal', [-0.1, -0.1]],
+            ['literal', [0, 0]],
+          ],
           'text-allow-overlap': true,
           'text-ignore-placement': true,
           'text-padding': 2,
