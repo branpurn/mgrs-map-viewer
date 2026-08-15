@@ -134,5 +134,11 @@
   "print.example": "EXAMPLE",
   "print.example.place": "Jefferson Pier",
   "print.example.grid": "18S UJ 2337 0652",
-  "print.example.note": "Read right, then up."
+  "print.example.note": "Read right, then up.",
+  "chrome.wysiwyg": "WYSIWYG",
+  "chrome.wysiwygOn": "On",
+  "chrome.wysiwygOff": "Off",
+  "chrome.ariaWysiwyg": "WYSIWYG. Default on.",
+  "chrome.ariaWysiwygOn": "WYSIWYG on. Screen matches the printed sheet.",
+  "chrome.ariaWysiwygOff": "WYSIWYG off."
 }
