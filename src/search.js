@@ -383,6 +383,7 @@ export function attachSearch(map, opts = {}) {
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
+    ev.stopPropagation();
     hideMatches();
     const parsed = parseQuery(input.value);
 
@@ -449,16 +450,18 @@ export function attachSearch(map, opts = {}) {
     }
   });
 
-  form.addEventListener('pointerdown', (ev) => {
+  const isolateSearch = (ev) => {
     ev.stopPropagation();
+  };
+  // Bubble only — capture + stopPropagation would swallow #search-clear.
+  ['pointerdown', 'mousedown', 'click', 'touchstart'].forEach((type) => {
+    form.addEventListener(type, isolateSearch);
+  });
+  form.addEventListener('pointerdown', (ev) => {
     if (clearBtn && (ev.target === clearBtn || clearBtn.contains(ev.target))) return;
     input.focus();
-  }, true);
-  form.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-  }, true);
-  input.addEventListener('pointerdown', (ev) => {
-    ev.stopPropagation();
+  });
+  input.addEventListener('pointerdown', () => {
     input.focus();
   });
 
@@ -475,12 +478,25 @@ export function attachSearch(map, opts = {}) {
   });
 
 
-  if (clearBtn) {
-    clearBtn.addEventListener('click', (ev) => {
+  const bindClear = (btn) => {
+    if (!btn) return;
+    btn.setAttribute('type', 'button');
+    btn.removeAttribute('form');
+    const onClear = (ev) => {
       ev.preventDefault();
+      ev.stopPropagation();
+      ev.stopImmediatePropagation();
       clear();
+    };
+    btn.addEventListener('click', onClear);
+    btn.addEventListener('pointerdown', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
     });
-  }
+  };
+  bindClear(clearBtn);
+  const altClear = document.getElementById('clear');
+  if (altClear && altClear !== clearBtn) bindClear(altClear);
 
   window.addEventListener('resize', () => {
     if (note && !note.hidden) pinToInput(note, 52);

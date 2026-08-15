@@ -470,3 +470,27 @@ body.printing #sheet {
 #print-legal { overflow: hidden; }
 #print-disclaimer { color: #1C1914; white-space: nowrap; font-size: 0.70cqh; }
 #print-attr { display: none; }
+
+/* Map face must stay painted in print preview. Do not hide the WebGL canvas.
+   Do not transform:scale() #sheet (blanks WebGL). */
+body.printing #map,
+body.printing #map .maplibregl-canvas-container,
+body.printing #map .maplibregl-canvas,
+body.printing #map canvas {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+@media print {
+  #map,
+  #map .maplibregl-canvas-container,
+  #map .maplibregl-canvas,
+  #map canvas {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  #sheet {
+    transform: none !important;
+  }
+}

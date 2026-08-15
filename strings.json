@@ -128,6 +128,8 @@
   "print.north.magneticLong": "MAGNETIC NORTH",
   "print.north.trueLong": "TRUE NORTH",
   "print.north.gm": "G–M",
+  "print.north.gmAngle": "G–M 9° 30′ W",
+  "print.north.convergence": "convergence 1° 17′",
   "print.north.note": "Grid, magnetic, and true north at center of sheet.",
   "print.gridZone": "GRID ZONE",
   "print.gridZoneValue": "{gzd}",
