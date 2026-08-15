@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/src/style.css" />
@@ -15,41 +15,35 @@
   </head>
   <body>
     <div id="app">
-      <p id="no-webgl" class="no-webgl" hidden>This browser cannot draw the map.</p>
+      <p id="no-webgl" class="no-webgl" hidden></p>
 
       <header class="chrome" id="chrome">
         <div class="brand">
-          <span class="app-name">MGRS Viewer</span>
-          <span class="tagline">Search a grid or place. Print the sheet.</span>
+          <span class="app-name" id="app-name"></span>
         </div>
         <form id="search-form" autocomplete="off">
-          <label class="sr-only" for="search-input">Search by grid, coordinates, or place</label>
+          <label class="sr-only" for="search-input" id="search-aria-label"></label>
           <input
             id="search-input"
             name="q"
             type="search"
-            placeholder="Grid or place"
-            title="Examples: 18T WK 8712 0415 · 38.889, -77.035 · Arlington VA"
-            aria-label="Search by grid, coordinates, or place"
             spellcheck="false"
           />
-          <button type="button" id="search-clear" class="ghost" hidden aria-label="Clear search. Escape to clear.">
-            Clear
-          </button>
-          <button type="submit" id="search-submit" aria-label="Search. Enter to submit.">Search</button>
+          <button type="button" id="search-clear" class="ghost" hidden></button>
+          <button type="submit" id="search-submit"></button>
         </form>
-        <button type="button" id="print-btn" title="Print this frame (US Letter)">Print</button>
-        <p id="search-helper" class="search-helper">MGRS, lat/long, or a place name</p>
+        <button type="button" id="print-btn"></button>
+        <p id="search-helper" class="search-helper"></p>
         <p id="search-hint" class="search-hint" hidden></p>
         <p id="search-note" class="search-note" hidden></p>
         <div id="search-formats" class="search-formats" hidden>
-          <p class="formats-h">Formats</p>
-          <p>100 m · 18T WK 8712 0415</p>
-          <p>1 km · 18T WK 871 041</p>
-          <p>10 km · 18T WK 87 04</p>
-          <p>Lat, long · 38.889, -77.035</p>
-          <p>DMS · 38°53′20″N 77°02′06″W</p>
-          <p>Place · Arlington VA</p>
+          <p class="formats-h" id="formats-heading"></p>
+          <p id="fmt-mgrs100"></p>
+          <p id="fmt-mgrs1k"></p>
+          <p id="fmt-mgrs10k"></p>
+          <p id="fmt-decimal"></p>
+          <p id="fmt-dms"></p>
+          <p id="fmt-place"></p>
         </div>
       </header>
 
@@ -58,67 +52,94 @@
       <div id="crosshair" class="crosshair" aria-hidden="true"></div>
 
       <div id="map-status" class="map-status" hidden>
-        <span class="status-text">Loading map…</span>
-        <button type="button" id="tile-retry" hidden>Retry</button>
+        <span class="status-text"></span>
+        <button type="button" id="tile-retry" hidden></button>
       </div>
 
       <div class="hud" id="hud">
         <div class="hud-block">
-          <span class="hud-label">MGRS</span>
-          <span id="center-mgrs" aria-label="MGRS at frame center"></span>
-        </div>
-        <div class="hud-block">
-          <span class="hud-label">Scale</span>
-          <span id="scale-readout" aria-label="Scale"></span>
+          <span id="scale-readout"></span>
+          <span id="hud-zoom-interval"></span>
+          <span id="center-mgrs"></span>
         </div>
         <div id="scale-bar" class="scale-bar" hidden>
           <span class="scale-bar-track"></span>
           <span class="scale-bar-label"></span>
         </div>
-        <p id="tile-source" class="tile-source">Using OpenTopoMap tiles</p>
+        <p id="tile-source" class="tile-source"></p>
+        <p id="grid-unavailable" class="grid-unavailable" hidden></p>
       </div>
 
-      <footer class="print-footer" id="print-footer">
-        <div class="print-main">
-          <div class="print-title-col">
-            <p class="print-series">Topographic</p>
-            <h1 id="print-title"></h1>
-            <p class="print-subtitle">MGRS Viewer</p>
+      <div id="print-sheet" class="print-sheet">
+        <div class="print-upper-collar">
+          <span id="print-product" class="print-product"></span>
+          <span id="print-upper-title" class="print-upper-title"></span>
+        </div>
+        <div class="print-neatline" aria-hidden="true"></div>
+        <div class="print-lower-collar">
+          <div class="print-col print-col-a">
+            <h1 id="print-title" class="print-title"></h1>
+            <p class="print-series" id="print-series"></p>
+            <p class="print-subtitle" id="print-subtitle"></p>
+            <dl class="print-spec">
+              <div>
+                <dt id="lbl-print-scale"></dt>
+                <dd id="print-scale"></dd>
+              </div>
+              <div>
+                <dt id="lbl-print-grid"></dt>
+                <dd id="print-grid-value"></dd>
+              </div>
+              <div id="print-grid-interval-row">
+                <dt id="lbl-print-grid-interval"></dt>
+                <dd id="print-grid-interval"></dd>
+              </div>
+              <div>
+                <dt id="lbl-print-datum"></dt>
+                <dd id="print-datum-value"></dd>
+              </div>
+              <div>
+                <dt id="lbl-print-projection"></dt>
+                <dd id="print-projection-value"></dd>
+              </div>
+            </dl>
           </div>
-          <div class="print-spec">
-            <div><span>Scale</span><strong id="print-scale"></strong></div>
-            <div><span>Grid</span><strong>MGRS</strong></div>
-            <div id="print-grid-interval-row"><span>Grid interval</span><strong id="print-grid-interval"></strong></div>
-            <div><span>Datum</span><strong>WGS 84</strong></div>
-            <div><span>Projection</span><strong>UTM</strong></div>
-          </div>
-          <div class="print-north" aria-label="North">
-            <svg viewBox="0 0 40 56" width="28" height="40" aria-hidden="true">
-              <polygon points="20,2 28,30 20,24 12,30" fill="#1C1914" />
-              <text x="20" y="50" text-anchor="middle" font-size="11" font-family="IBM Plex Sans Condensed, sans-serif">N</text>
+          <div class="print-col print-col-b">
+            <p class="print-north-label" id="lbl-print-north"></p>
+            <svg class="print-north-arrow" viewBox="0 0 40 56" width="40" height="40" aria-hidden="true">
+              <polygon points="20,0 30,30 20,24 10,30" fill="#1C1914" />
+              <line x1="20" y1="24" x2="20" y2="52" stroke="#1C1914" stroke-width="2.2" />
             </svg>
-            <span>True north</span>
+            <p class="print-true-north" id="lbl-print-true-north"></p>
+            <div id="print-scale-bar" class="print-scale-bar"></div>
           </div>
-          <div class="print-legend">
-            <p class="legend-h">Legend</p>
+          <div class="print-col print-col-c">
+            <p class="legend-h" id="lbl-print-legend"></p>
             <ul>
-              <li><i class="swatch grid"></i>MGRS grid</li>
-              <li><i class="swatch contours"></i>Contours</li>
-              <li><i class="swatch relief"></i>Relief</li>
+              <li><i class="swatch roads"></i><span id="leg-roads"></span></li>
+              <li><i class="swatch water"></i><span id="leg-water"></span></li>
+              <li><i class="swatch contours"></i><span id="leg-contours"></span></li>
+              <li><i class="swatch grid"></i><span id="leg-grid"></span></li>
+              <li><i class="swatch places"></i><span id="leg-places"></span></li>
+              <li><i class="swatch relief"></i><span id="leg-relief"></span></li>
             </ul>
           </div>
-          <div class="print-meta">
-            <div><span>Printed</span><strong id="print-date"></strong></div>
-            <div><span>Sheet</span><strong>US Letter 8.5 × 11 in</strong></div>
+          <div class="print-col print-col-d">
+            <div class="print-meta-block">
+              <span class="meta-lbl" id="lbl-print-printed"></span>
+              <strong id="print-date"></strong>
+            </div>
+            <div class="print-meta-block">
+              <span class="meta-lbl" id="lbl-print-sheet"></span>
+              <strong id="print-sheet-value" class="sheet-value"></strong>
+            </div>
           </div>
         </div>
-        <p class="print-disclaimer">
-          Not an official USGS or military product. Verify in the field. Do not use as the sole navigation source.
-        </p>
-        <p class="print-attr" id="print-attr">
-          Map data © OpenStreetMap contributors, SRTM. Style © OpenTopoMap (CC-BY-SA). Not a USGS map.
-        </p>
-      </footer>
+        <div class="print-page-footer">
+          <p class="print-disclaimer" id="print-disclaimer"></p>
+          <p class="print-attr" id="print-attr"></p>
+        </div>
+      </div>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

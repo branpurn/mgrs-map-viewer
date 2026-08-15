@@ -10,7 +10,7 @@ Reviewed from live HTML/CSS/JS on the shared machine, 2026-08-15. Spec wins.
 5. **Print grid is the screen overlay, not RF.** Spec lock: print lines by RF (≥75k → 10 km, 25–75k → 1 km, ≤25k → 100 m). Freeze that at Print.
 6. **No print scale bar.** RF sits in Col A; Col B still needs the 1.84in metric bar + North / True north (not only an “N” glyph).
 7. **Legend incomplete.** Has MGRS grid, Contours, Relief. Missing Roads, Water, Places (only drop a row if that layer is off).
-8. **Sheet value** `US Letter 8.5 × 11 in` must wrap after “Letter” in the 1.30in Col D. Do not cut the string.
+8. ~~Sheet wrap~~ **RESOLVED (PM).** `print.sheetValue` is `8.5 × 11 in`. One line, no wrap. Do not restore the long string.
 
 ## P1 — Web chrome
 
@@ -21,7 +21,7 @@ Reviewed from live HTML/CSS/JS on the shared machine, 2026-08-15. Spec wins.
 13. **Search error color** `#e8b4b4`. Use `gzd` `#8B1E1E` on the 1px field outline and the helper.
 14. **Focus gold** `--focus: #c4a35a`. Not a token. Focus = `ink` or `paper` @ 100%, 1px.
 15. **Crosshair.** Not in spec. Remove.
-16. **No favicon.** Drop in `design/icon/favicon-16.png` + `favicon-32.png` (+ 180/512). Theme color `#2B2924`.
+16. **Favicon.** Links are in. 16/32 were muddy downscales — replaced with pixel-aligned 2×2 marks (paper / ink neatline / gzd). 180/512 unchanged. Theme `#2B2924`.
 
 ## P2 — Readout + states
 
@@ -49,3 +49,27 @@ Reviewed from live HTML/CSS/JS on the shared machine, 2026-08-15. Spec wins.
 - Filename `mgrs-viewer-{mgrs}-{yyyy-mm-dd}`
 - Copy pulled from strings.json for the strings that exist
 - No 10 m grid, grid is not cyan/blue
+
+
+## Addendum (copy fit, PM 2026-08-15)
+
+- `print.title` / `lbl.sheetTitle`: max **28 characters**, truncate, do not wrap (upper collar and Col A).
+- Long disclaimer is **not** a collar column. Legal lives only in the 6 pt footer strip with attribution.
+- Collar stays **2.00in**.
+
+
+## Next paint — re-check first
+
+When :5173 / `print.css` moves, check in this order. No new visual system.
+
+1. `@page { size: 8.5in 11in; margin: 0 }`
+2. Neatline 7.74 × 8.14 in, 1.25 pt ink, paper `#F4EFE4` (not white, not 9.1 × 7.7)
+3. Lower collar **2.00 in** (y 8.72–10.72). Footer y 10.76–10.94, 6 pt legal only.
+4. Upper collar 0.33 in: MGRS Viewer left, title right, title ≤ 28 chars truncate
+5. Four columns: A title+spec · B North / True north + 1.84 in scale bar · C full legend · D Printed + `8.5 × 11 in`
+6. Print grid by RF (not the live screen overlay). No 10 m.
+7. Toolbar **48 px**, search + Print only. Helper overlay at top 52, not a second row.
+8. Readout: `1:n` / `z{n}` / MGRS / bar. Polar = `lbl.gridUnavailable`.
+9. z 0–7 = GZD only. GZD 2.5 px. Frame still 7.74 / 8.14.
+
+P0 is 1–6. If those fail, stop and re-file. Do not churn tokens, Plex, Print 32×88, placeholder, zoom 36×36, filename.

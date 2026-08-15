@@ -141,17 +141,44 @@ function labelForAccuracy(compact, accuracy) {
 }
 
 
+export function isGridAvailable(lat) {
+  return Number.isFinite(lat) && lat >= -80 && lat <= 84;
+}
+
 /**
- * Zoom → grid interval (meters) and mgrs.forward accuracy digits.
- * 0 = 100 km, 1 = 10 km, 2 = 1 km, 3 = 100 m
+ * Zoom → grid interval. Finest is 100 m (no 10 m).
+ * 0–7 hide; 8–10 10 km / prec 1; 11–13 1 km / prec 2; 14+ 100 m / prec 3.
  */
 export function intervalForZoom(zoom) {
   const z = Math.floor(zoom);
-  if (z < 8) return { meters: 100000, accuracy: 0, id: '100k', label: '100 km' };
-  if (z <= 10) return { meters: 10000, accuracy: 1, id: '10k', label: '10 km' };
-  if (z <= 13) return { meters: 1000, accuracy: 2, id: '1k', label: '1 km' };
-  if (z <= 16) return { meters: 100, accuracy: 3, id: '100m', label: '100 m' };
-  return { meters: 100, accuracy: 3, id: '100m', label: '100 m' };
+  if (z < 8) {
+    return { meters: 0, accuracy: 0, id: 'none', labelKey: '', hidden: true };
+  }
+  if (z <= 10) {
+    return {
+      meters: 10000,
+      accuracy: 1,
+      id: '10k',
+      labelKey: 'print.gridInterval.10k',
+      hidden: false,
+    };
+  }
+  if (z <= 13) {
+    return {
+      meters: 1000,
+      accuracy: 2,
+      id: '1k',
+      labelKey: 'print.gridInterval.1k',
+      hidden: false,
+    };
+  }
+  return {
+    meters: 100,
+    accuracy: 3,
+    id: '100m',
+    labelKey: 'print.gridInterval.100m',
+    hidden: false,
+  };
 }
 
 /** Live MGRS / convert precision from MapLibre zoom. */
@@ -217,7 +244,46 @@ function pointFeature(lon, lat, label, level) {
   };
 }
 
-function buildUtmLines(zone, northHem, bounds, interval) {
+function cssPxForMeters(map, meters) {
+  const canvas = map.getCanvas();
+  const x = canvas.clientWidth / 2;
+  const y = canvas.clientHeight / 2;
+  const a = map.unproject([x - 50, y]);
+  const b = map.unproject([x + 50, y]);
+  const span = a.distanceTo(b);
+  if (!Number.isFinite(span) || span <= 0) return 0;
+  return meters / (span / 100);
+}
+
+/** Levels whose lines are ≥ 24 CSS px apart, plus GZD whenever overlay is on. */
+export function allowedLevels(map) {
+  const z = Math.floor(map.getZoom());
+  if (z < 8) return [];
+  const ok = (m) => cssPxForMeters(map, m) >= 24;
+  const out = ['gzd'];
+  if (ok(100000)) out.push('100km');
+  if (z >= 8 && ok(10000)) out.push('10km');
+  if (z >= 11 && ok(1000)) out.push('1km');
+  if (z >= 14 && ok(100)) out.push('100m');
+  return out;
+}
+
+function finestMeters(levels) {
+  if (levels.includes('100m')) return 100;
+  if (levels.includes('1km')) return 1000;
+  if (levels.includes('10km')) return 10000;
+  if (levels.includes('100km')) return 100000;
+  return 0;
+}
+
+function levelFor(v) {
+  if (v % 100000 === 0) return '100km';
+  if (v % 10000 === 0) return '10km';
+  if (v % 1000 === 0) return '1km';
+  return '100m';
+}
+
+function buildUtmLines(zone, northHem, bounds, interval, allowed) {
   const features = [];
   const corners = [
     [bounds.west, bounds.south],
@@ -242,30 +308,19 @@ function buildUtmLines(zone, northHem, bounds, interval) {
   }
   minE = Math.max(100000, minE - interval);
   maxE = Math.min(900000, maxE + interval);
-  minN = Math.max(northHem ? 0 : 0, minN - interval);
+  minN = Math.max(0, minN - interval);
   maxN = maxN + interval;
 
-  const spanE = maxE - minE;
-  const spanN = maxN - minN;
-  let step = interval;
-  const maxLines = 48;
-  while ((spanE / step > maxLines || spanN / step > maxLines) && step < 100000) {
-    step *= 10;
-  }
-
+  const step = interval;
   const ds = sampleStep(step);
   const [zWest, zEast] = zoneLonRange(zone);
   const latMin = Math.max(bounds.south - 1, northHem ? 0 : -80);
   const latMax = Math.min(bounds.north + 1, northHem ? 84 : 0);
 
-  const levelFor = (v) => {
-    if (v % 100000 === 0) return '100km';
-    if (v % 10000 === 0) return '10km';
-    if (v % 1000 === 0) return '1km';
-    return '100m';
-  };
+  const keep = (v) => allowed.includes(levelFor(v));
 
   for (let e = snapUp(minE, step); e <= maxE; e += step) {
+    if (!keep(e)) continue;
     const coords = [];
     for (let n = minN; n <= maxN + ds; n += ds) {
       const p = utmToLatLon(zone, e, n, northHem);
@@ -291,6 +346,7 @@ function buildUtmLines(zone, northHem, bounds, interval) {
   }
 
   for (let n = snapUp(minN, step); n <= maxN; n += step) {
+    if (!keep(n)) continue;
     const coords = [];
     for (let e = minE; e <= maxE + ds; e += ds) {
       const p = utmToLatLon(zone, e, n, northHem);
@@ -317,10 +373,15 @@ function buildUtmLines(zone, northHem, bounds, interval) {
   return { features, step };
 }
 
+function squareLetters(compact) {
+  const m = String(compact || '')
+    .toUpperCase()
+    .match(/^\d{1,2}[C-HJ-NP-X]([A-HJ-NP-Z]{2})/);
+  return m ? m[1] : '';
+}
+
 function buildLabels(zone, northHem, bounds, interval, accuracy) {
   const features = [];
-  const midLat = (bounds.south + bounds.north) / 2;
-  const midLon = (bounds.west + bounds.east) / 2;
   const sw = latLonToUtm(bounds.west, bounds.south, zone);
   const ne = latLonToUtm(bounds.east, bounds.north, zone);
   const minE = Math.max(100000, Math.min(sw.easting, ne.easting) - interval);
@@ -338,9 +399,11 @@ function buildLabels(zone, northHem, bounds, interval, accuracy) {
   }
 
   const [zWest, zEast] = zoneLonRange(zone);
+  const everyFifth = interval <= 100;
 
   for (let e = snapUp(minE, step); e < maxE; e += step) {
     for (let n = snapUp(minN, step); n < maxN; n += step) {
+      if (everyFifth && (e % 500 !== 0 || n % 500 !== 0)) continue;
       const p = utmToLatLon(zone, e + step / 2, n + step / 2, northHem);
       if (
         p.lat < bounds.south ||
@@ -355,16 +418,41 @@ function buildLabels(zone, northHem, bounds, interval, accuracy) {
       if (utmZone(p.lon) !== zone) continue;
       try {
         const compact = forward([p.lon, p.lat], accuracy);
-        features.push(pointFeature(p.lon, p.lat, labelForAccuracy(compact, accuracy), 'cell'));
+        features.push(
+          pointFeature(p.lon, p.lat, labelForAccuracy(compact, accuracy), 'cell'),
+        );
       } catch {
         // polar / invalid
       }
     }
   }
 
-  // Always keep a label near the visual center so the HUD and grid agree.
-  void midLat;
-  void midLon;
+  if (interval <= 100000) {
+    const sqStep = 100000;
+    for (let e = snapUp(minE, sqStep); e < maxE; e += sqStep) {
+      for (let n = snapUp(minN, sqStep); n < maxN; n += sqStep) {
+        const p = utmToLatLon(zone, e + sqStep / 2, n + sqStep / 2, northHem);
+        if (
+          p.lat < bounds.south ||
+          p.lat > bounds.north ||
+          p.lon < bounds.west ||
+          p.lon > bounds.east ||
+          p.lon < zWest ||
+          p.lon > zEast
+        ) {
+          continue;
+        }
+        try {
+          const compact = forward([p.lon, p.lat], 0);
+          const letters = squareLetters(compact);
+          if (letters) features.push(pointFeature(p.lon, p.lat, letters, '100km'));
+        } catch {
+          // skip
+        }
+      }
+    }
+  }
+
   return features;
 }
 
@@ -421,7 +509,7 @@ function buildGzd(bounds, zoom) {
     }
   }
 
-  if (zoom < 8) {
+  if (zoom >= 8) {
     const zStart = utmZone(bounds.west);
     const zEnd = utmZone(bounds.east);
     for (let z = zStart; z <= zEnd; z += 1) {
@@ -442,44 +530,69 @@ function buildGzd(bounds, zoom) {
 
 export function buildGridGeoJSON(map) {
   const zoom = map.getZoom();
-  const { meters, accuracy } = intervalForZoom(zoom);
+  const band = intervalForZoom(zoom);
+  const center = map.getCenter();
+  const polar = !isGridAvailable(center.lat);
+
+  if (band.hidden || polar) {
+    return {
+      data: emptyFC(),
+      interval: 0,
+      accuracy: band.accuracy,
+      hidden: true,
+      polar,
+      labelKey: band.labelKey,
+    };
+  }
+
+  const levels = allowedLevels(map);
+  const meters = finestMeters(levels);
   const bounds = padBounds(map.getBounds(), 0.1);
   bounds.south = Math.max(-80, bounds.south);
   bounds.north = Math.min(84, bounds.north);
 
   const features = [];
-  features.push(...buildGzd(bounds, zoom).filter(Boolean));
+  if (levels.includes('gzd')) {
+    features.push(...buildGzd(bounds, zoom).filter(Boolean));
+  }
 
   const hems = [];
   if (bounds.north > 0) hems.push(true);
   if (bounds.south < 0) hems.push(false);
 
   let usedStep = meters;
-  for (const zone of zonesIn(bounds.west, bounds.east)) {
-    for (const northHem of hems) {
-      const { features: lines, step } = buildUtmLines(
-        zone,
-        northHem,
-        bounds,
-        meters,
-      );
-      usedStep = Math.max(usedStep, step);
-      features.push(...lines);
-      features.push(
-        ...buildLabels(zone, northHem, bounds, step, accuracy),
-      );
+  if (meters > 0) {
+    for (const zone of zonesIn(bounds.west, bounds.east)) {
+      for (const northHem of hems) {
+        const { features: lines, step } = buildUtmLines(
+          zone,
+          northHem,
+          bounds,
+          meters,
+          levels,
+        );
+        usedStep = Math.max(usedStep, step);
+        features.push(...lines);
+        features.push(
+          ...buildLabels(zone, northHem, bounds, step, band.accuracy),
+        );
+      }
     }
   }
 
   return {
     data: { type: 'FeatureCollection', features: features.filter(Boolean) },
     interval: usedStep,
-    accuracy,
+    accuracy: band.accuracy,
+    hidden: false,
+    polar: false,
+    labelKey: band.labelKey,
   };
 }
 
 export function centerMgrs(map, accuracy) {
   const c = map.getCenter();
+  if (!isGridAvailable(c.lat)) return '';
   const acc = Number.isFinite(accuracy) ? accuracy : precisionForZoom(map.getZoom());
   try {
     return formatMgrs(forward([c.lng, c.lat], acc));
@@ -490,6 +603,7 @@ export function centerMgrs(map, accuracy) {
 
 export function centerMgrsCompact(map, accuracy) {
   const c = map.getCenter();
+  if (!isGridAvailable(c.lat)) return '';
   const acc = Number.isFinite(accuracy) ? accuracy : precisionForZoom(map.getZoom());
   try {
     return String(forward([c.lng, c.lat], acc) || '').replace(/\s+/g, '').toUpperCase();
@@ -502,16 +616,30 @@ function emptyFC() {
   return { type: 'FeatureCollection', features: [] };
 }
 
+const VIS_LAYERS = [GZD_LINE_LAYER, LINE_LAYER, GZD_LABEL_LAYER, LABEL_LAYER];
+
+function setOverlayVisible(map, on) {
+  const vis = on ? 'visible' : 'none';
+  for (const id of VIS_LAYERS) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis);
+  }
+}
+
 /**
  * @param {import('maplibre-gl').Map} map
- * @param {(info: { interval: number, accuracy: number }) => void} [onUpdate]
+ * @param {(info: { interval: number, accuracy: number, hidden?: boolean, polar?: boolean, labelKey?: string }) => void} [onUpdate]
  */
 export function attachMgrsGrid(map, onUpdate) {
   const apply = () => {
-    const { data, interval, accuracy } = buildGridGeoJSON(map);
+    if (document.body.classList.contains('printing')) {
+      // Freeze the band already on the map; do not rebuild from RF.
+      return;
+    }
+    const { data, interval, accuracy, hidden, polar, labelKey } = buildGridGeoJSON(map);
     const src = map.getSource(SOURCE_ID);
     if (src) src.setData(data);
-    if (onUpdate) onUpdate({ interval, accuracy });
+    setOverlayVisible(map, !hidden);
+    if (onUpdate) onUpdate({ interval, accuracy, hidden, polar, labelKey });
   };
 
   const addLayers = () => {
@@ -523,9 +651,10 @@ export function attachMgrsGrid(map, onUpdate) {
       type: 'line',
       source: SOURCE_ID,
       filter: ['==', ['get', 'level'], 'gzd'],
+      layout: { 'line-cap': 'butt', 'line-join': 'miter' },
       paint: {
-        'line-color': '#8b1e1e',
-        'line-width': 1.6,
+        'line-color': '#8B1E1E',
+        'line-width': 2.5,
         'line-opacity': 0.85,
       },
     });
@@ -539,6 +668,7 @@ export function attachMgrsGrid(map, onUpdate) {
         ['==', ['get', 'kind'], 'line'],
         ['!=', ['get', 'level'], 'gzd'],
       ],
+      layout: { 'line-cap': 'butt', 'line-join': 'miter' },
       paint: {
         'line-color': '#1C1914',
         'line-width': [
@@ -579,9 +709,9 @@ export function attachMgrsGrid(map, onUpdate) {
         'text-padding': 4,
       },
       paint: {
-        'text-color': '#6b1515',
-        'text-halo-color': 'rgba(255,255,248,0.9)',
-        'text-halo-width': 1.6,
+        'text-color': '#8B1E1E',
+        'text-halo-color': 'rgba(244, 239, 228, 0.80)',
+        'text-halo-width': 2,
       },
     });
 
@@ -603,8 +733,8 @@ export function attachMgrsGrid(map, onUpdate) {
       },
       paint: {
         'text-color': '#1C1914',
-        'text-halo-color': 'rgba(255,255,248,0.88)',
-        'text-halo-width': 1.5,
+        'text-halo-color': 'rgba(244, 239, 228, 0.80)',
+        'text-halo-width': 2,
       },
     });
 

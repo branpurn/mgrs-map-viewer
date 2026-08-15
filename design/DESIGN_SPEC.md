@@ -82,7 +82,7 @@ Printer-safe: keep all ink ≥ 0.25" from paper edge. Collar type sits inside th
 Height 0.33". Fill `collar`. Baseline of type 0.12" above neatline. No logo, no tagline.
 
 - Left: `app.name` — 7.5 pt Sans, `ink-muted`, "MGRS Viewer"
-- Right: `print.title` — 11 pt Condensed Bold, `ink` — place name, or the MGRS square if no place. No "Title" label. The title is the value.
+- Right: `print.title` / `lbl.sheetTitle` — 11 pt Condensed Bold, `ink` — place name, or the MGRS square if no place. No "Title" label. **Max 28 characters, truncate with an ellipsis, do not wrap.**
 
 ### Map interior
 
@@ -107,13 +107,14 @@ Internal pad 0.08". Four columns, 0.08" gutters, 0.35 pt vertical rules. USGS ha
 | C Legend | 5.24 – 6.74 | 1.50" | Legend (layers on the sheet only) |
 | D Meta | 6.82 – 8.12 | 1.30" | Printed + Sheet |
 
-Neatline bottom stays **2.28"** (y = 8.72). Map size unchanged. Disclaimer/attribution sit *under* this 2.00" collar, not inside it.
+Neatline bottom stays **2.28"** (y = 8.72). Map size unchanged. Disclaimer/attribution sit *under* this 2.00" collar, not inside it. **Legal never goes in Col A–D.** The long disclaimer is footer-only, 6 pt, with attribution.
 
 #### Col A — Title + spec
 
 ```
 {print.title}              12 pt Condensed Bold   e.g. Arlington VA
                            or 18T WK 871 041 if no place
+                           max 28 chars, truncate, no wrap
 {print.series}             7.5 pt Sans            Topographic
 {print.subtitle}           7 pt Sans, ink-muted   MGRS Viewer
 
@@ -126,7 +127,7 @@ Contour interval {n}             hide row if unknown
 ```
 
 Spec rows 0.16" each, label 0.95" wide, value the rest. Keys: `print.scale`, `print.grid`, `print.gridInterval`, `print.datum`, `print.projection`, `print.contour`.
-Grid-interval display strings (not `1000 m`): `10 km` / `1 km` / `100 m` / `10 m` per §4 band.
+Grid-interval display strings (not `1000 m`): `10 km` / `1 km` / `100 m` from the printed RF principal. No `10 m`.
 
 #### Col B — North + scale bar
 
@@ -173,12 +174,11 @@ Far-right stack, 7 pt. Label `ink-muted` on its own line, value `ink` under it.
 Printed                 print.printed
 15 Aug 2026             local date, no clock
 
-Sheet                   print.sheet
-US Letter
-8.5 × 11 in             wraps to two lines; do not cut the string
+Sheet                   print.sheet / print.sheetValue
+8.5 × 11 in             one line, no wrap (PM lock)
 ```
 
-`print.sheet` value is `US Letter 8.5 × 11 in`. At 7 pt it is ~1.18" — too wide for 1.30" minus pad as a single line, so wrap after "Letter". Copywriter does not need to shorten it.
+`print.sheetValue` is `8.5 × 11 in`. Do not restore `US Letter 8.5 × 11 in`.
 
 ### Footer (y 10.76 → 10.94)
 
@@ -365,7 +365,7 @@ Frame center outside 80°S–84°N (UPS out of scope).
 - Hide MGRS overlay (all levels)
 - Hide live MGRS line in the readout
 - Hide `print.gridInterval` (and the Grid row if there is no grid to spec)
-- Readout: the MGRS line is replaced by one 13 / 400 Sans line, `ink-muted`, same card padding. Key `lbl.gridUnavailable` (exists in strings.json)
+- Readout: the MGRS line is replaced by one 13 / 400 Sans line, `ink-muted`, same card padding. Key `lbl.gridUnavailable` or `chrome.gridUnavailable` (same sentence in strings.json): “MGRS grid unavailable at this latitude.”
 - Print sheet: `lbl.gridUnavailable` as a 7 pt `ink-muted` line under the spec column, or omit the Grid block
 - No toast, no banner, no blocking Print
 

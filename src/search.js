@@ -1,5 +1,5 @@
 import { toPoint } from 'mgrs';
-import { API_BASE, COPY, noPlaceCopy, ambiguousCopy } from './copy.js';
+import { API_BASE, t, noPlaceCopy, ambiguousCopy } from './copy.js';
 
 const DECIMAL = /^(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)$/;
 const HEMI_SUFFIX =
@@ -270,12 +270,12 @@ export function attachSearch(map, opts = {}) {
     showHint('');
 
     if (parsed.type === 'empty') {
-      showNote(COPY.search.error.empty, true);
+      showNote(t('search.error.empty'), true);
       return;
     }
     if (parsed.type === 'bad') {
-      showNote(COPY.search.error.unrecognized, true);
-      showHint(COPY.search.error.unrecognizedHint);
+      showNote(t('search.error.unrecognized'), true);
+      showHint(t('search.error.unrecognizedHint'));
       return;
     }
     if (parsed.type === 'll' || parsed.type === 'mgrs') {
@@ -293,8 +293,8 @@ export function attachSearch(map, opts = {}) {
     try {
       const result = await searchPlace(parsed.q);
       if (result && result.needsApi) {
-        showNote(COPY.search.placeNeedsApi, false);
-        showHint(COPY.search.error.unrecognizedHint);
+        showNote(t('search.error.unrecognizedQuery'), false);
+        showHint(t('search.error.unrecognizedHint'));
         return;
       }
       if (result && result.none) {
@@ -310,17 +310,17 @@ export function attachSearch(map, opts = {}) {
         return;
       }
       if (result && result.error === 'unrecognizedQuery') {
-        showNote(COPY.search.error.unrecognizedQuery, true);
-        showHint(COPY.search.helper);
+        showNote(t('search.error.unrecognizedQuery'), true);
+        showHint(t('search.helper'));
         return;
       }
       if (result && result.error === 'unrecognized') {
-        showNote(COPY.search.error.unrecognized, true);
-        showHint(COPY.search.error.unrecognizedHint);
+        showNote(t('search.error.unrecognized'), true);
+        showHint(t('search.error.unrecognizedHint'));
         return;
       }
       if (result && result.error) {
-        showNote(COPY.search.error.failed, true);
+        showNote(t('search.error.failed'), true);
         return;
       }
       if (result && Number.isFinite(result.lat) && Number.isFinite(result.lon)) {
@@ -331,12 +331,12 @@ export function attachSearch(map, opts = {}) {
         }
         return;
       }
-      showNote(COPY.search.error.failed, true);
+      showNote(t('search.error.failed'), true);
     } catch (err) {
       if (err && err.code === 'offline') {
-        showNote(COPY.search.error.offline, true);
+        showNote(t('search.error.offline'), true);
       } else {
-        showNote(COPY.search.error.failed, true);
+        showNote(t('search.error.failed'), true);
       }
     }
   });

@@ -1,6 +1,6 @@
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { COPY } from './copy.js';
+import { t } from './copy.js';
 
 /** Washington DC / Monument — zoom 12 so OpenTopoMap reads as topo. */
 export const DEFAULT_CENTER = { lon: -77.035, lat: 38.89 };
@@ -14,12 +14,11 @@ export const OT_TILES = [
 
 export const OSM_TILES = ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'];
 
-export const OT_ATTR_SHORT =
-  'Map data © OpenStreetMap contributors, SRTM. Style © OpenTopoMap (CC-BY-SA). Not a USGS map.';
-export const OSM_ATTR_SHORT = 'Map data © OpenStreetMap contributors. Not a USGS map.';
+export const OT_ATTR_SHORT = t('lbl.attribution');
+export const OSM_ATTR_SHORT = t('lbl.attributionOsm');
 
-export const OT_ATTR_PRINT = COPY.print.attributionOtm;
-export const OSM_ATTR_PRINT = COPY.print.attributionOsm;
+export const OT_ATTR_PRINT = t('lbl.attribution');
+export const OSM_ATTR_PRINT = t('lbl.attributionOsm');
 
 const OT_PROBE = 'https://a.tile.opentopomap.org/12/1171/1566.png';
 
@@ -41,8 +40,8 @@ function emitTileSource() {
   if (el) {
     el.textContent =
       activeTileSource === 'opentopomap'
-        ? COPY.chrome.tiles.opentopomap
-        : COPY.chrome.tiles.osm;
+        ? t('chrome.tiles.opentopomap')
+        : t('chrome.tiles.osm');
   }
   const attr = document.getElementById('print-attr');
   if (attr) {
@@ -57,7 +56,8 @@ export function setStatus(text, { retry = false } = {}) {
   if (!status) return;
   if (!text) {
     status.hidden = true;
-    status.firstChild && (status.querySelector('.status-text').textContent = '');
+    const textEl = status.querySelector('.status-text');
+    if (textEl) textEl.textContent = '';
     if (retryBtn) retryBtn.hidden = true;
     return;
   }
@@ -148,20 +148,38 @@ export function attachTileFallback(map) {
       return;
     }
 
-    setStatus(COPY.chrome.tilesFailed, { retry: true });
+    setStatus(t('chrome.tilesFailed'), { retry: true });
   });
 }
 
 export async function retryTiles(map) {
-  setStatus(COPY.chrome.loadingTiles);
+  setStatus(t('chrome.loadingTiles'));
   const id = await detectBaseTiles();
   applyTileSource(map, id);
   try {
     await map.once('idle');
     setStatus('');
   } catch {
-    setStatus(COPY.chrome.tilesFailed, { retry: true });
+    setStatus(t('chrome.tilesFailed'), { retry: true });
   }
+}
+
+function hideChromeForNoWebGL() {
+  const banner = document.getElementById('no-webgl');
+  const chrome = document.getElementById('chrome');
+  const hud = document.getElementById('hud');
+  const frame = document.getElementById('print-frame');
+  const search = document.getElementById('search-form');
+  const printBtn = document.getElementById('print-btn');
+  if (banner) {
+    banner.hidden = false;
+    banner.textContent = t('chrome.noWebGL');
+  }
+  if (chrome) chrome.hidden = true;
+  if (hud) hud.hidden = true;
+  if (frame) frame.hidden = true;
+  if (search) search.hidden = true;
+  if (printBtn) printBtn.hidden = true;
 }
 
 /**
@@ -170,18 +188,11 @@ export async function retryTiles(map) {
  */
 export async function createMap(containerId = 'map') {
   if (typeof maplibregl.supported === 'function' && !maplibregl.supported()) {
-    const banner = document.getElementById('no-webgl');
-    const chrome = document.getElementById('chrome');
-    const hud = document.getElementById('hud');
-    const frame = document.getElementById('print-frame');
-    if (banner) banner.hidden = false;
-    if (chrome) chrome.hidden = true;
-    if (hud) hud.hidden = true;
-    if (frame) frame.hidden = true;
+    hideChromeForNoWebGL();
     return null;
   }
 
-  setStatus(COPY.chrome.loading);
+  setStatus(t('chrome.loading'));
 
   await detectBaseTiles();
 
@@ -191,7 +202,7 @@ export async function createMap(containerId = 'map') {
     center: [DEFAULT_CENTER.lon, DEFAULT_CENTER.lat],
     zoom: DEFAULT_ZOOM,
     minZoom: 2,
-    maxZoom: 18,
+    maxZoom: 22,
     maxPitch: 0,
     dragRotate: false,
     pitchWithRotate: false,
@@ -220,7 +231,7 @@ export async function createMap(containerId = 'map') {
   }
 
   map.on('load', () => {
-    setStatus(COPY.chrome.loadingTiles);
+    setStatus(t('chrome.loadingTiles'));
   });
   map.on('idle', () => {
     const status = document.getElementById('map-status');
