@@ -1,7 +1,12 @@
-Download the desktop app (MGRS Viewer). Double-click to launch.
+Download [MGRS-Viewer-0.1.0-linux.AppImage](https://github.com/branpurn/mgrs-map-viewer/releases/tag/v0.1.0). Double-click. [Install](docs/install.md).
 Self-host for a tunnel: http://localhost:18764
 
-If it does not open: double-click the AppImage (or the app). Allow execute if the OS asks. Tunnel: http://localhost:18764
+If it does not open:
+
+- Double-click MGRS-Viewer-0.1.0-linux.AppImage.
+- Allow execute if the OS asks.
+- Tunnel: http://localhost:18764
+
 
 ![MGRS Viewer](docs/images/hero.png)
 
