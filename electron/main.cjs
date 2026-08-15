@@ -6,10 +6,14 @@ const path = require("path");
 const PORT = 18764;
 // Electron 37 GPU process dies on this box ("Exiting GPU process during initialization").
 // Force software GL so a cold launch still maps a window (BUG-APP-002).
-app.commandLine.appendSwitch("enable-unsafe-swiftshader");
-app.commandLine.appendSwitch("ignore-gpu-blocklist");
-app.commandLine.appendSwitch("disable-gpu-sandbox");
-app.commandLine.appendSwitch("use-angle", "swiftshader");
+// Linux-only: on Mac/Windows the GPU is fine and swiftshader would force slow
+// software WebGL for the whole map.
+if (process.platform === "linux") {
+  app.commandLine.appendSwitch("enable-unsafe-swiftshader");
+  app.commandLine.appendSwitch("ignore-gpu-blocklist");
+  app.commandLine.appendSwitch("disable-gpu-sandbox");
+  app.commandLine.appendSwitch("use-angle", "swiftshader");
+}
 
 const searchApi = require("./search-api.cjs");
 const ROOT = path.join(__dirname, "..", "dist");
