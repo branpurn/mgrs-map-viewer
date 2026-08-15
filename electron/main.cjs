@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const PORT = 18764;
+const searchApi = require("./search-api.cjs");
 const ROOT = path.join(__dirname, "..", "dist");
 
 const MIME = {
@@ -25,6 +26,7 @@ function send(res, code, body, headers) {
 }
 
 const server = http.createServer((req, res) => {
+  if (searchApi.maybeHandle(req, res)) return;
   const url = decodeURIComponent((req.url || "/").split("?")[0]);
   let rel = url === "/" ? "/index.html" : url;
   const file = path.normalize(path.join(ROOT, rel));
