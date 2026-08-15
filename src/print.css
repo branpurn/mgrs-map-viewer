@@ -575,4 +575,11 @@ html.printing #print-map-face {
     object-fit: fill;
     z-index: 4;
   }
+  /* Hide live WebGL when the PNG face is present. Not display:none. */
+  body.has-print-face #map canvas,
+  body.has-print-face #map .maplibregl-canvas {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    display: block !important;
+  }
 }

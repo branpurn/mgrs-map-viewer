@@ -499,7 +499,7 @@ function fillPrintBlock(map) {
 
 function snapshotPrintMapFace(map) {
   const mapEl = document.getElementById('map');
-  if (!mapEl || !map) return;
+  if (!mapEl || !map) return false;
   let url = '';
   try {
     const canvas = typeof map.getCanvas === 'function' ? map.getCanvas() : null;
@@ -509,7 +509,7 @@ function snapshotPrintMapFace(map) {
   } catch {
     url = '';
   }
-  if (!url || url.length < 32) return;
+  if (!url || url.length < 32) return false;
   let img = document.getElementById('print-map-face');
   if (!img) {
     img = document.createElement('img');
@@ -519,11 +519,14 @@ function snapshotPrintMapFace(map) {
     mapEl.appendChild(img);
   }
   img.src = url;
+  document.body.classList.add('has-print-face');
+  return true;
 }
 
 function removePrintMapFace() {
   const img = document.getElementById('print-map-face');
   if (img && img.parentNode) img.parentNode.removeChild(img);
+  document.body.classList.remove('has-print-face');
 }
 
 function attachPrint(map) {
@@ -652,15 +655,12 @@ function attachPrint(map) {
       if (!printArmed) return;
       prepareSync();
       try { map.resize(); } catch { /* print size */ }
-      try {
-        if (typeof map.triggerRepaint === 'function') map.triggerRepaint();
-      } catch { /* */ }
       let printed = false;
-      const snapAndPrint = () => {
+      const snapAndPrint = (force=false) => {
         if (!printArmed || printed) return;
+        const ok = snapshotPrintMapFace(map);
+        if (!ok && !force) return;
         printed = true;
-        snapshotPrintMapFace(map);
-        if (!printArmed) return;
         try {
           REAL_PRINT.call(window);
         } catch {
@@ -673,14 +673,14 @@ function attachPrint(map) {
           restore();
         }
       };
-      // One render/frame so the resized buffer has pixels. Not idle (012).
+      // Paint first (not idle) so toDataURL sees tiles. 012: button-only print.
+      try { map.once('render', () => snapAndPrint(false)); } catch { /* */ }
       try {
-        map.once('render', snapAndPrint);
-      } catch {
-        snapAndPrint();
-        return;
-      }
-      requestAnimationFrame(snapAndPrint);
+        if (typeof map.triggerRepaint === 'function') map.triggerRepaint();
+      } catch { /* */ }
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => snapAndPrint(true));
+      });
     };
     afterLetterLayout(map, fire);
   });

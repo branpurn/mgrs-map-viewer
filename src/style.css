@@ -23,6 +23,36 @@ html, body {
   color: var(--paper);
 }
 
+html,
+body,
+#sheet,
+#map,
+#map canvas,
+.maplibregl-canvas,
+.maplibregl-canvas-container {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  color-adjust: exact;
+}
+#map canvas,
+.maplibregl-canvas {
+  -webkit-print-color-adjust: exact;
+}
+
+#print-map-face {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  z-index: 3;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  color-adjust: exact;
+}
+
 #app {
   position: relative;
   display: flex;
@@ -104,6 +134,12 @@ html, body {
 #map .maplibregl-canvas,
 #map .maplibregl-canvas-container {
   background: #E8D9B8;
+}
+#map canvas,
+#map .maplibregl-canvas {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  color-adjust: exact;
 }
 
 .chrome-tools {
