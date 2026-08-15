@@ -71,15 +71,23 @@ export function setStatus(text, { retry = false } = {}) {
  * Probe OpenTopoMap. Image tiles are used as MapLibre raster textures,
  * so CORS must succeed. Fall back to OSM on failure.
  */
-export async function detectBaseTiles() {
+export async function detectBaseTiles(timeoutMs = 1500) {
+  const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : 0;
   try {
-    const res = await fetch(OT_PROBE, { mode: 'cors', cache: 'no-store' });
+    const res = await fetch(OT_PROBE, {
+      mode: 'cors',
+      cache: 'no-store',
+      signal: ctrl ? ctrl.signal : undefined,
+    });
     if (res.ok) {
       activeTileSource = 'opentopomap';
       return activeTileSource;
     }
   } catch {
-    // network / CORS / blocked
+    // network / CORS / blocked / timeout
+  } finally {
+    if (timer) clearTimeout(timer);
   }
   activeTileSource = 'osm';
   return activeTileSource;
@@ -127,9 +135,24 @@ export function applyTileSource(map, id) {
  * Switch the live map to OSM if OpenTopoMap tiles start failing after load.
  * @param {maplibregl.Map} map
  */
+function tilesHavePainted(map) {
+  try {
+    if (typeof map.areTilesLoaded === 'function' && map.areTilesLoaded()) return true;
+  } catch {
+    // ignore
+  }
+  try {
+    if (typeof map.isSourceLoaded === 'function' && map.isSourceLoaded('basemap')) return true;
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
 export function attachTileFallback(map) {
   let errors = 0;
   let switched = activeTileSource !== 'opentopomap';
+  let osmSettled = switched;
 
   map.on('error', (e) => {
     const src = e?.sourceId || e?.source?.id;
@@ -144,9 +167,19 @@ export function attachTileFallback(map) {
       if (errors < 3) return;
       switched = true;
       applyTileSource(map, 'osm');
+      map.once('idle', () => {
+        osmSettled = true;
+        if (tilesHavePainted(map)) setStatus('');
+        else setStatus(t('chrome.tilesFailed'), { retry: true });
+      });
       return;
     }
 
+    if (!osmSettled) return;
+    if (tilesHavePainted(map)) {
+      setStatus('');
+      return;
+    }
     setStatus(t('chrome.tilesFailed'), { retry: true });
   });
 }
@@ -193,7 +226,10 @@ export async function createMap(containerId = 'map') {
     return null;
   }
 
-  await detectBaseTiles();
+  // Do not block first paint on the tile probe (Electron AppImage was a blank
+  // canvas until a later search forced a camera move). Start on OpenTopoMap;
+  // probe in the background and fall back if it fails.
+  activeTileSource = 'opentopomap';
 
   const map = new maplibregl.Map({
     container: containerId,
@@ -208,6 +244,10 @@ export async function createMap(containerId = 'map') {
     touchPitch: false,
     attributionControl: false,
     hash: false,
+  });
+
+  detectBaseTiles().then((id) => {
+    if (id !== 'opentopomap') applyTileSource(map, id);
   });
 
   map.addControl(
@@ -230,10 +270,27 @@ export async function createMap(containerId = 'map') {
   }
 
   map.on('idle', () => {
-    const retryBtnEl = document.getElementById('tile-retry');
-    const retryVisible = retryBtnEl && !retryBtnEl.hidden;
-    if (!retryVisible) setStatus('');
+    if (tilesHavePainted(map)) setStatus('');
   });
+
+  const kickResize = () => {
+    try {
+      map.resize();
+    } catch {
+      // map not ready
+    }
+  };
+  map.on('load', kickResize);
+  window.addEventListener('resize', kickResize);
+  requestAnimationFrame(() => {
+    kickResize();
+    requestAnimationFrame(kickResize);
+  });
+  const el = map.getContainer();
+  if (typeof ResizeObserver === 'function' && el) {
+    const ro = new ResizeObserver(() => kickResize());
+    ro.observe(el);
+  }
 
   return map;
 }

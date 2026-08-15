@@ -6,6 +6,7 @@ const path = require("path");
 const PORT = 18764;
 const searchApi = require("./search-api.cjs");
 const ROOT = path.join(__dirname, "..", "dist");
+const APP_URL = "http://127.0.0.1:" + PORT + "/";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -48,6 +49,64 @@ const server = http.createServer((req, res) => {
 
 let mainWindow = null;
 
+function waitForLocalApp(tries, cb) {
+  const req = http.get(APP_URL, (res) => {
+    const ct = String(res.headers["content-type"] || "");
+    let body = "";
+    res.on("data", (chunk) => {
+      if (body.length < 8000) body += chunk;
+    });
+    res.on("end", () => {
+      const ok = res.statusCode === 200 && ct.indexOf("text/html") !== -1 && /MGRS Viewer|mgrs-map-viewer/i.test(body);
+      if (ok) cb(true);
+      else if (tries <= 1) cb(false);
+      else setTimeout(() => waitForLocalApp(tries - 1, cb), 50);
+    });
+  });
+  req.on("error", () => {
+    if (tries <= 1) cb(false);
+    else setTimeout(() => waitForLocalApp(tries - 1, cb), 50);
+  });
+  req.setTimeout(400, () => {
+    req.destroy();
+    if (tries <= 1) cb(false);
+    else setTimeout(() => waitForLocalApp(tries - 1, cb), 50);
+  });
+}
+
+function kickMapPaint(win) {
+  if (!win || win.isDestroyed()) return;
+  try {
+    const size = win.getSize();
+    win.setSize(size[0], size[1] + 1);
+    win.setSize(size[0], size[1]);
+  } catch (e) {}
+  win.webContents.executeJavaScript(
+    "window.dispatchEvent(new Event('resize'));"
+  ).catch(function () {});
+}
+
+function showWhenMapReady(win) {
+  const js = [
+    "new Promise(function (resolve) {",
+    "  var start = Date.now();",
+    "  var tick = function () {",
+    "    var c = document.querySelector('#map canvas, .maplibregl-canvas');",
+    "    if (c && c.width > 32 && c.height > 32) { resolve(true); return; }",
+    "    if (Date.now() - start > 6000) { resolve(false); return; }",
+    "    setTimeout(tick, 80);",
+    "  };",
+    "  tick();",
+    "})",
+  ].join("");
+  win.webContents.executeJavaScript(js).catch(function () { return false; }).then(function () {
+    if (win.isDestroyed()) return;
+    kickMapPaint(win);
+    if (!win.isVisible()) win.show();
+    win.focus();
+  });
+}
+
 function createWindow() {
   const ICON = path.join(__dirname, "app-icon-512.png");
   const win = new BrowserWindow({
@@ -57,6 +116,7 @@ function createWindow() {
     minHeight: 540,
     title: "MGRS Viewer",
     icon: ICON,
+    show: false,
     autoHideMenuBar: true,
     webPreferences: { sandbox: true, contextIsolation: true },
   });
@@ -66,10 +126,35 @@ function createWindow() {
     shell.openExternal(url);
     return { action: "deny" };
   });
-  win.loadURL("http://127.0.0.1:" + PORT + "/");
+
+  let tries = 0;
+  const loadApp = function () {
+    win.loadURL(APP_URL);
+  };
+
+  win.webContents.on("did-fail-load", function (_e, _code, _desc, _url, isMain) {
+    if (!isMain) return;
+    if (tries >= 8) return;
+    tries += 1;
+    setTimeout(loadApp, 120);
+  });
+
+  win.webContents.on("did-finish-load", function () {
+    kickMapPaint(win);
+    showWhenMapReady(win);
+  });
+
   mainWindow = win;
   win.on("closed", () => {
     if (mainWindow === win) mainWindow = null;
+  });
+
+  waitForLocalApp(40, function (ok) {
+    if (!ok) {
+      refuseBusyPort();
+      return;
+    }
+    loadApp();
   });
 }
 
@@ -84,21 +169,7 @@ function focusMain() {
 }
 
 function existingAppIsOurs(cb) {
-  const req = http.get("http://127.0.0.1:" + PORT + "/", (res) => {
-    const ct = String(res.headers["content-type"] || "");
-    let body = "";
-    res.on("data", (chunk) => {
-      if (body.length < 8000) body += chunk;
-    });
-    res.on("end", () => {
-      cb(ct.indexOf("text/html") !== -1 && /MGRS Viewer|mgrs-map-viewer/i.test(body));
-    });
-  });
-  req.on("error", () => cb(false));
-  req.setTimeout(1000, () => {
-    req.destroy();
-    cb(false);
-  });
+  waitForLocalApp(4, cb);
 }
 
 function refuseBusyPort() {

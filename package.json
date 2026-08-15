@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 5173 --strictPort",
     "desktop": "electron .",
-    "build:desktop": "vite build --base=./ && electron-builder --linux AppImage"
+    "build:desktop": "VITE_API_BASE= vite build --base=./ && electron-builder --linux AppImage"
   },
   "dependencies": {
     "maplibre-gl": "^5.7.3",
