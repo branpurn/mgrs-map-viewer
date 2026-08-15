@@ -236,11 +236,6 @@ function layoutSheet(map) {
       hud.style.right = '18px';
       hud.style.bottom = '18px';
     }
-    if (dock) {
-      dock.style.left = '18px';
-      dock.style.top = '18px';
-      dock.style.bottom = 'auto';
-    }
     lastSheetBox = 'full';
     if (map) {
       sheetLayoutBusy = true;
@@ -283,11 +278,6 @@ function layoutSheet(map) {
     hud.style.bottom = '18px';
     hud.style.left = 'auto';
     hud.style.top = 'auto';
-  }
-  if (dock) {
-    dock.style.left = '18px';
-    dock.style.top = '18px';
-    dock.style.bottom = 'auto';
   }
   if (map) {
     sheetLayoutBusy = true;
@@ -355,10 +345,8 @@ function fillPrintBlock(map) {
   const view = computeViewScale(map);
   const scale = computePrintScale(map);
   const printing = document.body.classList.contains('printing');
-  // Printed collar must match the desk HUD. After Letter resize the
-  // live mpp is stale and was leaking 1:12 000 / 100 m.
-  const rf = printing ? 24000 : (view.rf || scale.rf || 24000);
-  const text = printing ? formatScaleRatio(24000) : (view.text || scale.text || formatScaleRatio(24000));
+  const rf = printing ? 24000 : (view.rf || 24000);
+  const text = printing ? formatScaleRatio(24000) : (view.text || formatScaleRatio(rf));
   state.lastScaleText = text;
   const rfBand = intervalForPrintRf(rf);
   const square = centerMgrs(map, rfBand.accuracy);

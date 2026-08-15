@@ -291,10 +291,10 @@ function lineFeature(coords, level) {
   };
 }
 
-function pointFeature(lon, lat, label, level) {
+function pointFeature(lon, lat, label, level, extra = {}) {
   return {
     type: 'Feature',
-    properties: { kind: 'label', label, level },
+    properties: { kind: 'label', label, level, ...extra },
     geometry: { type: 'Point', coordinates: [lon, lat] },
   };
 }
@@ -603,13 +603,18 @@ function buildCornerLabels(map) {
   const w = el.clientWidth;
   const h = el.clientHeight;
   if (w < 8 || h < 8) return [];
-  const pad = 18;
-  const pts = [[pad, pad], [w - pad, pad], [pad, h - pad], [w - pad, h - pad]];
+  const pad = 10;
+  const pts = [
+    [pad, pad, 'top-left'],
+    [w - pad, pad, 'top-right'],
+    [pad, h - pad, 'bottom-left'],
+    [w - pad, h - pad, 'bottom-right'],
+  ];
   const out = [];
-  for (const [x, y] of pts) {
+  for (const [x, y, anchor] of pts) {
     const ll = map.unproject([x, y]);
     const label = gzdSquareLabel(ll.lng, ll.lat);
-    if (label) out.push(pointFeature(ll.lng, ll.lat, label, 'corner'));
+    if (label) out.push(pointFeature(ll.lng, ll.lat, label, 'corner', { anchor }));
   }
   return out;
 }
@@ -932,7 +937,9 @@ export function attachMgrsGrid(map, onUpdate) {
           'text-field': ['get', 'label'],
           'text-size': 11,
           'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-anchor': ['get', 'anchor'],
           'text-allow-overlap': true,
+          'text-ignore-placement': true,
           'text-padding': 2,
         },
         paint: {

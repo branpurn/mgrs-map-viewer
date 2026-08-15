@@ -102,12 +102,22 @@ html, body {
 }
 
 #zoom-dock {
-  position: absolute;
-  left: 18px;
-  top: 18px;
-  bottom: auto;
-  z-index: 20;
+  position: relative;
+  left: auto;
+  top: auto;
+  bottom: auto !important;
+  flex: 0 0 auto;
+  z-index: 4;
   pointer-events: auto;
+}
+#chrome #zoom-dock .maplibregl-ctrl-group {
+  background: var(--paper);
+  border: 1px solid var(--ink);
+}
+#map .maplibregl-ctrl,
+#map .maplibregl-ctrl-top-left,
+#map .maplibregl-ctrl-bottom-left {
+  display: none !important;
 }
 
 .sr-only {
