@@ -1,6 +1,6 @@
 :root {
-  --paper: #FFFFFF;
-  --collar: #FFFFFF;
+  --paper: #F4EFE4;
+  --collar: #EDE6D6;
   --neatline: #000000;
   --ink: #1C1914;
   --ink-muted: #4A4036;
@@ -130,6 +130,7 @@ body:not(.printing) #print-upper {
   transform: none !important;
 }
 body:not(.printing) #print-title-upper,
+body:not(.printing) #print-date-upper,
 body:not(.printing) #print-upper .print-product {
   position: absolute !important;
   top: auto !important;
@@ -137,6 +138,11 @@ body:not(.printing) #print-upper .print-product {
   transform: none !important;
 }
 body:not(.printing) #print-title-upper {
+  left: 19% !important;
+  right: 19% !important;
+  text-align: center !important;
+}
+body:not(.printing) #print-date-upper {
   right: 0 !important;
   left: auto !important;
 }

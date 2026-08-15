@@ -71,8 +71,9 @@
           <div id="print-ticks" aria-hidden="true"></div>
           <div id="print-sheet" class="print-sheet" aria-hidden="true">
             <div id="print-upper" class="print-upper-collar">
-              <span id="print-product" class="print-product" data-i18n="app.name">MGRS Viewer</span>
+              <span id="print-product" class="print-product" data-i18n="lbl.product">MGRS MAP VIEWER</span>
               <h1 id="print-title-upper" class="print-title-upper"></h1>
+              <span id="print-date-upper" class="print-date-upper"></span>
             </div>
             <div id="print-footer" class="print-lower-collar">
               <div class="print-col print-col-a">
@@ -92,57 +93,33 @@
                   </div>
                   <div>
                     <dt id="lbl-print-datum" data-i18n="print.datum"></dt>
-                    <dd id="print-datum-value">NAD 83</dd>
+                    <dd id="print-datum-value" data-i18n="print.datumValue">WGS 84</dd>
                   </div>
                   <div>
                     <dt id="lbl-print-projection" data-i18n="print.projection"></dt>
-                    <dd id="print-projection-value" data-i18n="print.projectionValue"></dd>
+                    <dd id="print-projection-value"></dd>
+                  </div>
+                  <div id="print-gzd-row">
+                    <dt id="lbl-print-gzd" data-i18n="print.gridZone"></dt>
+                    <dd id="print-gzd" class="mono"></dd>
                   </div>
                 </dl>
-                <div class="print-ident-extra">
-                  <p class="print-k" id="lbl-print-gzd">GRID ZONE</p>
-                  <p class="print-v mono" id="print-gzd"></p>
-                  <p class="print-k" id="lbl-print-example">EXAMPLE</p>
+                <div class="print-ident-extra" id="print-example-block">
+                  <p class="print-k" id="lbl-print-example" data-i18n="print.example"></p>
                   <p class="print-v" id="print-example-place"></p>
                   <p class="print-v mono bold" id="print-example-grid"></p>
-                  <p class="print-note" id="print-example-note"></p>
+                  <p class="print-note" id="print-example-note" data-i18n="print.example.note"></p>
                 </div>
                 <p class="print-series" id="print-series" data-i18n="print.series"></p>
                 <p class="print-subtitle" id="print-subtitle" data-i18n="print.subtitle"></p>
               </div>
               <div class="print-col print-col-b">
-                <p class="print-north-label" id="lbl-print-north">G–M</p>
-                <svg id="print-gm" class="print-gm" viewBox="0 0 170 72" width="1.70in" height="0.62in" aria-hidden="true">
-                  <line x1="85" y1="68" x2="85" y2="8" stroke="#1C1914" stroke-width="1.2"/>
-                  <polygon points="85,4 82,12 88,12" fill="#1C1914"/>
-                  <text id="lbl-north-grid" x="90" y="14" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914"></text>
-                  <line x1="85" y1="68" x2="93" y2="10" stroke="#1C1914" stroke-width="1"/>
-                  <text x="96" y="22" font-size="9" fill="#1C1914">★</text>
-                  <text id="lbl-north-true" x="104" y="24" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914"></text>
-                  <line x1="85" y1="68" x2="62" y2="12" stroke="#1C1914" stroke-width="1.2"/>
-                  <polygon points="62,12 58,20 68,16" fill="#1C1914"/>
-                  <text id="lbl-north-magnetic" x="40" y="18" font-size="8" font-family="IBM Plex Sans, sans-serif" fill="#1C1914"></text>
-                </svg>
-                <p class="print-gm-fig mono" id="print-gm-angle">G–M 9° 30′ W</p>
-                <p class="print-gm-fig mono" id="print-gm-conv">convergence 1° 17′</p>
-                <p class="print-note" id="print-gm-note"></p>
+                <p class="print-col-h" id="lbl-print-scale-bar" data-i18n="print.scaleBar"></p>
                 <div id="print-scale-bar" class="print-scale-bar">
                   <div class="psb-track" id="print-scale-track"></div>
                   <div class="psb-labels"><span>0</span><span id="print-scale-end"></span></div>
                 </div>
-              </div>
-              <div class="print-col print-col-c">
-                <p class="legend-h" id="lbl-print-legend" data-i18n="print.legend"></p>
-                <ul>
-                  <li><i class="swatch roads"></i><span id="leg-roads" data-i18n="print.legend.roads"></span></li>
-                  <li><i class="swatch water"></i><span id="leg-water" data-i18n="print.legend.water"></span></li>
-                  <li><i class="swatch contours"></i><span id="leg-contours" data-i18n="print.legend.contours"></span></li>
-                  <li><i class="swatch grid"></i><span id="leg-grid" data-i18n="print.legend.grid"></span></li>
-                  <li><i class="swatch places"></i><span id="leg-places" data-i18n="print.legend.places"></span></li>
-                  <li><i class="swatch relief"></i><span id="leg-relief" data-i18n="print.legend.relief"></span></li>
-                </ul>
-              </div>
-              <div class="print-col print-col-d">
+                <p class="print-rf" id="print-scale-center"></p>
                 <div class="print-meta-block">
                   <span class="meta-lbl" id="lbl-print-printed" data-i18n="print.printed"></span>
                   <strong id="print-date"></strong>
@@ -151,6 +128,14 @@
                   <span class="meta-lbl" id="lbl-print-sheet" data-i18n="print.sheet"></span>
                   <strong id="print-sheet-value" class="sheet-value" data-i18n="print.sheetValue"></strong>
                 </div>
+              </div>
+              <div class="print-col print-col-c">
+                <p class="print-north-label" id="lbl-print-north" data-i18n="print.north"></p>
+                <svg id="print-north-arrow" class="print-north-arrow" viewBox="0 0 40 56" aria-hidden="true">
+                  <polygon points="20,2 24,22 20,18 16,22" fill="#1C1914"/>
+                  <line x1="20" y1="18" x2="20" y2="54" stroke="#1C1914" stroke-width="1.6"/>
+                </svg>
+                <p class="print-true-north" id="print-true-north" data-i18n="print.trueNorth"></p>
               </div>
             </div>
             <footer id="print-legal" class="print-legal">

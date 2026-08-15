@@ -4,7 +4,7 @@ html, body, #sheet, #map, canvas, .maplibregl-canvas, #map canvas, .maplibregl-c
   color-adjust: exact !important;
 }
 
-html.printing, html.printing body { background: #FFFFFF !important; }
+html.printing, html.printing body { background: var(--paper) !important; }
 @page {
   size: 8.5in 11in;
   margin: 0;
@@ -24,7 +24,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   max-height: none;
   bottom: calc(100% * 10.42 / 11);
   padding: 0;
-  background: #FFFFFF;
+  background: var(--collar);
   display: block;
   box-sizing: border-box;
   overflow: hidden;
@@ -47,8 +47,8 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-title-upper {
   position: absolute;
-  right: 0;
-  left: auto;
+  left: 19%;
+  right: 19%;
   top: auto;
   bottom: calc(100% * 0.12 / 0.58);
   margin: 0;
@@ -61,8 +61,21 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 61%;
+  text-align: center;
+  max-width: none;
   max-height: 0.20in;
+}
+
+#print-date-upper {
+  position: absolute;
+  right: 0;
+  left: auto;
+  top: auto;
+  bottom: calc(100% * 0.12 / 0.58);
+  font-size: 7.5pt;
+  color: #4A4036;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 #print-footer {
@@ -72,7 +85,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
   height: calc(100% * 2.00 / 11);
-  background: #FFFFFF;
+  background: var(--collar);
   box-sizing: border-box;
   border-top: 0.75pt solid #000000;
   border-bottom: 0.35pt solid #000000;
@@ -88,29 +101,24 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   min-width: 0;
 }
 
-#print-footer .print-col-a { width: 31.008%; flex: 0 0 31.008%; overflow: hidden; }
+#print-footer .print-col-a { width: 42%; flex: 0 0 42%; overflow: hidden; }
 #print-footer .print-col-b {
-  width: 24.547%;
-  flex: 0 0 24.547%;
-  border-left: 0.35pt solid #000000;
+  width: 32%;
+  flex: 0 0 32%;
+  border-left: 0.35pt solid #1C1914;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
 }
 #print-footer .print-col-c {
-  width: 18.088%;
-  flex: 0 0 18.088%;
-  border-left: 0.35pt solid #000000;
-}
-#print-footer .print-col-d {
   width: auto;
   flex: 1 1 0;
   min-width: 0;
-  overflow: visible;
-  border-left: 0.35pt solid #000000;
-  font-size: 0.88cqh;
-  line-height: 1.2;
+  border-left: 0.35pt solid #1C1914;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 #print-title {
@@ -161,13 +169,19 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   line-height: 1.2;
 }
 
-.print-north-arrow { width: 0.28in; height: 0.42in; }
-.print-true-north { margin: 1px 0 8px; font-size: 6.5pt; color: #4A4036; }
+.print-north-arrow { width: 0.28in; height: 0.42in; display: block; margin: 0.08in 0 0.04in; }
+.print-true-north { margin: 1px 0 0; font-size: 6.5pt; color: #4A4036; }
+.print-rf {
+  margin: 0.08in 0 0.12in;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9pt;
+  color: #1C1914;
+}
 
 #print-scale-bar,
 .print-scale-bar {
-  width: 21.65%;
-  max-width: 21.65%;
+  width: 1.84in;
+  max-width: 1.84in;
 }
 
 .psb-track {
@@ -180,7 +194,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 .psb-track i:nth-child(odd),
 .psb-track .seg-ink { background: #000000; }
 .psb-track i:nth-child(even),
-.psb-track .seg-paper { background: #FFFFFF; }
+.psb-track .seg-paper { background: var(--paper); }
 
 .psb-labels {
   display: flex;
@@ -283,7 +297,7 @@ body.printing #app {
   height: 11in !important;
   max-width: 8.5in;
   max-height: 11in;
-  background: #FFFFFF !important;
+  background: var(--paper) !important;
   color: #1C1914;
   overflow: hidden !important;
   margin: 0 !important;
@@ -341,7 +355,7 @@ body.printing #map {
 
 @media print {
   html, body, #app {
-    background: #FFFFFF !important;
+    background: var(--paper) !important;
     color: #1C1914;
     width: 8.5in !important;
     height: 11in !important;
@@ -404,7 +418,7 @@ body.printing #map {
   }
 
   #desk {
-    background: #FFFFFF !important;
+    background: var(--paper) !important;
     overflow: visible !important;
     position: static !important;
   }
@@ -469,7 +483,7 @@ body.printing #map {
 }
 
 body.printing #print-ticks { display: block !important; z-index: 21; }
-body.printing #desk { background: #FFFFFF !important; overflow: visible !important; position: static !important; }
+body.printing #desk { background: var(--paper) !important; overflow: visible !important; position: static !important; }
 body.printing #sheet {
   position: absolute !important;
   top: 0 !important;
@@ -494,8 +508,8 @@ body.printing #sheet {
   color: #1C1914;
 }
 #print-legal { overflow: hidden; }
-#print-disclaimer { color: #1C1914; white-space: nowrap; font-size: 0.70cqh; }
-#print-attr { display: none; }
+#print-disclaimer { color: #4A4036; white-space: nowrap; font-size: 6pt; }
+#print-attr { display: block; color: #4A4036; white-space: nowrap; font-size: 6pt; margin: 0; }
 
 /* #map / #sheet stay painted. Do not transform:scale() #sheet (blanks WebGL).
    Never hide #map, #sheet, or #print-map-face. */

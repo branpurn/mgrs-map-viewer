@@ -13,6 +13,7 @@ import {
   precisionForZoom,
   isGridAvailable,
   setPrintInterval,
+  utmZone,
 } from './mgrs-grid.js';
 import {
   attachScaleReadout,
@@ -43,7 +44,7 @@ const state = {
   lastScaleText: '',
   lastMgrs: '',
   lastLabel: 'Washington, District of Columbia',
-  exampleLocked: true,
+  exampleLocked: false,
   polar: false,
   gridHidden: false,
 };
@@ -66,13 +67,19 @@ function formatPrintedDate() {
 
 function datumValue() {
   const v = t('print.datumValue');
-  if (!v || v === 'print.datumValue' || /WGS\s*84/i.test(v)) return 'NAD 83';
-  return v;
+  return (!v || v === 'print.datumValue') ? 'WGS 84' : v;
 }
 
 function writeDatum() {
-  // Every #print-datum-value write is t('print.datumValue') NAD 83.
   setText('print-datum-value', datumValue());
+}
+
+function utmZoneLabel(map) {
+  if (!map || typeof map.getCenter !== 'function') return t('print.projectionValue');
+  const c = map.getCenter();
+  const z = utmZone(c.lng);
+  const hemi = c.lat >= 0 ? 'N' : 'S';
+  return `UTM ${z}${hemi}`;
 }
 
 function isoDate(d = new Date()) {
@@ -113,39 +120,10 @@ function setText(id, value) {
   const el = document.getElementById(id);
   if (!el) return;
   if (id === 'print-datum-value') {
-    const v = t('print.datumValue');
-    el.textContent = (!v || v === 'print.datumValue' || /WGS\s*84/i.test(String(v))) ? 'NAD 83' : String(v);
-    return;
-  }
-  if (id === 'print-gm-angle') {
-    el.textContent = GM_ANGLE();
-    return;
-  }
-  if (id === 'print-gm-conv') {
-    el.textContent = GM_CONV();
+    el.textContent = datumValue();
     return;
   }
   el.textContent = value == null ? '' : String(value);
-}
-
-const LOCKED_GM_ANGLE = 'G–M 9° 30′ W';
-const LOCKED_GM_CONV = 'convergence 1° 17′';
-
-function GM_ANGLE() {
-  // Jefferson Pier lock. Never write a magnetic-model / computed declination.
-  const v = t('print.north.gmAngle');
-  if (!v || v === 'print.north.gmAngle' || /0°\s*38|9°\s*3[68]|1°\s*47/.test(v)) {
-    return LOCKED_GM_ANGLE;
-  }
-  return LOCKED_GM_ANGLE;
-}
-
-function GM_CONV() {
-  const v = t('print.north.convergence');
-  if (!v || v === 'print.north.convergence' || /1°\s*47/.test(v)) {
-    return LOCKED_GM_CONV;
-  }
-  return LOCKED_GM_CONV;
 }
 
 function applyChromeCopy() {
@@ -194,31 +172,18 @@ function applyChromeCopy() {
   writeDatum();
   setText('lbl-print-projection', t('print.projection'));
   setText('print-projection-value', t('print.projectionValue'));
-  setText('lbl-print-north', t('print.north.gm'));
-  setText('print-gm-note', t('print.north.note'));
+  setText('lbl-print-north', t('print.north'));
+  setText('print-true-north', t('print.trueNorth'));
   setText('lbl-print-gzd', t('print.gridZone'));
   setText('lbl-print-example', t('print.example'));
-  setText('print-example-place', t('print.example.place'));
-  setText('print-example-grid', t('print.example.grid'));
   setText('print-example-note', t('print.example.note'));
-  setText('lbl-print-legend', t('print.legend'));
-  setText('leg-roads', t('print.legend.roads'));
-  setText('leg-water', t('print.legend.water'));
-  setText('leg-contours', t('print.legend.contours'));
-  setText('leg-grid', t('print.legend.grid'));
-  setText('leg-places', t('print.legend.places'));
-  setText('leg-relief', t('print.legend.relief'));
   setText('lbl-print-printed', t('print.printed'));
   setText('print-date', formatPrintedDate());
+  setText('print-date-upper', formatPrintedDate());
   setText('lbl-print-sheet', t('print.sheet'));
   setText('print-sheet-value', t('print.sheetValue'));
-  setText('print-disclaimer', `${t('app.name')} · ${t('print.attribution.notUsgs')}`);
+  setText('print-disclaimer', t('print.disclaimer'));
   setText('print-attr', '');
-  setText('lbl-north-grid', t('print.north.grid'));
-  setText('lbl-north-true', t('print.north.true'));
-  setText('lbl-north-magnetic', t('print.north.magnetic'));
-  setText('print-gm-angle', GM_ANGLE());
-  setText('print-gm-conv', GM_CONV());
   setText('grid-unavailable', t('lbl.gridUnavailable'));
   const mgrsEl = document.getElementById('center-mgrs');
   if (mgrsEl) mgrsEl.setAttribute('aria-label', t('chrome.mgrsAria'));
@@ -597,26 +562,28 @@ function fillPrintBlock(map) {
   const intervalRow = document.getElementById('print-grid-interval-row');
   if (intervalRow) intervalRow.hidden = !!state.polar;
   setText('print-date', formatPrintedDate());
-  setText('print-attr', '');
-  setText('print-product', t('app.name'));
+  setText('print-date-upper', formatPrintedDate());
+  setText('print-attr', attrPrint());
+  setText('print-product', t('lbl.product'));
   setText('print-sheet-value', t('print.sheetValue'));
-  setText('print-disclaimer', `${t('app.name')} · ${t('print.attribution.notUsgs')}`);
+  setText('print-disclaimer', t('print.disclaimer'));
   const gzd = String(square || '').trim().split(/\s+/)[0] || '';
   setText('print-gzd', gzd ? t('print.gridZoneValue', { gzd }) : '');
-  setText('print-gm-angle', GM_ANGLE());
-  setText('print-gm-conv', GM_CONV());
-  if (state.exampleLocked) {
-    setText('print-example-place', t('print.example.place'));
-    setText('print-example-grid', t('print.example.grid'));
+  setText('print-projection-value', utmZoneLabel(map));
+  const example = centerMgrs(map, 3);
+  const exampleBlock = document.getElementById('print-example-block');
+  if (state.polar || !example) {
+    if (exampleBlock) exampleBlock.hidden = true;
+    setText('print-example-place', '');
+    setText('print-example-grid', '');
   } else {
+    if (exampleBlock) exampleBlock.hidden = false;
     setText('print-example-place', title);
-    setText('print-example-grid', square || '');
+    setText('print-example-grid', example);
   }
+  setText('print-scale-center', text);
   renderPrintScaleBar(document.getElementById('print-scale-bar'), scale.metersPerPixel, rf);
   writeDatum();
-  setText('print-date', formatPrintedDate());
-  setText('print-gm-angle', GM_ANGLE());
-  setText('print-gm-conv', GM_CONV());
   pinCollarTitle();
   return rfBand;
 }

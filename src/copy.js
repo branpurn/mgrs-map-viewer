@@ -20,7 +20,9 @@ const FALLBACKS = {
   'print.north.magnetic': 'MN',
   'print.north.note': 'Grid, magnetic, and true north at center of sheet.',
   'print.datum': 'DATUM',
-  'print.datumValue': 'NAD 83',
+  'print.datumValue': 'WGS 84',
+  'print.trueNorth': 'True north',
+  'print.north': 'North',
   'print.grid': 'GRID',
   'print.gridValue': 'MGRS',
   'print.gridInterval': 'Grid interval',
@@ -66,7 +68,6 @@ export function t(key, vars = {}) {
   } else {
     template = key;
   }
-  if (key === 'print.datumValue' && (!template || /WGS\s*84/i.test(template))) template = 'NAD 83';
   return String(template).replace(/\{(\w+)\}/g, (match, name) =>
     Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : match,
   );
@@ -116,11 +117,6 @@ export function formatScaleRatio(n) {
 export function applyStaticCopy(root = document) {
   root.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
-    if (el.id === 'print-datum-value' || key === 'print.datumValue') {
-      const v = t('print.datumValue');
-      el.textContent = (!v || v === 'print.datumValue' || /WGS\s*84/i.test(v)) ? 'NAD 83' : v;
-      return;
-    }
     el.textContent = t(key);
   });
   root.querySelectorAll('[data-i18n-html]').forEach((el) => {
