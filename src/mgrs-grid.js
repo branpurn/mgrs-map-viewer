@@ -177,7 +177,7 @@ export function intervalForRf(rf) {
       levels: ['gzd', '100km', '10km'],
     };
   }
-  if (n >= 25000) {
+  if (n >= 20000) {
     return {
       meters: 1000,
       accuracy: 3,
@@ -727,7 +727,8 @@ const VIS_LAYERS = [
 ];
 
 const INK = '#000000';
-const GZD = '#000000';
+const GZD_LINE = '#000000';
+const GZD_LABEL = '#8B1E1E';
 const PAPER = '#FFFFFF';
 
 function setOverlayVisible(map, on) {
@@ -796,7 +797,7 @@ export function attachMgrsGrid(map, onUpdate) {
       map.setPaintProperty(LINE_CASE_LAYER, 'line-opacity', printing ? 1 : 0.9);
     }
     if (map.getLayer(GZD_LINE_LAYER)) {
-      map.setPaintProperty(GZD_LINE_LAYER, 'line-color', GZD);
+      map.setPaintProperty(GZD_LINE_LAYER, 'line-color', GZD_LINE);
       map.setPaintProperty(GZD_LINE_LAYER, 'line-width', 2.5);
       map.setPaintProperty(GZD_LINE_LAYER, 'line-opacity', 0.85);
     }
@@ -809,11 +810,11 @@ export function attachMgrsGrid(map, onUpdate) {
       );
     }
     if (map.getLayer(GZD_LABEL_LAYER)) {
-      map.setPaintProperty(GZD_LABEL_LAYER, 'text-color', GZD);
+      map.setPaintProperty(GZD_LABEL_LAYER, 'text-color', GZD_LABEL);
       map.setPaintProperty(GZD_LABEL_LAYER, 'text-halo-color', PAPER);
     }
     if (map.getLayer(CORNER_LABEL_LAYER)) {
-      map.setPaintProperty(CORNER_LABEL_LAYER, 'text-color', GZD);
+      map.setPaintProperty(CORNER_LABEL_LAYER, 'text-color', GZD_LABEL);
       map.setPaintProperty(CORNER_LABEL_LAYER, 'text-halo-color', PAPER);
     }
     if (map.getLayer(LABEL_LAYER)) {
@@ -879,7 +880,7 @@ export function attachMgrsGrid(map, onUpdate) {
         filter: ['==', ['get', 'level'], 'gzd'],
         layout: { 'line-cap': 'butt', 'line-join': 'miter' },
         paint: {
-          'line-color': GZD,
+          'line-color': GZD_LINE,
           'line-width': 2.5,
           'line-opacity': 0.85,
         },
@@ -925,7 +926,7 @@ export function attachMgrsGrid(map, onUpdate) {
           'text-padding': 2,
         },
         paint: {
-          'text-color': GZD,
+          'text-color': GZD_LABEL,
           'text-halo-color': PAPER,
           'text-halo-width': 3.5,
         },
@@ -963,7 +964,7 @@ export function attachMgrsGrid(map, onUpdate) {
           'text-padding': 2,
         },
         paint: {
-          'text-color': GZD,
+          'text-color': GZD_LABEL,
           'text-halo-color': PAPER,
           'text-halo-width': 3.5,
         },

@@ -63,8 +63,10 @@ function rebuild(map, host) {
     tick(host, { left: x, top: `${((TOP - OUT) / 11) * 100}%`, width: '0.6pt', height: `${((OUT + INN) / 11) * 100}%` });
     tick(host, { left: x, top: `${((TOP + MAP_H - INN) / 11) * 100}%`, width: '0.6pt', height: `${((OUT + INN) / 11) * 100}%` });
     const text = edgeLabel(e, step);
-    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP - 0.11) / 11) * 100}%` });
-    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + MAP_H + OUT + 0.02) / 11) * 100}%` });
+    // Inside the map face — top labels clear the upper title, bottom labels
+    // clear Col A title / tick 23 (DESIGN_SPEC §2: 0.14" band inside neatline).
+    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + 0.03) / 11) * 100}%` });
+    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + MAP_H - 0.13) / 11) * 100}%` });
   }
 
   for (let n = snapUp(minN, step); n <= maxN; n += step) {

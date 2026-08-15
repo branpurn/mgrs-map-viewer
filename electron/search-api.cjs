@@ -1,4 +1,17 @@
 "use strict";
+/**
+ * Locked search contract (wave 1). No auth, CORS *.
+ * GET /api/health -> 200 {ok:true, service:"mgrs-search"}
+ * GET /api/search?q= always results[]. Root mirrors first hit.
+ * Empty/whitespace q -> 200 {ok:true, query, results:[]}. Never 400/404.
+ * Detect: MGRS/USNG, decimal lat/lon, DMS, then Nominatim (limit 5).
+ * Hit {label,lat,lon,kind,zoom,mgrs,precision,bbox?}; kind/type place|mgrs|usng|latlon.
+ * Odd/undecodable MGRS -> 400 unrecognized_query. Out-of-range lat/lon -> 400 invalid_coordinates.
+ * No lon/lat swap. Unknown place -> 200 results:[]. Nominatim fail -> 502 upstream.
+ * Unknown GET /api/* -> 404 not_found.
+ * GET /api/convert?lat=&lon=&precision=5 -> 200 {ok,lat,lon,mgrs,label,precision,zoom,type:"latlon"}.
+ * Missing/empty lat or lon, or precision outside 0-5 -> 400 invalid_coordinates.
+ */
 const mgrs = require("mgrs");
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 const UA = "MGRS-Map-Viewer/0.1 (contact: purnell-dev mgrs-map-viewer)";
@@ -190,7 +203,10 @@ function parseLocal(q) {
   const text = normalize(q).trim();
   const compact = text.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
   const mgrsMatch = compact.match(MGRS_LOOSE);
-  if (mgrsMatch && mgrsMatch[4].length % 2 === 0) {
+  if (mgrsMatch) {
+    if (mgrsMatch[4].length % 2 !== 0) {
+      return { error: "unrecognized_query", message: "MGRS easting and northing must be an even number of digits" };
+    }
     try {
       const [lon, lat] = mgrs.toPoint(compact);
       if (inRange(lat, lon)) {
@@ -203,8 +219,9 @@ function parseLocal(q) {
           zoom: ZOOM_MGRS[precision] != null ? ZOOM_MGRS[precision] : 13,
         });
       }
+      return { error: "invalid_coordinates", message: "MGRS converted out of range" };
     } catch (e) {
-      return { error: "invalid_coordinates", message: "Could not decode MGRS grid " + compact };
+      return { error: "unrecognized_query", message: "Could not decode MGRS grid " + compact };
     }
   }
 
@@ -284,14 +301,8 @@ function parseLocal(q) {
 
   m = text.match(DECIMAL);
   if (m) {
-    const a = parseFloat(m[1]);
-    const b = parseFloat(m[2]);
-    let lat = a;
-    let lon = b;
-    if (!inRange(lat, lon) && inRange(b, a)) {
-      lat = b;
-      lon = a;
-    }
+    const lat = parseFloat(m[1]);
+    const lon = parseFloat(m[2]);
     if (inRange(lat, lon)) {
       return coordHit("latlon", lat, lon, {
         label: lat.toFixed(Math.max(5, decimalPlaces(m[1]))) + ", " + lon.toFixed(Math.max(5, decimalPlaces(m[2]))),
@@ -349,6 +360,51 @@ function handleSearch(req, res, url) {
     });
 }
 
+function handleConvert(req, res, url) {
+  const latRaw = url.searchParams.get("lat");
+  const lonRaw = url.searchParams.get("lon");
+  const precRaw = url.searchParams.get("precision");
+
+  if (latRaw == null || lonRaw == null || String(latRaw).trim() === "" || String(lonRaw).trim() === "") {
+    json(res, 400, { ok: false, error: "invalid_coordinates", results: [] });
+    return;
+  }
+
+  const lat = parseFloat(latRaw);
+  const lon = parseFloat(lonRaw);
+  let precision = 5;
+  if (precRaw != null && String(precRaw).trim() !== "") {
+    const p = Number(precRaw);
+    if (!Number.isInteger(p) || p < 0 || p > 5) {
+      json(res, 400, { ok: false, error: "invalid_coordinates", results: [] });
+      return;
+    }
+    precision = p;
+  }
+
+  if (!inRange(lat, lon)) {
+    json(res, 400, { ok: false, error: "invalid_coordinates", results: [] });
+    return;
+  }
+
+  const encoded = encodeMgrs(lat, lon, precision);
+  if (!encoded) {
+    json(res, 400, { ok: false, error: "invalid_coordinates", results: [] });
+    return;
+  }
+
+  json(res, 200, {
+    ok: true,
+    lat,
+    lon,
+    mgrs: encoded,
+    label: encoded,
+    precision,
+    zoom: ZOOM_MGRS[precision] != null ? ZOOM_MGRS[precision] : 13,
+    type: "latlon",
+  });
+}
+
 function maybeHandle(req, res) {
   const url = new URL(req.url || "/", "http://127.0.0.1");
   const path = url.pathname.replace(/\/$/, "") || "/";
@@ -365,6 +421,16 @@ function maybeHandle(req, res) {
 
   if (path === "/api/search" && req.method === "GET") {
     handleSearch(req, res, url);
+    return true;
+  }
+
+  if (path === "/api/convert" && req.method === "GET") {
+    handleConvert(req, res, url);
+    return true;
+  }
+
+  if (path.startsWith("/api/") && req.method === "GET") {
+    json(res, 404, { ok: false, error: "not_found", message: "Unknown API route", results: [] });
     return true;
   }
 

@@ -1,6 +1,7 @@
 import { t, applyStaticCopy, formatScaleRatio } from './copy.js';
 import {
   createMap,
+  dockZoom,
   activeTileSource,
   attrPrint,
 } from './map.js';
@@ -12,7 +13,6 @@ import {
   precisionForZoom,
   isGridAvailable,
   setPrintInterval,
-  utmZone,
 } from './mgrs-grid.js';
 import {
   attachScaleReadout,
@@ -93,6 +93,9 @@ function setText(id, value) {
   if (el) el.textContent = value == null ? '' : String(value);
 }
 
+const GM_ANGLE = () => `${t('print.north.gm')} 9° 30′ W`;
+const GM_CONV = 'convergence 1° 17′';
+
 function applyChromeCopy() {
   applyStaticCopy(document);
   setText('app-name', t('app.name'));
@@ -162,43 +165,10 @@ function applyChromeCopy() {
   setText('lbl-north-true', t('print.north.true'));
   setText('lbl-north-magnetic', t('print.north.magnetic'));
   setText('print-gm-angle', GM_ANGLE());
-  setText('print-gm-conv', GM_CONV_FALLBACK);
+  setText('print-gm-conv', GM_CONV);
   setText('grid-unavailable', t('lbl.gridUnavailable'));
   const mgrsEl = document.getElementById('center-mgrs');
   if (mgrsEl) mgrsEl.setAttribute('aria-label', t('chrome.mgrsAria'));
-}
-
-const GM_ANGLE = () => `${t('print.north.gm')} 9° 30' W`;
-const GM_CONV_FALLBACK = "convergence 1° 17'";
-
-function formatDmParts(deg) {
-  if (!Number.isFinite(deg) || Math.abs(deg) > 180) return null;
-  const abs = Math.abs(deg);
-  let d = Math.floor(abs);
-  let m = Math.round((abs - d) * 60);
-  if (m === 60) {
-    d += 1;
-    m = 0;
-  }
-  if (!Number.isInteger(d) || !Number.isInteger(m) || m < 0 || m > 59 || d > 180) {
-    return null;
-  }
-  return { d, m };
-}
-
-function formatConvergence(lon, lat) {
-  if (!Number.isFinite(lon) || !Number.isFinite(lat)) return GM_CONV_FALLBACK;
-  const zone = utmZone(lon);
-  const lon0 = (zone - 1) * 6 - 180 + 3;
-  const phi = (lat * Math.PI) / 180;
-  const dLon = ((lon - lon0) * Math.PI) / 180;
-  if (!Number.isFinite(dLon) || Math.abs(dLon) > Math.PI / 2) return GM_CONV_FALLBACK;
-  const deg = (Math.atan(Math.tan(dLon) * Math.sin(phi)) * 180) / Math.PI;
-  const parts = formatDmParts(deg);
-  if (!parts) return GM_CONV_FALLBACK;
-  const out = `convergence ${parts.d}° ${parts.m}'`;
-  if (!/^convergence \d{1,2}° [0-5]?\d'$/.test(out)) return GM_CONV_FALLBACK;
-  return out;
 }
 
 let sheetLayoutBusy = false;
@@ -207,30 +177,55 @@ let liveMap = null;
 /** User Sheet preference. Default ON. Search / print / layout must not write this. */
 let sheetOn = true;
 let printSavedSheetOn = true;
+let allowAutoRf = true;
 
 function isWysiwyg() {
   return sheetOn;
 }
 
+function sheetLabel() {
+  const s = t('chrome.sheet') || t('print.sheet') || 'Sheet';
+  return /wysiwyg/i.test(s) ? 'Sheet' : s;
+}
+
+function sheetOnOff(on) {
+  const s = on ? t('chrome.wysiwygOn') : t('chrome.wysiwygOff');
+  if (!s || /wysiwyg/i.test(s)) return on ? 'On' : 'Off';
+  return s;
+}
+
+function readSheetOn() {
+  try {
+    const v = sessionStorage.getItem('mgrs-sheet');
+    if (v === 'off') return false;
+    if (v === 'on') return true;
+  } catch { /* private mode */ }
+  return true;
+}
+
+function writeSheetOn(on) {
+  try { sessionStorage.setItem('mgrs-sheet', on ? 'on' : 'off'); } catch { /* */ }
+}
+
 function paintSheetToggle() {
   const btn = document.getElementById('wysiwyg-btn');
   const on = sheetOn;
-  const label = t('chrome.sheet') || t('print.sheet');
   if (btn) {
     btn.setAttribute('type', 'button');
     btn.removeAttribute('form');
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     btn.classList.toggle('on', on);
     btn.classList.toggle('off', !on);
-    btn.setAttribute('aria-label', t('chrome.ariaSheet') || t('chrome.ariaWysiwyg'));
-    btn.setAttribute('title', t('chrome.ariaSheet') || t('chrome.ariaWysiwyg'));
+    btn.setAttribute('aria-label', t('chrome.ariaSheet'));
+    btn.setAttribute('title', t('chrome.ariaSheet'));
   }
-  setText('lbl-wysiwyg', label);
-  setText('wysiwyg-state', on ? t('chrome.wysiwygOn') : t('chrome.wysiwygOff'));
+  setText('lbl-wysiwyg', sheetLabel());
+  setText('wysiwyg-state', sheetOnOff(on));
 }
 
 function setWysiwyg(on) {
   sheetOn = !!on;
+  writeSheetOn(sheetOn);
   document.body.classList.toggle('wysiwyg-off', !sheetOn);
   paintSheetToggle();
   lastSheetBox = '';
@@ -244,11 +239,12 @@ function attachWysiwyg() {
   if (!btn) return;
   btn.setAttribute('type', 'button');
   btn.removeAttribute('form');
+  sheetOn = readSheetOn();
+  document.body.classList.toggle('wysiwyg-off', !sheetOn);
   paintSheetToggle();
-  const keepOffSearch = (ev) => {
+  btn.addEventListener('pointerdown', (ev) => {
     ev.stopPropagation();
-  };
-  btn.addEventListener('pointerdown', keepOffSearch);
+  });
   btn.addEventListener('click', (ev) => {
     ev.preventDefault();
     ev.stopPropagation();
@@ -270,7 +266,6 @@ function layoutSheet(map) {
     sheet.style.transform = 'none';
     sheet.style.aspectRatio = 'auto';
     const hud = document.getElementById('hud');
-    const dock = document.getElementById('zoom-dock');
     if (hud) {
       hud.style.right = '18px';
       hud.style.bottom = '18px';
@@ -284,15 +279,11 @@ function layoutSheet(map) {
     return;
   }
   const hud = document.getElementById('hud');
-  const dock = document.getElementById('zoom-dock');
   const hudW = hud && !hud.hidden ? hud.offsetWidth : 168;
-  const hudH = hud && !hud.hidden ? hud.offsetHeight : 88;
-  const zoomW = 36;
-  const zoomH = 74;
-  const leftReserve = Math.max(36, 18 + zoomW);
-  const rightReserve = Math.max(36, 18 + hudW);
-  const topReserve = Math.max(24, 18 + zoomH);
-  const bottomReserve = 24;
+  const leftReserve = 24;
+  const rightReserve = Math.max(24, 18 + hudW);
+  const topReserve = 16;
+  const bottomReserve = 16;
   const r = desk.getBoundingClientRect();
   if (r.width < 80 || r.height < 80) {
     lastSheetBox = '';
@@ -330,21 +321,13 @@ function layoutSheet(map) {
 }
 
 function setZoomForPrintRf(map, target = 24000) {
-  const printing = document.body.classList.contains('printing');
   const mapEl = document.getElementById('map');
-  const live = (mapEl && mapEl.clientWidth)
+  const w = (mapEl && mapEl.clientWidth)
     || (map.getCanvas() && map.getCanvas().clientWidth)
-    || 0;
-  // Same width as frameWidthPx in scale.js. Call AFTER map.resize() so
-  // #map.clientWidth is the Letter neatline, not a stale desk width
-  // (32dc7fb hardcoded 7.74*96 and leaked 1:12 000 on capture).
-  const measured = live > 8 ? live : frameWidthPx();
-  const letterPx = 7.74 * 96;
-  const nearLetter = Math.abs(measured - letterPx) / letterPx < 0.12;
-  // Always the print-neatline formula (same as computePrintScale / HUD).
-  // If printing but #map is still full-bleed, do not use that width (1:12 000 leak).
-  const w = (printing && !nearLetter) ? letterPx : measured;
-  const mpp = (7.74 * 0.0254 * target) / Math.max(1, w);
+    || frameWidthPx()
+    || 7.74 * 96;
+  const groundM = 7.74 * 0.0254 * target;
+  const mpp = groundM / Math.max(1, w);
   const lat = map.getCenter().lat;
   const z = Math.log2((156543.03392804097 * Math.cos((lat * Math.PI) / 180)) / mpp);
   if (Number.isFinite(z)) map.setZoom(Math.min(18, Math.max(2, z)));
@@ -360,6 +343,14 @@ function afterLetterLayout(map, fn) {
     try { map.resize(); } catch { /* layout */ }
     requestAnimationFrame(run);
   });
+}
+
+function lockDemoRf(map) {
+  if (!allowAutoRf || document.body.classList.contains('printing')) return;
+  layoutSheet(map);
+  try { map.resize(); } catch { /* lock */ }
+  setZoomForPrintRf(map, 24000);
+  fillPrintBlock(map);
 }
 
 function setMgrsReadout(text, polar = false) {
@@ -400,7 +391,6 @@ function updateCenterHud(map) {
   }
 }
 
-
 function fillPrintBlock(map) {
   const view = computeViewScale(map);
   const scale = computePrintScale(map);
@@ -427,9 +417,8 @@ function fillPrintBlock(map) {
   setText('print-disclaimer', `${t('app.name')} · ${t('print.attribution.notUsgs')}`);
   const gzd = String(square || '').trim().split(/\s+/)[0] || '';
   setText('print-gzd', gzd ? t('print.gridZoneValue', { gzd }) : '');
-  const c = map.getCenter();
   setText('print-gm-angle', GM_ANGLE());
-  setText('print-gm-conv', formatConvergence(c.lng, c.lat));
+  setText('print-gm-conv', GM_CONV);
   if (state.exampleLocked) {
     setText('print-example-place', t('print.example.place'));
     setText('print-example-grid', t('print.example.grid'));
@@ -449,11 +438,21 @@ function attachPrint(map) {
 
   window.print = function mgrsPrintDead() { return; };
 
+  let prePrint = null;
+  const captureView = () => ({
+    zoom: map.getZoom(),
+    center: map.getCenter(),
+    sheetOn,
+  });
+
   const prepareSync = () => {
-    printSavedSheetOn = sheetOn;
+    if (!prePrint) prePrint = captureView();
+    printSavedSheetOn = prePrint.sheetOn;
     document.body.classList.add('printing');
     document.documentElement.classList.add('printing');
     try { map.resize(); } catch { /* print size */ }
+    const mapEl = document.getElementById('map');
+    if (mapEl) void mapEl.clientWidth;
     setZoomForPrintRf(map, 24000);
     setPrintInterval(intervalForPrintRf(24000));
     fillPrintBlock(map);
@@ -470,15 +469,37 @@ function attachPrint(map) {
     document.body.classList.remove('printing');
     document.documentElement.classList.remove('printing');
     document.title = t('app.documentTitle');
-    sheetOn = printSavedSheetOn;
+    const saved = prePrint;
+    prePrint = null;
+    sheetOn = saved ? saved.sheetOn : printSavedSheetOn;
     document.body.classList.toggle('wysiwyg-off', !sheetOn);
     paintSheetToggle();
     lastSheetBox = '';
+    const putBack = () => {
+      if (!saved || !Number.isFinite(saved.zoom)) return;
+      try {
+        const c = saved.center;
+        const lng = c && (c.lng ?? c.lon);
+        const lat = c && c.lat;
+        if (Number.isFinite(lng) && Number.isFinite(lat)) {
+          map.jumpTo({ center: [lng, lat], zoom: saved.zoom });
+        } else {
+          map.setZoom(saved.zoom);
+        }
+      } catch {
+        try { map.setZoom(saved.zoom); } catch { /* keep */ }
+      }
+    };
     try { map.resize(); } catch { /* restore */ }
     layoutSheet(liveMap);
+    dockZoom(map);
+    putBack();
     requestAnimationFrame(() => {
       try { map.resize(); } catch { /* restore */ }
       layoutSheet(liveMap);
+      dockZoom(map);
+      putBack();
+      fillPrintBlock(map);
     });
   };
 
@@ -500,10 +521,20 @@ function attachPrint(map) {
   window.addEventListener('keydown', blockNativePrint, true);
   document.addEventListener('keydown', blockNativePrint, true);
 
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape' && (printArmed || document.body.classList.contains('printing'))) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      restore();
+    }
+  }, true);
+
   btn.addEventListener('click', (ev) => {
     ev.preventDefault();
     ev.stopImmediatePropagation();
+    prePrint = captureView();
     printSavedSheetOn = sheetOn;
+    allowAutoRf = false;
     printArmed = true;
     document.body.classList.add('printing');
     document.documentElement.classList.add('printing');
@@ -557,9 +588,7 @@ async function main() {
   attachCollarTicks(map);
   fillPrintBlock(map);
   afterLetterLayout(map, () => {
-    layoutSheet(map);
-    setZoomForPrintRf(map, 24000);
-    fillPrintBlock(map);
+    lockDemoRf(map);
   });
   if (/[?&]print=1\b/.test(location.search)) {
     const go = async () => {
@@ -608,8 +637,12 @@ async function main() {
   map.on('load', () => {
     layoutSheet(map);
     try { map.resize(); } catch { /* load */ }
-    setZoomForPrintRf(map, 24000);
+    lockDemoRf(map);
     hud();
+  });
+  map.once('idle', () => {
+    lockDemoRf(map);
+    allowAutoRf = false;
   });
   map.on('move', () => {
     updateCenterHud(map);
