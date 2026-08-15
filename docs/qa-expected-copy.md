@@ -51,6 +51,12 @@ On the DC / 18S UJ sheet: **G–M 9° 30′ W** and **convergence 1° 17′**.
 
 Fail: garbled `0.4° 7' 93' W`. Truncated G–M. Missing convergence.
 
+## RF
+
+First-load Jefferson Pier: sheet and HUD both **1:24 000**.
+
+Fail: first-load RF ≠ HUD. Print → Cancel leaves **1:12 000**. A 1:12 000 print capture.
+
 ## Print sheet
 
 | When | Key | Expected |
