@@ -113,11 +113,22 @@ html, body {
   pointer-events: auto;
 }
 #chrome #zoom-dock .maplibregl-ctrl-group {
+  display: flex;
+  flex-direction: row;
   background: var(--paper);
   border: 1px solid var(--ink);
 }
+#chrome #zoom-dock .maplibregl-ctrl-group button {
+  width: 32px !important;
+  height: 32px !important;
+}
+#chrome #zoom-dock .maplibregl-ctrl-group button + button {
+  border-top: 0 !important;
+  border-left: 1px solid var(--ink) !important;
+}
 #map .maplibregl-ctrl,
 #map .maplibregl-ctrl-top-left,
+#map .maplibregl-ctrl-top-right,
 #map .maplibregl-ctrl-bottom-left {
   display: none !important;
 }

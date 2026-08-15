@@ -321,13 +321,9 @@ function layoutSheet(map) {
 }
 
 function setZoomForPrintRf(map, target = 24000) {
-  const mapEl = document.getElementById('map');
-  const w = (mapEl && mapEl.clientWidth)
-    || (map.getCanvas() && map.getCanvas().clientWidth)
-    || frameWidthPx()
-    || 7.74 * 96;
-  const groundM = 7.74 * 0.0254 * target;
-  const mpp = groundM / Math.max(1, w);
+  // RF from meters-per-CSS-pixel at 96 dpi. Never divide 7.74 in by the
+  // live (scaled) #map width — that zooms in and leaks 1:12 000 after cancel.
+  const mpp = (target * 0.0254) / 96;
   const lat = map.getCenter().lat;
   const z = Math.log2((156543.03392804097 * Math.cos((lat * Math.PI) / 180)) / mpp);
   if (Number.isFinite(z)) map.setZoom(Math.min(18, Math.max(2, z)));
@@ -473,7 +469,6 @@ function attachPrint(map) {
     prePrint = null;
     sheetOn = saved ? saved.sheetOn : printSavedSheetOn;
     document.body.classList.toggle('wysiwyg-off', !sheetOn);
-    paintSheetToggle();
     lastSheetBox = '';
     const putBack = () => {
       if (!saved || !Number.isFinite(saved.zoom)) return;

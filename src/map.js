@@ -271,12 +271,7 @@ export async function createMap(containerId = 'map') {
     new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }),
     'top-left',
   );
-  const dock = document.getElementById('zoom-dock');
-  const navGroup = map.getContainer().querySelector('.maplibregl-ctrl-group');
-  if (dock && navGroup) dock.appendChild(navGroup);
-  map.getContainer().querySelectorAll('.maplibregl-ctrl').forEach((el) => {
-    if (dock && !dock.contains(el)) el.style.display = 'none';
-  });
+  dockZoom(map);
 
   attachTileFallback(map);
   emitTileSource();
@@ -312,6 +307,17 @@ export async function createMap(containerId = 'map') {
   }
 
   return map;
+}
+
+export function dockZoom(map) {
+  const dock = document.getElementById('zoom-dock');
+  if (!dock || !map) return;
+  const root = map.getContainer();
+  const group = root.querySelector('.maplibregl-ctrl-group');
+  if (group && !dock.contains(group)) dock.appendChild(group);
+  root.querySelectorAll('.maplibregl-ctrl').forEach((el) => {
+    if (!dock.contains(el)) el.style.display = 'none';
+  });
 }
 
 export function getCenterLngLat(map) {

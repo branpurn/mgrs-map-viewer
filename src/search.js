@@ -223,27 +223,18 @@ export async function searchPlace(q) {
   return { error: kind, q: query };
 }
 
-function flyTo(map, lon, lat, zoom) {
-  map.flyTo({
+function flyTo(map, lon, lat, _zoom) {
+  map.jumpTo({
     center: [lon, lat],
-    zoom,
-    essential: true,
+    zoom: map.getZoom(),
   });
 }
 
 function fitOrFly(map, hit) {
-  if (Array.isArray(hit.bbox) && hit.bbox.length === 4) {
-    const [west, south, east, north] = hit.bbox;
-    map.fitBounds(
-      [
-        [west, south],
-        [east, north],
-      ],
-      { padding: 48, maxZoom: 16, essential: true },
-    );
-    return;
-  }
-  flyTo(map, hit.lon, hit.lat, Number.isFinite(hit.zoom) ? hit.zoom : 14);
+  map.jumpTo({
+    center: [hit.lon, hit.lat],
+    zoom: map.getZoom(),
+  });
 }
 
 /**
