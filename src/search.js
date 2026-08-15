@@ -495,15 +495,16 @@ export function attachSearch(map, opts = {}) {
     const key = ev.key;
     const ctrlA = (ev.ctrlKey || ev.metaKey) && (key === 'a' || key === 'A');
     if (ctrlA) {
+      if (ev.target === input) return;
       const tag = ev.target && ev.target.tagName;
       const inOther = ev.target
-        && ev.target !== input
         && (tag === 'TEXTAREA' || tag === 'SELECT' || ev.target.isContentEditable);
       if (!inOther) {
         ev.preventDefault();
         ev.stopImmediatePropagation();
         input.focus();
-        input.select();
+        const v = String(input.value || '');
+        input.setSelectionRange(0, v.length);
       }
       return;
     }

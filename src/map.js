@@ -269,11 +269,14 @@ export async function createMap(containerId = 'map') {
 
   map.addControl(
     new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }),
-    'bottom-left',
+    'top-left',
   );
   const dock = document.getElementById('zoom-dock');
   const navGroup = map.getContainer().querySelector('.maplibregl-ctrl-group');
   if (dock && navGroup) dock.appendChild(navGroup);
+  map.getContainer().querySelectorAll('.maplibregl-ctrl').forEach((el) => {
+    if (dock && !dock.contains(el)) el.style.display = 'none';
+  });
 
   attachTileFallback(map);
   emitTileSource();

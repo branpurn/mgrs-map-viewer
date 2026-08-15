@@ -22,12 +22,11 @@
       if (/[?&]print=1\b/.test(location.search)) document.addEventListener('DOMContentLoaded', function () {
         document.body.classList.add('printing');
       });
-      window.__mgrsNativePrint = window.print.bind(window);
+      if (typeof window.__mgrsNativePrint !== 'function') {
+        window.__mgrsNativePrint = window.print.bind(window);
+      }
       window.__mgrsAllowPrint = false;
-      window.print = function () {
-        if (!window.__mgrsAllowPrint) return;
-        window.__mgrsNativePrint();
-      };
+      window.print = function () { return; };
       window.addEventListener('keydown', function (ev) {
         if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'p' || ev.key === 'P' || ev.code === 'KeyP')) {
           ev.preventDefault();
@@ -50,7 +49,7 @@
           <input
             id="search-input"
             name="q"
-            type="search"
+            type="text"
             spellcheck="false"
             placeholder="Grid or place"
           />

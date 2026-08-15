@@ -1,4 +1,4 @@
-import { t, applyStaticCopy } from './copy.js';
+import { t, applyStaticCopy, formatScaleRatio } from './copy.js';
 import {
   createMap,
   activeTileSource,
@@ -24,6 +24,13 @@ import {
 } from './scale.js';
 import { attachSearch } from './search.js';
 import { attachCollarTicks } from './ticks.js';
+
+if (typeof window.__mgrsNativePrint !== 'function') {
+  window.__mgrsNativePrint = window.print.bind(window);
+}
+const REAL_PRINT = window.__mgrsNativePrint;
+window.__mgrsAllowPrint = false;
+window.print = function mgrsPrintDead() { return; };
 
 const TITLE_MAX = 28;
 
@@ -230,7 +237,8 @@ function layoutSheet(map) {
     }
     if (dock) {
       dock.style.left = '18px';
-      dock.style.bottom = '18px';
+      dock.style.top = '18px';
+      dock.style.bottom = 'auto';
     }
     lastSheetBox = 'full';
     if (map) {
@@ -248,7 +256,7 @@ function layoutSheet(map) {
   const zoomH = 74;
   const leftReserve = Math.max(36, 18 + zoomW);
   const rightReserve = Math.max(36, 18 + hudW);
-  const topReserve = 24;
+  const topReserve = Math.max(24, 18 + zoomH);
   const bottomReserve = 24;
   const r = desk.getBoundingClientRect();
   const availW = Math.max(40, r.width - leftReserve - rightReserve);
@@ -277,8 +285,8 @@ function layoutSheet(map) {
   }
   if (dock) {
     dock.style.left = '18px';
-    dock.style.bottom = '18px';
-    dock.style.top = 'auto';
+    dock.style.top = '18px';
+    dock.style.bottom = 'auto';
   }
   if (map) {
     sheetLayoutBusy = true;
@@ -288,10 +296,14 @@ function layoutSheet(map) {
 }
 
 function setZoomForPrintRf(map, target = 24000) {
+  const printing = document.body.classList.contains('printing');
   const mapEl = document.getElementById('map');
-  const w = (mapEl && mapEl.clientWidth)
+  const live = (mapEl && mapEl.clientWidth)
     || (map.getCanvas() && map.getCanvas().clientWidth)
-    || 7.74 * 96;
+    || 0;
+  // Letter neatline is 7.74in. Do not use a stale desk width after
+  // body.printing (that leaked 1:12 000 in the print preview).
+  const w = printing ? 7.74 * 96 : (live || 7.74 * 96);
   const groundM = 7.74 * 0.0254 * target;
   const mpp = groundM / Math.max(1, w);
   const lat = map.getCenter().lat;
@@ -341,8 +353,11 @@ function updateCenterHud(map) {
 function fillPrintBlock(map) {
   const view = computeViewScale(map);
   const scale = computePrintScale(map);
-  const rf = view.rf || scale.rf;
-  const text = view.text || scale.text;
+  const printing = document.body.classList.contains('printing');
+  // Printed collar must match the desk HUD. After Letter resize the
+  // live mpp is stale and was leaking 1:12 000 / 100 m.
+  const rf = printing ? 24000 : (view.rf || scale.rf || 24000);
+  const text = printing ? formatScaleRatio(24000) : (view.text || scale.text || formatScaleRatio(24000));
   state.lastScaleText = text;
   const rfBand = intervalForPrintRf(rf);
   const square = centerMgrs(map, rfBand.accuracy);
@@ -383,44 +398,32 @@ function attachPrint(map) {
   btn.setAttribute('type', 'button');
   btn.removeAttribute('form');
 
-  let fromButton = false;
-  const nativePrint = window.__mgrsNativePrint || window.print.bind(window);
-  window.print = function mgrsPrintGuard() {
-    if (!fromButton && !window.__mgrsAllowPrint) return;
-    nativePrint();
-  };
+  window.print = function mgrsPrintDead() { return; };
 
   const prepare = () => {
     document.body.classList.add('printing');
     try { map.resize(); } catch { /* print size */ }
     setZoomForPrintRf(map, 24000);
-    const scale = computeViewScale(map);
-    setPrintInterval(intervalForPrintRf(scale.rf || 24000));
+    setPrintInterval(intervalForPrintRf(24000));
     fillPrintBlock(map);
     const compact = centerMgrsCompact(map, precisionForZoom(map.getZoom()));
     document.title = printFilename(compact);
   };
 
   const restore = () => {
-    fromButton = false;
     window.__mgrsAllowPrint = false;
     setPrintInterval(null);
     document.body.classList.remove('printing');
     document.title = t('app.documentTitle');
     map.resize();
-    layoutSheet();
+    layoutSheet(liveMap);
   };
 
-  window.addEventListener('beforeprint', () => {
-    if (!fromButton) return;
-    prepare();
-  });
+  window.addEventListener('beforeprint', () => {});
   window.addEventListener('afterprint', restore);
 
   const blockNativePrint = (ev) => {
-    const key = ev.key;
-    const code = ev.code;
-    if ((ev.ctrlKey || ev.metaKey) && (key === 'p' || key === 'P' || code === 'KeyP')) {
+    if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'p' || ev.key === 'P' || ev.code === 'KeyP')) {
       ev.preventDefault();
       ev.stopImmediatePropagation();
     }
@@ -429,19 +432,12 @@ function attachPrint(map) {
   document.addEventListener('keydown', blockNativePrint, true);
 
   btn.addEventListener('click', (ev) => {
-    if (!ev.isTrusted) return;
-    if (ev.target !== btn && !btn.contains(ev.target)) return;
     ev.preventDefault();
-    ev.stopPropagation();
-    if (btn.disabled) return;
-    fromButton = true;
-    window.__mgrsAllowPrint = true;
+    ev.stopImmediatePropagation();
     prepare();
     try {
-      nativePrint();
+      REAL_PRINT.call(window);
     } catch {
-      fromButton = false;
-      window.__mgrsAllowPrint = false;
       const note = document.getElementById('search-note');
       if (note) {
         note.hidden = false;
