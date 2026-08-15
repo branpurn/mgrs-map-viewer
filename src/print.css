@@ -485,12 +485,16 @@ body.printing #sheet {
 #print-disclaimer { color: #1C1914; white-space: nowrap; font-size: 0.70cqh; }
 #print-attr { display: none; }
 
-/* Map face must stay painted in print preview. Do not hide the WebGL canvas.
-   Do not transform:scale() #sheet (blanks WebGL). */
+/* #map / #sheet stay painted. Do not transform:scale() #sheet (blanks WebGL).
+   Never hide #map, #sheet, or #print-map-face. */
 body.printing #map,
 body.printing #map .maplibregl-canvas-container,
-body.printing #map .maplibregl-canvas,
-body.printing #map canvas {
+body.printing #sheet {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+body.printing:not(.has-print-face) #map .maplibregl-canvas {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
@@ -498,8 +502,12 @@ body.printing #map canvas {
 @media print {
   #map,
   #map .maplibregl-canvas-container,
-  #map .maplibregl-canvas,
-  #map canvas {
+  #sheet {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  body:not(.has-print-face) #map .maplibregl-canvas {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -544,7 +552,8 @@ body.printing #map canvas {
 #print-sheet { overflow: hidden; }
 
 /* Snapshot of the WebGL face. Chrome skips WebGL when Background graphics is off;
-   an <img> prints as content. Do not display:none the live canvas. */
+   an <img> prints as content. #print-map-face stays visible on screen and in print
+   when present. Only hide the live WebGL canvas (.maplibregl-canvas). */
 #print-map-face {
   display: none;
   position: absolute;
@@ -558,19 +567,27 @@ body.printing #map canvas {
   print-color-adjust: exact !important;
   color-adjust: exact !important;
 }
+body.has-print-face #print-map-face,
+html.has-print-face #print-map-face,
 body.printing #print-map-face,
 html.printing #print-map-face {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
 }
+/* Hide live WebGL only after the PNG is in the tree. Never #map / #sheet / img. */
+body.has-print-face .maplibregl-canvas {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
 @media print {
-  html, body, #sheet, #map, #map canvas, .maplibregl-canvas, .maplibregl-canvas-container, #print-map-face {
+  html, body, #sheet, #map, #print-map-face {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
-  #print-map-face {
+  #print-map-face,
+  body.has-print-face #print-map-face {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -581,11 +598,8 @@ html.printing #print-map-face {
     object-fit: fill;
     z-index: 4;
   }
-  /* Hide live WebGL when the PNG face is present. Not display:none. */
-  body.has-print-face #map canvas,
-  body.has-print-face #map .maplibregl-canvas {
+  body.has-print-face .maplibregl-canvas {
     visibility: hidden !important;
     opacity: 0 !important;
-    display: block !important;
   }
 }

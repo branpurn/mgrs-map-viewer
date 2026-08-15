@@ -548,7 +548,6 @@ function fillPrintBlock(map) {
   setText('print-upper-title', title);
   setText('print-scale', text);
   setText('print-grid-value', t('print.gridValue'));
-  writeDatum();
   setText('print-grid-interval', t(rfBand.labelKey));
   const intervalRow = document.getElementById('print-grid-interval-row');
   if (intervalRow) intervalRow.hidden = !!state.polar;
@@ -569,8 +568,6 @@ function fillPrintBlock(map) {
     setText('print-example-grid', square || '');
   }
   renderPrintScaleBar(document.getElementById('print-scale-bar'), scale.metersPerPixel, rf);
-  writeDatum();
-  setText('print-date', formatPrintedDate());
   return rfBand;
 }
 
@@ -597,7 +594,13 @@ function snapshotPrintMapFace(map) {
     mapEl.appendChild(img);
   }
   img.src = url;
+  img.removeAttribute('hidden');
+  img.style.display = 'block';
+  img.style.visibility = 'visible';
+  img.style.opacity = '1';
+  // Class after the img is in the tree so hide cannot race the snapshot.
   document.body.classList.add('has-print-face');
+  document.documentElement.classList.add('has-print-face');
   return true;
 }
 
@@ -605,6 +608,7 @@ function removePrintMapFace() {
   const img = document.getElementById('print-map-face');
   if (img && img.parentNode) img.parentNode.removeChild(img);
   document.body.classList.remove('has-print-face');
+  document.documentElement.classList.remove('has-print-face');
 }
 
 function attachPrint(map) {
@@ -734,10 +738,10 @@ function attachPrint(map) {
       prepareSync();
       try { map.resize(); } catch { /* print size */ }
       let printed = false;
-      const snapAndPrint = (force=false) => {
+      const snapAndPrint = () => {
         if (!printArmed || printed) return;
-        const ok = snapshotPrintMapFace(map);
-        if (!ok && !force) return;
+        // Snapshot first (canvas still visible), then hide live WebGL via has-print-face.
+        snapshotPrintMapFace(map);
         printed = true;
         try {
           REAL_PRINT.call(window);
@@ -751,14 +755,20 @@ function attachPrint(map) {
           restore();
         }
       };
-      // Paint first (not idle) so toDataURL sees tiles. 012: button-only print.
-      try { map.once('render', () => snapAndPrint(false)); } catch { /* */ }
+      // One real render, then one frame, then snapshot, then print.
+      // Not idle (012). Do not hide the canvas before the PNG exists.
+      try {
+        map.once('render', () => {
+          requestAnimationFrame(snapAndPrint);
+        });
+      } catch {
+        snapAndPrint();
+        return;
+      }
       try {
         if (typeof map.triggerRepaint === 'function') map.triggerRepaint();
       } catch { /* */ }
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => snapAndPrint(true));
-      });
+      setTimeout(snapAndPrint, 480);
     };
     afterLetterLayout(map, fire);
   });
