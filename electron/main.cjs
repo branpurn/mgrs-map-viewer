@@ -47,13 +47,19 @@ const server = http.createServer((req, res) => {
 });
 
 function createWindow() {
+  const ICON = path.join(__dirname, "app-icon-512.png");
   const win = new BrowserWindow({
-    width: 1280,
-    height: 840,
+    width: 1440,
+    height: 900,
+    minWidth: 720,
+    minHeight: 540,
     title: "MGRS Viewer",
+    icon: ICON,
+    autoHideMenuBar: true,
     webPreferences: { sandbox: true, contextIsolation: true },
   });
   win.removeMenu();
+  win.setTitle("MGRS Viewer");
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: "deny" };
