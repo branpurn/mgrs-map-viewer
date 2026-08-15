@@ -76,6 +76,8 @@ lbl.sheetTitle is 12 pt Condensed Bold CAPS in a 2.18 in ident column. **~28 cha
 
 Pass: `PINE RIDGE, VA` (14). Fail if a longer place name wraps or overflows the ident column.
 
+Title must not sit on the map face. Fail: a tile sliver above the title. Bottom tick labels must be present.
+
 ## Date and corner grid
 
 Printed year is **2026**. Fail: **2024**.
