@@ -105,9 +105,51 @@ body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {
   height: calc(100% * 8.14 / 11);
   inset: auto;
   overflow: hidden;
+  contain: paint;
   background: #E8D9B8;
   outline: 1.25pt solid var(--neatline);
   z-index: 1;
+}
+#sheet #map .maplibregl-canvas-container {
+  overflow: hidden;
+}
+
+/* Screen: keep the place title in the upper collar / Col A after zoom.
+   print.css print snapshot / body.printing rules are left alone. */
+body:not(.printing) #print-upper {
+  position: absolute !important;
+  top: 0 !important;
+  left: calc(100% * 0.38 / 8.5) !important;
+  width: calc(100% * 7.74 / 8.5) !important;
+  right: auto !important;
+  height: auto !important;
+  max-height: none !important;
+  bottom: calc(100% * 10.42 / 11) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  transform: none !important;
+}
+body:not(.printing) #print-title-upper,
+body:not(.printing) #print-upper .print-product {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% * 0.12 / 0.58) !important;
+  transform: none !important;
+}
+body:not(.printing) #print-title-upper {
+  right: 0 !important;
+  left: auto !important;
+}
+body:not(.printing) #print-upper .print-product {
+  left: 0 !important;
+  right: auto !important;
+}
+body:not(.printing) #print-title {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
 }
 
 #print-ticks {

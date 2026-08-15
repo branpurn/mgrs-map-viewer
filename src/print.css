@@ -17,13 +17,15 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   top: 0;
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
-  height: calc(100% * 0.58 / 11);
-  max-height: calc(100% * 0.58 / 11);
+  /* Lock the white mask to the neatline (y 0.58). Height+width-% padding
+     overflowed into #map after zoom/layoutSheet and made a title sliver. */
+  right: auto;
+  height: auto;
+  max-height: none;
+  bottom: calc(100% * 10.42 / 11);
+  padding: 0;
   background: #FFFFFF;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 0 0 calc(100% * 0.12 / 11);
+  display: block;
   box-sizing: border-box;
   overflow: hidden;
   z-index: 7;
@@ -31,6 +33,11 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 }
 
 #print-upper .print-product {
+  position: absolute;
+  left: 0;
+  right: auto;
+  top: auto;
+  bottom: calc(100% * 0.12 / 0.58);
   font-size: 7.5pt;
   color: #4A4036;
   line-height: 1;
@@ -39,6 +46,11 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 }
 
 #print-title-upper {
+  position: absolute;
+  right: 0;
+  left: auto;
+  top: auto;
+  bottom: calc(100% * 0.12 / 0.58);
   margin: 0;
   font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
   font-size: 11pt;

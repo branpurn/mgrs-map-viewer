@@ -389,6 +389,7 @@ function layoutSheet(map, opts = {}) {
       sheetLayoutBusy = false;
       if (saved) restoreCamera(map, saved);
     }
+    pinCollarTitle();
     return;
   }
   const hud = document.getElementById('hud');
@@ -432,6 +433,7 @@ function layoutSheet(map, opts = {}) {
     sheetLayoutBusy = false;
     if (saved) restoreCamera(map, saved);
   }
+  pinCollarTitle();
 }
 
 function setZoomForPrintRf(map, target = 24000) {
@@ -556,6 +558,24 @@ function updateCenterHud(map) {
   }
 }
 
+function pinCollarTitle() {
+  // Zoom / layoutSheet / ticks must not leave the title over #map.
+  // Clear inline geometry so CSS (#print-sheet / Col A) wins.
+  const ids = ['print-upper', 'print-title-upper', 'print-title', 'print-product'];
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.style.removeProperty('top');
+    el.style.removeProperty('left');
+    el.style.removeProperty('right');
+    el.style.removeProperty('bottom');
+    el.style.removeProperty('transform');
+    el.style.removeProperty('position');
+    el.style.removeProperty('height');
+    el.style.removeProperty('margin');
+  }
+}
+
 function fillPrintBlock(map) {
   const view = computeViewScale(map);
   const scale = computePrintScale(map);
@@ -597,6 +617,7 @@ function fillPrintBlock(map) {
   setText('print-date', formatPrintedDate());
   setText('print-gm-angle', GM_ANGLE());
   setText('print-gm-conv', GM_CONV());
+  pinCollarTitle();
   return rfBand;
 }
 
@@ -1002,6 +1023,12 @@ async function main() {
   map.on('move', () => {
     updateCenterHud(map);
     fillPrintBlock(map);
+    pinCollarTitle();
+  });
+  map.on('zoom', pinCollarTitle);
+  map.on('zoomend', () => {
+    fillPrintBlock(map);
+    pinCollarTitle();
   });
   if (map.loaded()) hud();
 }

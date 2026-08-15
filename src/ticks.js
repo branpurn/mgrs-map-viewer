@@ -34,13 +34,22 @@ function lab(el, text, style) {
 }
 
 function rebuild(map, host) {
-  host.replaceChildren();
   const printing = document.body.classList.contains('printing');
   const band = printing
     ? { meters: 1000, hidden: false, gzdOnly: false }
     : intervalForZoom(map.getZoom());
   const step = band.meters;
-  if (!step || band.hidden || band.gzdOnly) return;
+  if (!step || band.hidden || band.gzdOnly) {
+    host.replaceChildren();
+    return;
+  }
+
+  const mapEl = map.getContainer();
+  const sheet = document.getElementById('sheet');
+  const mw = mapEl.clientWidth || (sheet ? sheet.clientWidth * (MAP_W / 8.5) : 0);
+  const mh = mapEl.clientHeight || (sheet ? sheet.clientHeight * (MAP_H / 11) : 0);
+  // Mid-zoom resize can report 0 — keep the last easting labels instead of wiping.
+  if (mw < 8 || mh < 8) return;
 
   const c = map.getCenter();
   const zone = utmZone(c.lng);
@@ -52,9 +61,7 @@ function rebuild(map, host) {
   const maxE = Math.max(sw.easting, ne.easting);
   const minN = Math.min(sw.northing, ne.northing);
   const maxN = Math.max(sw.northing, ne.northing);
-  const mapEl = map.getContainer();
-  const mw = mapEl.clientWidth || 1;
-  const mh = mapEl.clientHeight || 1;
+  host.replaceChildren();
   const north = c.lat >= 0;
 
   for (let e = snapUp(minE, step); e <= maxE; e += step) {
@@ -92,6 +99,8 @@ export function attachCollarTicks(map) {
   const draw = () => rebuild(map, host);
   map.on('move', draw);
   map.on('zoom', draw);
+  map.on('zoomend', draw);
+  map.on('moveend', draw);
   map.on('resize', draw);
   if (map.loaded()) draw();
   else map.on('load', draw);
