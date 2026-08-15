@@ -47,9 +47,9 @@ Fail: WGS 84. Blank DATUM, SCALE, or GRID. Legend heading missing or the raw key
 
 ## G–M
 
-On the DC / 18S UJ sheet: **G–M 9° 30′ W** and **convergence 1° 17′**.
+On the DC / 18S UJ sheet: **G–M 9° 30′ W** and **convergence 1° 17′**. At first-load too.
 
-Fail: garbled `0.4° 7' 93' W`. Truncated G–M. Missing convergence.
+Fail: garbled `0.4° 7' 93' W`. **0°38′W**. Truncated G–M. Missing convergence.
 
 ## RF
 
