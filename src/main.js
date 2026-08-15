@@ -325,12 +325,12 @@ function attachPrint(map) {
   const btn = document.getElementById('print-btn');
   if (!btn) return;
   btn.setAttribute('type', 'button');
-  btn.setAttribute('form', '');
+  btn.removeAttribute('form');
 
   let fromButton = false;
-  const nativePrint = window.print.bind(window);
+  const nativePrint = window.__mgrsNativePrint || window.print.bind(window);
   window.print = function mgrsPrintGuard() {
-    if (!fromButton) return;
+    if (!fromButton && !window.__mgrsAllowPrint) return;
     nativePrint();
   };
 
@@ -347,6 +347,7 @@ function attachPrint(map) {
 
   const restore = () => {
     fromButton = false;
+    window.__mgrsAllowPrint = false;
     setPrintInterval(null);
     document.body.classList.remove('printing');
     document.title = t('app.documentTitle');
@@ -371,24 +372,20 @@ function attachPrint(map) {
   window.addEventListener('keydown', blockNativePrint, true);
   document.addEventListener('keydown', blockNativePrint, true);
 
-  btn.addEventListener('click', async (ev) => {
+  btn.addEventListener('click', (ev) => {
+    if (!ev.isTrusted) return;
+    if (ev.target !== btn && !btn.contains(ev.target)) return;
     ev.preventDefault();
     ev.stopPropagation();
     if (btn.disabled) return;
-    btn.disabled = true;
-    const prev = btn.textContent;
-    btn.textContent = t('chrome.printing');
     fromButton = true;
+    window.__mgrsAllowPrint = true;
     prepare();
-    try {
-      await map.once('idle');
-    } catch {
-      // print anyway
-    }
     try {
       nativePrint();
     } catch {
       fromButton = false;
+      window.__mgrsAllowPrint = false;
       const note = document.getElementById('search-note');
       if (note) {
         note.hidden = false;
@@ -396,8 +393,6 @@ function attachPrint(map) {
         note.classList.add('is-error');
       }
     }
-    btn.textContent = prev;
-    btn.disabled = false;
   });
 
   document.addEventListener('keydown', (ev) => {

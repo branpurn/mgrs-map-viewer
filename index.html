@@ -22,6 +22,18 @@
       if (/[?&]print=1\b/.test(location.search)) document.addEventListener('DOMContentLoaded', function () {
         document.body.classList.add('printing');
       });
+      window.__mgrsNativePrint = window.print.bind(window);
+      window.__mgrsAllowPrint = false;
+      window.print = function () {
+        if (!window.__mgrsAllowPrint) return;
+        window.__mgrsNativePrint();
+      };
+      window.addEventListener('keydown', function (ev) {
+        if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'p' || ev.key === 'P' || ev.code === 'KeyP')) {
+          ev.preventDefault();
+          ev.stopImmediatePropagation();
+        }
+      }, true);
     </script>
 
   </head>
@@ -43,7 +55,7 @@
             placeholder="Grid or place"
           />
           <button type="button" id="search-clear" class="ghost" hidden></button>
-          <button type="submit" id="search-submit"></button>
+          <button type="button" id="search-submit" tabindex="-1" hidden></button>
         </form>
         <button type="button" id="print-btn">Print</button>
         <p id="search-helper" class="search-helper"></p>

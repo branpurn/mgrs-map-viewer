@@ -173,7 +173,7 @@ body.no-webgl-active #print-sheet {
 .chrome#chrome {
   position: relative;
   flex: 0 0 48px;
-  z-index: 3;
+  z-index: 30;
   display: flex;
   align-items: center;
   gap: 12px;

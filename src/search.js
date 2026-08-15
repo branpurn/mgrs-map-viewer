@@ -185,7 +185,11 @@ export async function searchPlace(q) {
     throw err;
   }
 
-  const url = '/api/search?q=' + encodeURIComponent(query);
+  const origin =
+    typeof location !== 'undefined' && location.origin && location.origin !== 'null'
+      ? location.origin
+      : '';
+  const url = origin + '/api/search?q=' + encodeURIComponent(query);
   let res;
   try {
     res = await fetch(url, { headers: { Accept: 'application/json' } });
@@ -249,7 +253,6 @@ function fitOrFly(map, hit) {
 export function attachSearch(map, opts = {}) {
   const form = document.getElementById('search-form');
   const input = document.getElementById('search-input');
-  const note = document.getElementById('search-note');
   const clearBtn = document.getElementById('search-clear');
 
   let matches = document.getElementById('search-matches');
@@ -258,10 +261,17 @@ export function attachSearch(map, opts = {}) {
     matches.id = 'search-matches';
     matches.className = 'search-matches';
     matches.hidden = true;
-    document.body.appendChild(matches);
-  } else if (matches.closest('#chrome') || matches.closest('#app')) {
-    document.body.appendChild(matches);
   }
+  document.body.appendChild(matches);
+
+  let note = document.getElementById('search-note');
+  if (!note) {
+    note = document.createElement('p');
+    note.id = 'search-note';
+    note.className = 'search-note';
+    note.hidden = true;
+  }
+  document.body.appendChild(note);
 
   let missTimer = 0;
   let fadeTimer = 0;
@@ -269,10 +279,16 @@ export function attachSearch(map, opts = {}) {
   const pinToInput = (el, topPx) => {
     if (!el || !input) return;
     const r = input.getBoundingClientRect();
-    el.style.left = `${r.left}px`;
-    el.style.width = `${r.width}px`;
+    const w = r.width > 0 ? r.width : 320;
+    el.style.position = 'fixed';
+    el.style.left = `${Math.round(r.left)}px`;
+    el.style.width = `${Math.round(w)}px`;
+    el.style.maxWidth = `${Math.round(w)}px`;
     el.style.right = 'auto';
     el.style.top = `${topPx}px`;
+    el.style.zIndex = '40';
+    if (el.id === 'search-note') el.style.height = '18px';
+    else el.style.height = 'auto';
   };
 
   const hideNote = () => {
@@ -293,8 +309,9 @@ export function attachSearch(map, opts = {}) {
     }
     window.clearTimeout(missTimer);
     window.clearTimeout(fadeTimer);
-    pinToInput(note, 52);
     note.hidden = false;
+    note.removeAttribute('hidden');
+    pinToInput(note, 52);
     note.textContent = text;
     note.classList.remove('is-fading');
     input.classList.add('is-miss');
@@ -316,13 +333,16 @@ export function attachSearch(map, opts = {}) {
   };
 
   const showMatches = (items, q) => {
-    if (!matches) return;
+    if (!matches || !items || items.length < 2) return;
+    document.body.appendChild(matches);
+    matches.hidden = false;
+    matches.removeAttribute('hidden');
+    pinToInput(matches, 74);
     matches.innerHTML = '';
     const heading = document.createElement('p');
     heading.className = 'matches-h';
     heading.textContent = t('search.matches');
     matches.appendChild(heading);
-    pinToInput(matches, 74);
     items.slice(0, 8).forEach((hit) => {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -438,6 +458,14 @@ export function attachSearch(map, opts = {}) {
     }
   });
 
+  form.addEventListener('pointerdown', (ev) => {
+    if (clearBtn && (ev.target === clearBtn || clearBtn.contains(ev.target))) return;
+    input.focus();
+  }, true);
+  input.addEventListener('pointerdown', () => {
+    input.focus();
+  });
+
   input.addEventListener('input', () => {
     hideNote();
     hideMatches();
@@ -447,8 +475,7 @@ export function attachSearch(map, opts = {}) {
   input.addEventListener('keydown', (ev) => {
     if (ev.key !== 'Enter') return;
     ev.preventDefault();
-    if (typeof form.requestSubmit === 'function') form.requestSubmit();
-    else form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
   });
 
 
@@ -465,16 +492,31 @@ export function attachSearch(map, opts = {}) {
   });
 
   document.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape' && (ev.target === input || form.contains(ev.target))) {
+    const key = ev.key;
+    const ctrlA = (ev.ctrlKey || ev.metaKey) && (key === 'a' || key === 'A');
+    if (ctrlA) {
+      const tag = ev.target && ev.target.tagName;
+      const inOther = ev.target
+        && ev.target !== input
+        && (tag === 'TEXTAREA' || tag === 'SELECT' || ev.target.isContentEditable);
+      if (!inOther) {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        input.focus();
+        input.select();
+      }
+      return;
+    }
+    if (key === 'Escape' && (ev.target === input || form.contains(ev.target))) {
       ev.preventDefault();
       clear();
     }
-    if (ev.key === '/' && ev.target !== input && ev.target.tagName !== 'INPUT') {
+    if (key === '/' && ev.target !== input && ev.target.tagName !== 'INPUT') {
       ev.preventDefault();
       input.focus();
       input.select();
     }
-  });
+  }, true);
 
   syncClear();
 }
