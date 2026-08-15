@@ -115,7 +115,13 @@ export function formatScaleRatio(n) {
 
 export function applyStaticCopy(root = document) {
   root.querySelectorAll('[data-i18n]').forEach((el) => {
-    el.textContent = t(el.getAttribute('data-i18n'));
+    const key = el.getAttribute('data-i18n');
+    if (el.id === 'print-datum-value' || key === 'print.datumValue') {
+      const v = t('print.datumValue');
+      el.textContent = (!v || v === 'print.datumValue' || /WGS\s*84/i.test(v)) ? 'NAD 83' : v;
+      return;
+    }
+    el.textContent = t(key);
   });
   root.querySelectorAll('[data-i18n-html]').forEach((el) => {
     el.innerHTML = t(el.getAttribute('data-i18n-html'));

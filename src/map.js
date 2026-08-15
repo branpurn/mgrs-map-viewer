@@ -351,6 +351,9 @@ export function dockZoom(map) {
   root.querySelectorAll('.maplibregl-ctrl').forEach((el) => {
     if (!dock.contains(el)) el.style.display = 'none';
   });
+  document.querySelectorAll('#desk .maplibregl-ctrl, #desk .maplibregl-ctrl-top-right, #desk .maplibregl-ctrl-bottom-left').forEach((el) => {
+    if (!dock.contains(el)) el.style.display = 'none';
+  });
   dock.style.pointerEvents = 'auto';
   dock.querySelectorAll('button').forEach((b) => {
     b.setAttribute('type', 'button');

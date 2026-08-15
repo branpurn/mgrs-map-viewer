@@ -456,6 +456,7 @@ export function attachSearch(map, opts = {}) {
 
   const isolateSearch = (ev) => {
     ev.stopPropagation();
+    if (typeof opts.onInteract === 'function') opts.onInteract();
   };
   // Bubble only — capture + stopPropagation would swallow #search-clear.
   // Search click/focus/type must not flip Sheet On.

@@ -655,7 +655,8 @@ body.no-webgl-active #print-sheet {
   align-items: center;
   gap: 8px;
   height: 32px;
-  padding: 0 2px;
+  min-width: 132px;
+  padding: 0 8px;
   border: 0;
   background: transparent;
   color: #fff;

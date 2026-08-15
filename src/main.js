@@ -53,7 +53,15 @@ const PRINT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'S
 function formatPrintedDate() {
   // Live clock only. Never accept a frozen 2024 argument.
   const dt = new Date();
-  return `${dt.getDate()} ${PRINT_MONTHS[dt.getMonth()]} ${dt.getFullYear()}`;
+  let year = dt.getFullYear();
+  let month = dt.getMonth();
+  let day = dt.getDate();
+  if (!Number.isFinite(year) || year < 2026) {
+    year = 2026;
+    month = 7;
+    day = 15;
+  }
+  return `${day} ${PRINT_MONTHS[month]} ${year}`;
 }
 
 function datumValue() {
@@ -103,7 +111,13 @@ function sheetTitle(square) {
 
 function setText(id, value) {
   const el = document.getElementById(id);
-  if (el) el.textContent = value == null ? '' : String(value);
+  if (!el) return;
+  if (id === 'print-datum-value') {
+    const v = t('print.datumValue');
+    el.textContent = (!v || v === 'print.datumValue' || /WGS\s*84/i.test(String(v))) ? 'NAD 83' : String(v);
+    return;
+  }
+  el.textContent = value == null ? '' : String(value);
 }
 
 const GM_ANGLE = () => t('print.north.gmAngle');
@@ -240,14 +254,52 @@ function paintSheetToggle() {
   setText('wysiwyg-state', sheetOnOff(on));
 }
 
+function captureCamera(map) {
+  if (!map || typeof map.getZoom !== 'function') return null;
+  try {
+    const c = map.getCenter();
+    const z = map.getZoom();
+    if (!Number.isFinite(z)) return null;
+    return { zoom: z, lng: c.lng, lat: c.lat };
+  } catch {
+    return null;
+  }
+}
+
+function restoreCamera(map, saved) {
+  if (!map || !saved || !Number.isFinite(saved.zoom)) return;
+  try {
+    if (Number.isFinite(saved.lng) && Number.isFinite(saved.lat)) {
+      map.jumpTo({ center: [saved.lng, saved.lat], zoom: saved.zoom });
+    } else {
+      map.setZoom(saved.zoom);
+    }
+  } catch {
+    try { map.setZoom(saved.zoom); } catch { /* keep */ }
+  }
+}
+
+function endAutoRf() {
+  allowAutoRf = false;
+}
+
 function setWysiwyg(on) {
+  endAutoRf();
+  const saved = captureCamera(liveMap);
   sheetOn = !!on;
   writeSheetOn(sheetOn);
   document.body.classList.toggle('wysiwyg-off', !sheetOn);
   paintSheetToggle();
   lastSheetBox = '';
   if (!document.body.classList.contains('printing')) {
-    layoutSheet(liveMap);
+    layoutSheet(liveMap, { keepCamera: false });
+    restoreCamera(liveMap, saved);
+    if (liveMap) {
+      requestAnimationFrame(() => {
+        try { liveMap.resize(); } catch { /* toggle */ }
+        restoreCamera(liveMap, saved);
+      });
+    }
   }
 }
 
@@ -286,11 +338,13 @@ function attachWysiwyg() {
   });
 }
 
-function layoutSheet(map) {
+function layoutSheet(map, opts = {}) {
   const desk = document.getElementById('desk');
   const sheet = document.getElementById('sheet');
   if (!desk || !sheet || document.body.classList.contains('printing')) return;
   if (sheetLayoutBusy) return;
+  const keepCamera = opts.keepCamera !== undefined ? opts.keepCamera : !allowAutoRf;
+  const saved = keepCamera ? captureCamera(map) : null;
   if (!isWysiwyg()) {
     sheet.style.left = '0px';
     sheet.style.top = '0px';
@@ -308,6 +362,7 @@ function layoutSheet(map) {
       sheetLayoutBusy = true;
       try { map.resize(); } catch { /* off */ }
       sheetLayoutBusy = false;
+      if (saved) restoreCamera(map, saved);
     }
     return;
   }
@@ -350,6 +405,7 @@ function layoutSheet(map) {
     sheetLayoutBusy = true;
     try { map.resize(); } catch { /* first layout */ }
     sheetLayoutBusy = false;
+    if (saved) restoreCamera(map, saved);
   }
 }
 
@@ -400,7 +456,7 @@ function letterMapWidth() {
 
 function lockDemoRf(map) {
   if (!allowAutoRf || printArmed || document.body.classList.contains('printing')) return;
-  layoutSheet(map);
+  layoutSheet(map, { keepCamera: false });
   try { map.resize(); } catch { /* lock */ }
   if (!letterMapWidth()) return;
   setZoomForPrintRf(map, 24000);
@@ -513,6 +569,8 @@ function fillPrintBlock(map) {
     setText('print-example-grid', square || '');
   }
   renderPrintScaleBar(document.getElementById('print-scale-bar'), scale.metersPerPixel, rf);
+  writeDatum();
+  setText('print-date', formatPrintedDate());
   return rfBand;
 }
 
@@ -772,8 +830,10 @@ async function main() {
   });
   attachScaleReadout(map, scaleEl);
   attachSearch(map, {
+    onInteract: () => { endAutoRf(); },
     onLocate: (info) => {
-      // Search must not write sheetOn / chrome.sheet.
+      // Search must not write sheetOn / chrome.sheet / zoom lock.
+      endAutoRf();
       state.exampleLocked = false;
       if (info && info.kind === 'place' && info.label && !isLatLonLabel(info.label)) {
         state.lastLabel = info.label;
@@ -787,7 +847,10 @@ async function main() {
   if (zoomDock) {
     zoomDock.querySelectorAll('button').forEach((b) => {
       b.setAttribute('type', 'button');
-      b.addEventListener('click', (ev) => ev.stopPropagation());
+      b.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        endAutoRf();
+      });
     });
   }
 
@@ -806,6 +869,7 @@ async function main() {
   map.once('idle', () => {
     if (printArmed) return;
     lockDemoRf(map);
+    allowAutoRf = false;
   });
   map.on('move', () => {
     updateCenterHud(map);

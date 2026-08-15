@@ -14,37 +14,43 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-upper {
   position: absolute;
-  top: calc(100% * 0.04 / 11);
+  top: calc(100% * 0.22 / 11);
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
-  height: calc(100% * 0.30 / 11);
+  height: calc(100% * 0.34 / 11);
+  max-height: calc(100% * 0.36 / 11);
   background: #FFFFFF;
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
-  padding: 0;
+  padding: 0 0 0.02in;
   box-sizing: border-box;
   overflow: hidden;
+  z-index: 6;
+  pointer-events: none;
 }
 
 #print-upper .print-product {
-  font-size: 0.95cqh;
+  font-size: 7.5pt;
   color: #4A4036;
-  line-height: 1.2;
+  line-height: 1;
+  max-height: 0.16in;
+  overflow: hidden;
 }
 
 #print-title-upper {
   margin: 0;
   font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
-  font-size: 1.39cqh;
+  font-size: 11pt;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #1C1914;
-  line-height: 1.1;
+  line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 61%;
+  max-height: 0.20in;
 }
 
 #print-footer {
