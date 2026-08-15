@@ -1,6 +1,7 @@
-https://branpurn.github.io/mgrs-map-viewer/
+Download the desktop app (MGRS Viewer). Double-click to launch.
+Self-host for a tunnel: http://localhost:18764
 
-Open the link. No install.
+If it does not open: double-click the AppImage (or the app). Allow execute if the OS asks. Tunnel: http://localhost:18764
 
 ![MGRS Viewer](docs/images/hero.png)
 
@@ -48,6 +49,8 @@ OpenStreetMap fallback: Map data © OpenStreetMap contributors https://www.opens
 Hit the public tile servers directly. Do not proxy tile.openstreetmap.org.
 
 ## Team only
+
+Preview: https://branpurn.github.io/mgrs-map-viewer/
 
 Repo: https://github.com/branpurn/mgrs-map-viewer
 
