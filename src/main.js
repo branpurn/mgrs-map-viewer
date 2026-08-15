@@ -12,6 +12,7 @@ import {
   precisionForZoom,
   isGridAvailable,
   setPrintInterval,
+  utmZone,
 } from './mgrs-grid.js';
 import {
   attachScaleReadout,
@@ -135,8 +136,6 @@ function applyChromeCopy() {
   setText('print-example-place', t('print.example.place'));
   setText('print-example-grid', t('print.example.grid'));
   setText('print-example-note', t('print.example.note'));
-  setText('print-gm-angle', 'G–M 9° 30′ W');
-  setText('print-gm-conv', 'convergence 1° 17′');
   setText('lbl-print-legend', t('print.legend'));
   setText('leg-roads', t('print.legend.roads'));
   setText('leg-water', t('print.legend.water'));
@@ -147,33 +146,85 @@ function applyChromeCopy() {
   setText('lbl-print-printed', t('print.printed'));
   setText('lbl-print-sheet', t('print.sheet'));
   setText('print-sheet-value', t('print.sheetValue'));
-  setText(
-    'print-disclaimer',
-    `${t('app.name')} · ${t('print.attribution.notUsgs')}. ${t('print.disclaimer')}`,
-  );
+  setText('print-disclaimer', t('print.disclaimer'));
+  setText('lbl-north-grid', t('print.north.grid'));
+  setText('lbl-north-true', t('print.north.true'));
+  setText('lbl-north-magnetic', t('print.north.magnetic'));
+  setText('print-gm-angle', `${t('print.north.gm')} 9° 30' W`);
+  setText('print-gm-conv', 'convergence 1° 17\'');
   setText('grid-unavailable', t('lbl.gridUnavailable'));
   const mgrsEl = document.getElementById('center-mgrs');
   if (mgrsEl) mgrsEl.setAttribute('aria-label', t('chrome.mgrsAria'));
 }
 
+function formatConvergence(lon, lat) {
+  const zone = utmZone(lon);
+  const lon0 = (zone - 1) * 6 - 180 + 3;
+  const phi = (lat * Math.PI) / 180;
+  const dLon = ((lon - lon0) * Math.PI) / 180;
+  const deg = (Math.atan(Math.tan(dLon) * Math.sin(phi)) * 180) / Math.PI;
+  if (!Number.isFinite(deg)) return "convergence 1° 17'";
+  const abs = Math.abs(deg);
+  let d = Math.floor(abs);
+  let m = Math.round((abs - d) * 60);
+  if (m === 60) {
+    d += 1;
+    m = 0;
+  }
+  return `convergence ${d}° ${m}'`;
+}
+
+let sheetLayoutBusy = false;
+let lastSheetBox = '';
+
 function layoutSheet(map) {
   const desk = document.getElementById('desk');
   const sheet = document.getElementById('sheet');
   if (!desk || !sheet || document.body.classList.contains('printing')) return;
-  const inset = 24;
+  if (sheetLayoutBusy) return;
+  const hud = document.getElementById('hud');
+  const dock = document.getElementById('zoom-dock');
+  const hudW = hud && !hud.hidden ? hud.offsetWidth : 168;
+  const hudH = hud && !hud.hidden ? hud.offsetHeight : 88;
+  const zoomW = 36;
+  const zoomH = 74;
+  const leftReserve = Math.max(24, 16 + zoomW);
+  const rightReserve = Math.max(24, 16 + hudW);
+  const topReserve = 24;
+  const bottomReserve = 24;
   const r = desk.getBoundingClientRect();
-  const availW = Math.max(40, r.width - inset * 2);
-  const availH = Math.max(40, r.height - inset * 2);
+  const availW = Math.max(40, r.width - leftReserve - rightReserve);
+  const availH = Math.max(40, r.height - topReserve - bottomReserve);
   const natW = 8.5 * 96;
   const natH = 11 * 96;
-  const scale = Math.min(availW / natW, availH / natH);
+  const scale = Math.min(availW / natW, availH / natH, 1);
   const w = natW * scale;
   const h = natH * scale;
-  sheet.style.left = `${Math.round((r.width - w) / 2)}px`;
-  sheet.style.top = `${Math.round((r.height - h) / 2)}px`;
-  sheet.style.transform = `scale(${scale})`;
+  const x = leftReserve + (availW - w) / 2;
+  const y = topReserve + (availH - h) / 2;
+  const box = `${Math.round(w)}x${Math.round(h)}@${Math.round(x)},${Math.round(y)}`;
+  if (box === lastSheetBox) return;
+  lastSheetBox = box;
+  sheet.style.width = `${Math.round(w)}px`;
+  sheet.style.height = `${Math.round(h)}px`;
+  sheet.style.left = `${Math.round(x)}px`;
+  sheet.style.top = `${Math.round(y)}px`;
+  sheet.style.transform = 'none';
+  sheet.style.aspectRatio = 'auto';
+  if (hud) {
+    hud.style.left = `${Math.round(x + w + 16)}px`;
+    hud.style.top = `${Math.round(Math.max(8, y + h - hudH))}px`;
+    hud.style.right = 'auto';
+    hud.style.bottom = 'auto';
+  }
+  if (dock) {
+    dock.style.left = `${Math.round(x - 16 - zoomW)}px`;
+    dock.style.top = `${Math.round(y + h - zoomH)}px`;
+  }
   if (map) {
+    sheetLayoutBusy = true;
     try { map.resize(); } catch { /* first layout */ }
+    sheetLayoutBusy = false;
   }
 }
 
@@ -235,6 +286,8 @@ function fillPrintBlock(map) {
   setText('print-title-upper', title);
   setText('print-upper-title', title);
   setText('print-scale', scale.text);
+  setText('print-grid-value', t('print.gridValue'));
+  setText('print-datum-value', t('print.datumValue'));
   setText('print-grid-interval', t(rfBand.labelKey));
   const intervalRow = document.getElementById('print-grid-interval-row');
   if (intervalRow) intervalRow.hidden = !!state.polar;
@@ -242,12 +295,12 @@ function fillPrintBlock(map) {
   setText('print-attr', attrPrint());
   setText('print-product', t('app.name'));
   setText('print-sheet-value', t('print.sheetValue'));
-  setText(
-    'print-disclaimer',
-    `${t('app.name')} · ${t('print.attribution.notUsgs')}. ${t('print.disclaimer')}`,
-  );
+  setText('print-disclaimer', t('print.disclaimer'));
   const gzd = String(square || '').trim().split(/\s+/)[0] || '';
-  setText('print-gzd', gzd);
+  setText('print-gzd', gzd ? t('print.gridZoneValue', { gzd }) : '');
+  const c = map.getCenter();
+  setText('print-gm-angle', `${t('print.north.gm')} 9° 30' W`);
+  setText('print-gm-conv', formatConvergence(c.lng, c.lat));
   if (state.exampleLocked) {
     setText('print-example-place', t('print.example.place'));
     setText('print-example-grid', t('print.example.grid'));
@@ -341,6 +394,15 @@ async function main() {
   setZoomForPrintRf(map, 24000);
   attachCollarTicks(map);
   fillPrintBlock(map);
+  if (/[?&]print=1\b/.test(location.search)) {
+    const go = async () => {
+      fillPrintBlock(map);
+      document.body.classList.add('printing');
+      try { map.resize(); } catch { /* print layout */ }
+      try { await map.once('idle'); } catch { /* print anyway */ }
+    };
+    go();
+  }
 
   const scaleEl = document.getElementById('scale-readout');
 
@@ -372,8 +434,10 @@ async function main() {
     fillPrintBlock(map);
   };
   map.on('load', hud);
-  map.on('move', () => updateCenterHud(map));
-  map.on('resize', () => layoutSheet(map));
+  map.on('move', () => {
+    updateCenterHud(map);
+    fillPrintBlock(map);
+  });
   if (map.loaded()) hud();
 }
 

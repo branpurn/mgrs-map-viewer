@@ -1,3 +1,4 @@
+html.printing, html.printing body { background: #FFFFFF !important; }
 @page {
   size: 8.5in 11in;
   margin: 0;
@@ -67,8 +68,8 @@
   border-left: 0.35pt solid #000000;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
 }
 #print-footer .print-col-c {
   width: 1.50in;
@@ -118,6 +119,7 @@
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-weight: 500;
   font-size: 7pt;
+  color: #1C1914;
 }
 
 .print-north-label,
@@ -141,7 +143,7 @@
 .psb-track {
   display: flex;
   height: 0.10in;
-  border: 0.5pt solid #1C1914;
+  border: 0.5pt solid #000000;
   box-sizing: border-box;
 }
 .psb-track i { flex: 1; display: block; height: 100%; }
@@ -193,9 +195,10 @@
     linear-gradient(#C4845A, #C4845A) 50% 70% / 100% 0.50pt no-repeat;
 }
 .swatch.grid {
-  background:
-    linear-gradient(#1C1914, #1C1914) 0 50% / 70% 0.90pt no-repeat,
-    linear-gradient(#8B1E1E, #8B1E1E) 100% 50% / 30% 1.50pt no-repeat;
+  background: transparent;
+  border-top: 0.90pt solid #000000;
+  height: 0;
+  margin-top: 0.03in;
 }
 .swatch.places {
   background: transparent;
@@ -262,6 +265,7 @@ body.printing #app {
 body.printing .chrome,
 body.printing #chrome,
 body.printing #hud,
+body.printing #zoom-dock,
 body.printing #crosshair,
 body.printing #map-status,
 body.printing #search-note,
@@ -284,7 +288,7 @@ body.printing #print-sheet {
   width: 8.5in;
   height: 11in;
   pointer-events: none;
-  z-index: 20;
+  z-index: 5;
   background: transparent;
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   color: #1C1914;
@@ -326,6 +330,7 @@ body.printing #map {
   .chrome,
   #chrome,
   #hud,
+  #zoom-dock,
   #crosshair,
   #map-status,
   #search-note,
@@ -366,6 +371,31 @@ body.printing #map {
     outline: 1.25pt solid #000000;
     z-index: 2;
   }
+
+  #desk {
+    background: #FFFFFF !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  #sheet {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    width: 8.5in !important;
+    height: 11in !important;
+    box-shadow: none !important;
+  }
+
+  #print-ticks {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 21;
+  }
+
+  #print-sheet { z-index: 5; }
 }
 
 
@@ -377,8 +407,8 @@ body.printing #map {
 .print-v.mono, .print-gm-fig { font-family: "IBM Plex Mono", ui-monospace, monospace; }
 .print-v.bold { font-weight: 700; font-size: 8.5pt; }
 .print-note { margin: 0; font-size: 6pt; line-height: 1.15; color: #4A4036; }
-.print-gm { display: block; margin: 0 auto 0.02in; }
-.print-gm-fig { margin: 0; font-size: 6.5pt; line-height: 1.2; text-align: center; }
+.print-gm { display: block; margin: 0 0 0.02in; }
+.print-gm-fig { margin: 0; font-size: 6.5pt; line-height: 1.2; text-align: left; }
 .print-col-a { overflow: hidden; }
 .print-col-a .print-title { font-size: 11pt; }
 .print-spec div { height: 0.14in; }
@@ -397,7 +427,8 @@ body.printing #map {
   line-height: 1;
 }
 
-body.printing #desk { background: #fff !important; overflow: visible !important; }
+body.printing #print-ticks { display: block !important; z-index: 21; }
+body.printing #desk { background: #FFFFFF !important; overflow: visible !important; position: static !important; }
 body.printing #sheet {
   position: absolute !important;
   top: 0 !important;

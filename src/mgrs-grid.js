@@ -586,6 +586,33 @@ function buildGzd(bounds, zoom) {
   return features.filter(Boolean);
 }
 
+
+function gzdSquareLabel(lon, lat) {
+  try {
+    const compact = forward([lon, lat], 0);
+    const m = String(compact).toUpperCase().match(/^(\d{1,2}[C-HJ-NP-X])([A-HJ-NP-Z]{2})/);
+    return m ? `${m[1]} ${m[2]}` : '';
+  } catch {
+    return '';
+  }
+}
+
+function buildCornerLabels(map) {
+  const el = map.getContainer();
+  const w = el.clientWidth;
+  const h = el.clientHeight;
+  if (w < 8 || h < 8) return [];
+  const pad = 18;
+  const pts = [[pad, pad], [w - pad, pad], [pad, h - pad], [w - pad, h - pad]];
+  const out = [];
+  for (const [x, y] of pts) {
+    const ll = map.unproject([x, y]);
+    const label = gzdSquareLabel(ll.lng, ll.lat);
+    if (label) out.push(pointFeature(ll.lng, ll.lat, label, 'corner'));
+  }
+  return out;
+}
+
 export function buildGridGeoJSON(map) {
   const zoom = map.getZoom();
   const center = map.getCenter();
@@ -615,6 +642,7 @@ export function buildGridGeoJSON(map) {
   if (levels.includes('gzd')) {
     features.push(...buildGzd(bounds, zoom).filter(Boolean));
   }
+  features.push(...buildCornerLabels(map));
 
   const hems = [];
   if (bounds.north > 0) hems.push(true);
@@ -678,12 +706,14 @@ function emptyFC() {
 
 const GZD_CASE_LAYER = 'mgrs-gzd-case';
 const LINE_CASE_LAYER = 'mgrs-grid-case';
+const CORNER_LABEL_LAYER = 'mgrs-corner-labels';
 const VIS_LAYERS = [
   GZD_CASE_LAYER,
   LINE_CASE_LAYER,
   GZD_LINE_LAYER,
   LINE_LAYER,
   GZD_LABEL_LAYER,
+  CORNER_LABEL_LAYER,
   LABEL_LAYER,
 ];
 
@@ -784,6 +814,10 @@ export function attachMgrsGrid(map, onUpdate) {
     if (map.getLayer(GZD_LABEL_LAYER)) {
       map.setPaintProperty(GZD_LABEL_LAYER, 'text-color', GZD);
       map.setPaintProperty(GZD_LABEL_LAYER, 'text-halo-color', PAPER);
+    }
+    if (map.getLayer(CORNER_LABEL_LAYER)) {
+      map.setPaintProperty(CORNER_LABEL_LAYER, 'text-color', GZD);
+      map.setPaintProperty(CORNER_LABEL_LAYER, 'text-halo-color', PAPER);
     }
     if (map.getLayer(LABEL_LAYER)) {
       map.setPaintProperty(LABEL_LAYER, 'text-color', INK);
@@ -898,7 +932,26 @@ export function attachMgrsGrid(map, onUpdate) {
         filter: ['==', ['get', 'level'], 'gzd'],
         layout: {
           'text-field': ['get', 'label'],
-          'text-size': 13,
+          'text-size': 11,
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-allow-overlap': true,
+          'text-padding': 2,
+        },
+        paint: {
+          'text-color': GZD,
+          'text-halo-color': PAPER,
+          'text-halo-width': 3.5,
+        },
+      });
+
+      map.addLayer({
+        id: CORNER_LABEL_LAYER,
+        type: 'symbol',
+        source: SOURCE_ID,
+        filter: ['==', ['get', 'level'], 'corner'],
+        layout: {
+          'text-field': ['get', 'label'],
+          'text-size': 11,
           'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
           'text-allow-overlap': true,
           'text-padding': 2,
@@ -914,15 +967,11 @@ export function attachMgrsGrid(map, onUpdate) {
         id: LABEL_LAYER,
         type: 'symbol',
         source: SOURCE_ID,
-        filter: [
-          'all',
-          ['==', ['get', 'kind'], 'label'],
-          ['!=', ['get', 'level'], 'gzd'],
-        ],
+        filter: ['==', ['get', 'level'], '100km'],
         layout: {
           'text-field': ['get', 'label'],
           'text-size': 11,
-          'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
           'text-allow-overlap': false,
           'text-padding': 2,
         },
