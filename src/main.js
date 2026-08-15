@@ -500,6 +500,16 @@ function fillPrintBlock(map) {
 function snapshotPrintMapFace(map) {
   const mapEl = document.getElementById('map');
   if (!mapEl || !map) return;
+  let url = '';
+  try {
+    const canvas = typeof map.getCanvas === 'function' ? map.getCanvas() : null;
+    if (canvas && typeof canvas.toDataURL === 'function') {
+      url = canvas.toDataURL('image/png');
+    }
+  } catch {
+    url = '';
+  }
+  if (!url || url.length < 32) return;
   let img = document.getElementById('print-map-face');
   if (!img) {
     img = document.createElement('img');
@@ -508,14 +518,7 @@ function snapshotPrintMapFace(map) {
     img.setAttribute('aria-hidden', 'true');
     mapEl.appendChild(img);
   }
-  try {
-    const canvas = typeof map.getCanvas === 'function' ? map.getCanvas() : null;
-    if (canvas && typeof canvas.toDataURL === 'function') {
-      img.src = canvas.toDataURL('image/png');
-    }
-  } catch {
-    if (img.parentNode) img.parentNode.removeChild(img);
-  }
+  img.src = url;
 }
 
 function removePrintMapFace() {
@@ -652,19 +655,32 @@ function attachPrint(map) {
       try {
         if (typeof map.triggerRepaint === 'function') map.triggerRepaint();
       } catch { /* */ }
-      snapshotPrintMapFace(map);
-      if (!printArmed) return;
-      try {
-        REAL_PRINT.call(window);
-      } catch {
-        const note = document.getElementById('search-note');
-        if (note) {
-          note.hidden = false;
-          note.textContent = t('chrome.printBlocked');
-          note.classList.add('is-error');
+      let printed = false;
+      const snapAndPrint = () => {
+        if (!printArmed || printed) return;
+        printed = true;
+        snapshotPrintMapFace(map);
+        if (!printArmed) return;
+        try {
+          REAL_PRINT.call(window);
+        } catch {
+          const note = document.getElementById('search-note');
+          if (note) {
+            note.hidden = false;
+            note.textContent = t('chrome.printBlocked');
+            note.classList.add('is-error');
+          }
+          restore();
         }
-        restore();
+      };
+      // One render/frame so the resized buffer has pixels. Not idle (012).
+      try {
+        map.once('render', snapAndPrint);
+      } catch {
+        snapAndPrint();
+        return;
       }
+      requestAnimationFrame(snapAndPrint);
     };
     afterLetterLayout(map, fire);
   });

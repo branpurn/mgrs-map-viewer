@@ -1,4 +1,4 @@
-html, body, #sheet, #map, #map canvas, .maplibregl-canvas, .maplibregl-canvas-container {
+html, body, #sheet, #map, canvas, .maplibregl-canvas, #map canvas, .maplibregl-canvas-container {
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
   color-adjust: exact !important;
