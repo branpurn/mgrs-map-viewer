@@ -61,12 +61,13 @@ function rebuild(map, host) {
     const xIn = LEFT + (px.x / mw) * MAP_W;
     const x = `${(xIn / 8.5) * 100}%`;
     tick(host, { left: x, top: `${((TOP - OUT) / 11) * 100}%`, width: '0.6pt', height: `${((OUT + INN) / 11) * 100}%` });
-    tick(host, { left: x, top: `${((TOP + MAP_H - INN) / 11) * 100}%`, width: '0.6pt', height: `${((OUT + INN) / 11) * 100}%` });
+    // Bottom ticks stay inside the neatline — do not enter Col A title.
+    tick(host, { left: x, top: `${((TOP + MAP_H - INN) / 11) * 100}%`, width: '0.6pt', height: `${(INN / 11) * 100}%` });
     const text = edgeLabel(e, step);
-    // Inside the map face — top labels clear the upper title, bottom labels
-    // clear Col A title / tick 23 (DESIGN_SPEC §2: 0.14" band inside neatline).
+    // Inside the map face. Bottom labels sit 0.22" above the neatline so
+    // tick 23 cannot kiss the Col A title (ellipsis stays closed).
     lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + 0.03) / 11) * 100}%` });
-    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + MAP_H - 0.13) / 11) * 100}%` });
+    lab(host, text, { left: `${((xIn - 0.08) / 8.5) * 100}%`, top: `${((TOP + MAP_H - 0.22) / 11) * 100}%` });
   }
 
   for (let n = snapUp(minN, step); n <= maxN; n += step) {

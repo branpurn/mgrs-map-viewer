@@ -454,7 +454,8 @@ export function attachSearch(map, opts = {}) {
     ev.stopPropagation();
   };
   // Bubble only — capture + stopPropagation would swallow #search-clear.
-  ['pointerdown', 'mousedown', 'click', 'touchstart'].forEach((type) => {
+  // Search click/focus/type must not flip Sheet On.
+  ['pointerdown', 'mousedown', 'click', 'touchstart', 'focusin', 'input', 'keydown'].forEach((type) => {
     form.addEventListener(type, isolateSearch);
   });
   form.addEventListener('pointerdown', (ev) => {

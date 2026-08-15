@@ -22,6 +22,8 @@ import {
   buildPrintScaleBar,
   renderPrintScaleBar,
   frameWidthPx,
+  metersPerPixelAtCenter,
+  zoomForPrintRf,
 } from './scale.js';
 import { attachSearch } from './search.js';
 import { attachCollarTicks } from './ticks.js';
@@ -244,6 +246,15 @@ function attachWysiwyg() {
   sheetOn = readSheetOn();
   document.body.classList.toggle('wysiwyg-off', !sheetOn);
   paintSheetToggle();
+  const zoomDock = document.getElementById('zoom-dock');
+  if (zoomDock) {
+    ['pointerdown', 'mousedown', 'click'].forEach((type) => {
+      zoomDock.addEventListener(type, (ev) => ev.stopPropagation());
+    });
+    zoomDock.querySelectorAll('button').forEach((b) => {
+      b.setAttribute('type', 'button');
+    });
+  }
   btn.addEventListener('pointerdown', (ev) => {
     ev.stopPropagation();
   });
@@ -251,7 +262,7 @@ function attachWysiwyg() {
     ev.preventDefault();
     ev.stopPropagation();
     ev.stopImmediatePropagation();
-    if (ev.target && ev.target.closest('#search-form, #search-input, #search-clear, #clear')) return;
+    if (ev.target && ev.target.closest('#search-form, #search-input, #search-clear, #clear, #zoom-dock')) return;
     if (!btn.contains(ev.target)) return;
     setWysiwyg(!sheetOn);
   });
@@ -325,21 +336,21 @@ function layoutSheet(map) {
 }
 
 function setZoomForPrintRf(map, target = 24000) {
-  // Use current #map.clientWidth so HUD / collar RF match (7.74 in neatline).
-  // Call AFTER layout + map.resize(). Print preview may use Letter width;
-  // restore must never call this (that is the 1:12 000 leak).
+  // AFTER Letter layout. Use live #map.clientWidth (7.74 in neatline).
+  // MapLibre z0 world is 512 px — 156543 (256) was 1:6 000 / 1:12 000.
+  // Restore must never call this (that leaked print zoom onto the desk).
   const mapEl = document.getElementById('map');
-  const live = (mapEl && mapEl.clientWidth)
-    || (map.getCanvas() && map.getCanvas().clientWidth)
-    || 0;
-  const letterPx = 7.74 * 96;
-  const measured = live > 8 ? live : (frameWidthPx() || letterPx);
-  const printing = document.body.classList.contains('printing');
-  const nearLetter = Math.abs(measured - letterPx) / letterPx < 0.12;
-  const w = (printing && !nearLetter) ? letterPx : measured;
-  const mpp = (7.74 * 0.0254 * target) / Math.max(1, w);
-  const lat = map.getCenter().lat;
-  const z = Math.log2((156543.03392804097 * Math.cos((lat * Math.PI) / 180)) / mpp);
+  const w = (mapEl && mapEl.clientWidth) || frameWidthPx() || (7.74 * 96);
+  if (w < 8) return;
+  const targetMpp = (target * 7.74 * 0.0254) / w;
+  const currentMpp = metersPerPixelAtCenter(map);
+  const z0 = map.getZoom();
+  let z;
+  if (currentMpp && currentMpp > 0 && Number.isFinite(z0)) {
+    z = z0 + Math.log2(currentMpp / targetMpp);
+  } else {
+    z = zoomForPrintRf(map.getCenter().lat, w, target);
+  }
   if (Number.isFinite(z)) map.setZoom(Math.min(18, Math.max(2, z)));
 }
 
@@ -431,7 +442,7 @@ function fillPrintBlock(map) {
   const scale = computePrintScale(map);
   const printing = document.body.classList.contains('printing');
   const raw = view.rawRf;
-  const locked = Number.isFinite(raw) && raw >= 22800 && raw <= 25200;
+  const locked = Number.isFinite(raw) && raw >= 23200 && raw <= 24800;
   const rf = printing ? 24000 : (locked ? 24000 : (view.rf || 24000));
   const text = printing || locked ? formatScaleRatio(24000) : (view.text || formatScaleRatio(rf));
   state.lastScaleText = text;
@@ -671,6 +682,7 @@ async function main() {
   attachScaleReadout(map, scaleEl);
   attachSearch(map, {
     onLocate: (info) => {
+      // Search must not write sheetOn / chrome.sheet.
       state.exampleLocked = false;
       if (info && info.kind === 'place' && info.label && !isLatLonLabel(info.label)) {
         state.lastLabel = info.label;
@@ -680,6 +692,13 @@ async function main() {
     },
   });
   attachPrint(map);
+  const zoomDock = document.getElementById('zoom-dock');
+  if (zoomDock) {
+    zoomDock.querySelectorAll('button').forEach((b) => {
+      b.setAttribute('type', 'button');
+      b.addEventListener('click', (ev) => ev.stopPropagation());
+    });
+  }
 
   const hud = () => {
     updateCenterHud(map);

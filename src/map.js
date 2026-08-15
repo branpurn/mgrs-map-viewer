@@ -2,9 +2,10 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { t } from './copy.js';
 
-/** Jefferson Pier / Washington DC — RF target 1:24 000 after first layout. */
+/** Jefferson Pier / Washington DC — RF target 1:24 000 after Letter layout. */
 export const DEFAULT_CENTER = { lon: -77.0353, lat: 38.8895 };
-export const DEFAULT_ZOOM = 14.23;
+/** 512-based z for 1:24 000 at Letter neatline. Live lock uses #map.clientWidth. */
+export const DEFAULT_ZOOM = 13.23;
 
 export const OT_TILES = [
   'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
@@ -248,11 +249,20 @@ export async function createMap(containerId = 'map') {
   // probe in the background and fall back if it fails.
   activeTileSource = 'opentopomap';
 
+  const host = document.getElementById(containerId);
+  const hostW = host && host.clientWidth;
+  let startZoom = DEFAULT_ZOOM;
+  if (hostW && hostW > 40) {
+    const mpp = (24000 * 7.74 * 0.0254) / hostW;
+    const z = Math.log2((78271.51696402048 * Math.cos((DEFAULT_CENTER.lat * Math.PI) / 180)) / mpp);
+    if (Number.isFinite(z)) startZoom = Math.min(18, Math.max(2, z));
+  }
+
   const map = new maplibregl.Map({
     container: containerId,
     style: buildStyle(activeTileSource),
     center: [DEFAULT_CENTER.lon, DEFAULT_CENTER.lat],
-    zoom: DEFAULT_ZOOM,
+    zoom: startZoom,
     minZoom: 2,
     maxZoom: 18,
     maxPitch: 0,

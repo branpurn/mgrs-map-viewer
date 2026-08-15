@@ -76,6 +76,9 @@ html, body {
   height: 100%;
   pointer-events: none;
   z-index: 6;
+  /* Clip at neatline bottom (y 8.72) so tick 23 cannot enter Col A. */
+  clip-path: inset(0 0 calc(100% * 2.28 / 11) 0);
+  overflow: hidden;
 }
 #print-ticks svg {
   display: block;
@@ -92,7 +95,7 @@ html, body {
   color: #1C1914;
   pointer-events: none;
   z-index: 5;
-  overflow: visible;
+  overflow: hidden;
 }
 
 #map {

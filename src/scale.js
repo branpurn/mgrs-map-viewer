@@ -24,6 +24,19 @@ export function frameWidthPx() {
   return 7.74 * 96;
 }
 
+/** MapLibre world is 512 CSS px at z0 (not 256). */
+export const MPP_Z0 = 78271.51696402048;
+export const NEATLINE_IN = 7.74;
+
+/** Zoom that makes the 7.74 in neatline read `target` RF at `widthPx`. */
+export function zoomForPrintRf(lat, widthPx, target = 24000) {
+  const w = Number(widthPx) > 8 ? Number(widthPx) : NEATLINE_IN * 96;
+  const mpp = (target * NEATLINE_IN * 0.0254) / w;
+  const z = Math.log2((MPP_Z0 * Math.cos((Number(lat) * Math.PI) / 180)) / mpp);
+  if (!Number.isFinite(z)) return 13;
+  return Math.min(18, Math.max(2, z));
+}
+
 export function computeViewScale(map) {
   // Same RF as the printed neatline (7.74 in) so HUD and collar match.
   return computePrintScale(map);
