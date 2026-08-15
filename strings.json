@@ -140,5 +140,7 @@
   "chrome.wysiwygOff": "Off",
   "chrome.ariaWysiwyg": "WYSIWYG switch. Default on.",
   "chrome.ariaWysiwygOn": "WYSIWYG on. Screen matches the printed sheet.",
-  "chrome.ariaWysiwygOff": "WYSIWYG off. Full map, no sheet."
+  "chrome.ariaWysiwygOff": "WYSIWYG off. Full map, no sheet.",
+  "chrome.sheet": "Sheet",
+  "chrome.ariaSheet": "Sheet view. On is the Letter sheet. Off is the full map."
 }
