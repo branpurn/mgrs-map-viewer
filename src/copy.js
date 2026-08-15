@@ -28,6 +28,7 @@ const FALLBACKS = {
   'print.scale': 'SCALE',
   'print.projection': 'Projection',
   'print.projectionValue': 'UTM',
+  'print.legend': 'Legend',
   'print.legend.roads': 'Roads',
   'print.legend.water': 'Water',
   'print.legend.contours': 'Contours',
