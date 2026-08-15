@@ -58,7 +58,8 @@ html.has-print-face #print-map-face {
   visibility: visible !important;
   opacity: 1 !important;
 }
-body.has-print-face .maplibregl-canvas {
+body.has-print-face canvas.maplibregl-canvas,
+body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {
   visibility: hidden !important;
   opacity: 0 !important;
 }

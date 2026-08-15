@@ -18,10 +18,6 @@
     <link rel="stylesheet" href="./src/style.css" />
     <link rel="stylesheet" href="./src/print.css" />
     <script>
-      if (/[?&]print=1\b/.test(location.search)) document.documentElement.classList.add('printing');
-      if (/[?&]print=1\b/.test(location.search)) document.addEventListener('DOMContentLoaded', function () {
-        document.body.classList.add('printing');
-      });
       if (typeof window.__mgrsNativePrint !== 'function') {
         window.__mgrsNativePrint = window.print.bind(window);
       }

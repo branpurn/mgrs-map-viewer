@@ -575,8 +575,10 @@ html.printing #print-map-face {
   visibility: visible !important;
   opacity: 1 !important;
 }
-/* Hide live WebGL only after the PNG is in the tree. Never #map / #sheet / img. */
-body.has-print-face .maplibregl-canvas {
+/* Hide live WebGL only after the PNG is in the tree. Never #map / #sheet / img.
+   Selector is the MapLibre canvas only — #print-map-face is an <img>. */
+body.has-print-face canvas.maplibregl-canvas,
+body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {
   visibility: hidden !important;
   opacity: 0 !important;
 }
@@ -587,7 +589,8 @@ body.has-print-face .maplibregl-canvas {
     color-adjust: exact !important;
   }
   #print-map-face,
-  body.has-print-face #print-map-face {
+  body.has-print-face #print-map-face,
+  html.has-print-face #print-map-face {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -598,7 +601,8 @@ body.has-print-face .maplibregl-canvas {
     object-fit: fill;
     z-index: 4;
   }
-  body.has-print-face .maplibregl-canvas {
+  body.has-print-face canvas.maplibregl-canvas,
+  body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {
     visibility: hidden !important;
     opacity: 0 !important;
   }

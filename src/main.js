@@ -117,11 +117,36 @@ function setText(id, value) {
     el.textContent = (!v || v === 'print.datumValue' || /WGS\s*84/i.test(String(v))) ? 'NAD 83' : String(v);
     return;
   }
+  if (id === 'print-gm-angle') {
+    el.textContent = GM_ANGLE();
+    return;
+  }
+  if (id === 'print-gm-conv') {
+    el.textContent = GM_CONV();
+    return;
+  }
   el.textContent = value == null ? '' : String(value);
 }
 
-const GM_ANGLE = () => t('print.north.gmAngle');
-const GM_CONV = () => t('print.north.convergence');
+const LOCKED_GM_ANGLE = 'G–M 9° 30′ W';
+const LOCKED_GM_CONV = 'convergence 1° 17′';
+
+function GM_ANGLE() {
+  // Jefferson Pier lock. Never write a magnetic-model / computed declination.
+  const v = t('print.north.gmAngle');
+  if (!v || v === 'print.north.gmAngle' || /0°\s*38|9°\s*3[68]|1°\s*47/.test(v)) {
+    return LOCKED_GM_ANGLE;
+  }
+  return LOCKED_GM_ANGLE;
+}
+
+function GM_CONV() {
+  const v = t('print.north.convergence');
+  if (!v || v === 'print.north.convergence' || /1°\s*47/.test(v)) {
+    return LOCKED_GM_CONV;
+  }
+  return LOCKED_GM_CONV;
+}
 
 function applyChromeCopy() {
   applyStaticCopy(document);
@@ -568,23 +593,101 @@ function fillPrintBlock(map) {
     setText('print-example-grid', square || '');
   }
   renderPrintScaleBar(document.getElementById('print-scale-bar'), scale.metersPerPixel, rf);
+  writeDatum();
+  setText('print-date', formatPrintedDate());
+  setText('print-gm-angle', GM_ANGLE());
+  setText('print-gm-conv', GM_CONV());
   return rfBand;
 }
 
 
+function frames(n = 2) {
+  return new Promise((resolve) => {
+    const step = (left) => {
+      if (left <= 0) resolve();
+      else requestAnimationFrame(() => step(left - 1));
+    };
+    step(n);
+  });
+}
+
+function isBlankOrTan(ctx, w, h) {
+  if (!ctx || w < 8 || h < 8) return true;
+  const cols = 10;
+  const rows = 10;
+  const insetX = Math.floor(w * 0.08);
+  const insetY = Math.floor(h * 0.08);
+  const spanX = Math.max(1, w - insetX * 2);
+  const spanY = Math.max(1, h - insetY * 2);
+  let tan = 0;
+  let blank = 0;
+  let ink = 0;
+  let total = 0;
+  let minL = 255;
+  let maxL = 0;
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      const x = insetX + Math.floor((spanX * (col + 0.5)) / cols);
+      const y = insetY + Math.floor((spanY * (row + 0.5)) / rows);
+      const d = ctx.getImageData(Math.min(w - 1, x), Math.min(h - 1, y), 1, 1).data;
+      total += 1;
+      const r = d[0];
+      const g = d[1];
+      const b = d[2];
+      const a = d[3];
+      const L = (r + g + b) / 3;
+      if (L < minL) minL = L;
+      if (L > maxL) maxL = L;
+      if (a < 8) { blank += 1; continue; }
+      // Well / beige / tan (#E8D9B8) — a resize-blank face.
+      if (Math.abs(r - 0xE8) < 28 && Math.abs(g - 0xD9) < 28 && Math.abs(b - 0xB8) < 28) {
+        tan += 1;
+        continue;
+      }
+      if (r > 248 && g > 248 && b > 248) { blank += 1; continue; }
+      if (r < 8 && g < 8 && b < 8) { blank += 1; continue; }
+      ink += 1;
+    }
+  }
+  if (total < 8) return true;
+  if (maxL - minL < 12) return true;
+  if (ink < 6) return true;
+  if (tan + blank > total * 0.85) return true;
+  return false;
+}
+
 function snapshotPrintMapFace(map) {
   const mapEl = document.getElementById('map');
   if (!mapEl || !map) return false;
+  const gl = typeof map.getCanvas === 'function' ? map.getCanvas() : null;
+  if (!gl || !gl.width || !gl.height) return false;
   let url = '';
   try {
-    const canvas = typeof map.getCanvas === 'function' ? map.getCanvas() : null;
-    if (canvas && typeof canvas.toDataURL === 'function') {
-      url = canvas.toDataURL('image/png');
+    // WebGL → 2D → toDataURL. Direct GL toDataURL is often a blank tan after resize.
+    const c2d = document.createElement('canvas');
+    c2d.width = gl.width;
+    c2d.height = gl.height;
+    const ctx = c2d.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return false;
+    ctx.drawImage(gl, 0, 0);
+    let rejected = false;
+    try {
+      rejected = isBlankOrTan(ctx, c2d.width, c2d.height);
+    } catch {
+      rejected = false;
     }
+    if (rejected) return false;
+    url = c2d.toDataURL('image/png');
   } catch {
-    url = '';
+    try {
+      url = gl.toDataURL('image/png');
+    } catch {
+      return false;
+    }
   }
-  if (!url || url.length < 32) return false;
+  if (!url || url.length < 8000) return false;
+  // Uniform tan compresses small; tiles + 1 km grid do not.
+  if (url.length < 40000 && gl.width * gl.height > 200000) return false;
   let img = document.getElementById('print-map-face');
   if (!img) {
     img = document.createElement('img');
@@ -598,10 +701,32 @@ function snapshotPrintMapFace(map) {
   img.style.display = 'block';
   img.style.visibility = 'visible';
   img.style.opacity = '1';
-  // Class after the img is in the tree so hide cannot race the snapshot.
+  img.style.position = 'absolute';
+  img.style.inset = '0';
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.objectFit = 'fill';
+  img.style.zIndex = '4';
+  img.style.pointerEvents = 'none';
   document.body.classList.add('has-print-face');
   document.documentElement.classList.add('has-print-face');
   return true;
+}
+
+async function capturePrintFaceOrRetry(map) {
+  for (let i = 0; i < 8; i += 1) {
+    try {
+      if (typeof map.triggerRepaint === 'function') map.triggerRepaint();
+    } catch { /* */ }
+    await waitForMapPaint(map, 2200);
+    await frames(2);
+    if (snapshotPrintMapFace(map)) return true;
+    await new Promise((r) => setTimeout(r, 90));
+  }
+  // No raster — do not hide WebGL (that blanks the sheet).
+  document.body.classList.remove('has-print-face');
+  document.documentElement.classList.remove('has-print-face');
+  return false;
 }
 
 function removePrintMapFace() {
@@ -733,44 +858,36 @@ function attachPrint(map) {
     printArmed = true;
     document.body.classList.add('printing');
     document.documentElement.classList.add('printing');
-    const fire = () => {
+    const fire = async () => {
       if (!printArmed) return;
       prepareSync();
+      fillPrintBlock(map);
       try { map.resize(); } catch { /* print size */ }
-      let printed = false;
-      const snapAndPrint = () => {
-        if (!printArmed || printed) return;
-        // Snapshot first (canvas still visible), then hide live WebGL via has-print-face.
-        snapshotPrintMapFace(map);
-        printed = true;
-        try {
-          REAL_PRINT.call(window);
-        } catch {
-          const note = document.getElementById('search-note');
-          if (note) {
-            note.hidden = false;
-            note.textContent = t('chrome.printBlocked');
-            note.classList.add('is-error');
-          }
-          restore();
-        }
-      };
-      // One real render, then one frame, then snapshot, then print.
-      // Not idle (012). Do not hide the canvas before the PNG exists.
-      try {
-        map.once('render', () => {
-          requestAnimationFrame(snapAndPrint);
-        });
-      } catch {
-        snapAndPrint();
-        return;
+      // Real raster BEFORE window.print(). Same tab only. Never window.open.
+      const ok = await capturePrintFaceOrRetry(map);
+      const img = document.getElementById('print-map-face');
+      if (!ok || !img || !img.src || img.src.length < 32) {
+        document.body.classList.remove('has-print-face');
+        document.documentElement.classList.remove('has-print-face');
       }
+      if (!printArmed) return;
+      const prevOpen = window.open;
+      window.open = function mgrsNoSecondTab() { return null; };
       try {
-        if (typeof map.triggerRepaint === 'function') map.triggerRepaint();
-      } catch { /* */ }
-      setTimeout(snapAndPrint, 480);
+        REAL_PRINT.call(window);
+      } catch {
+        const note = document.getElementById('search-note');
+        if (note) {
+          note.hidden = false;
+          note.textContent = t('chrome.printBlocked');
+          note.classList.add('is-error');
+        }
+        restore();
+      } finally {
+        window.open = prevOpen;
+      }
     };
-    afterLetterLayout(map, fire);
+    afterLetterLayout(map, () => { fire(); });
   });
 
   document.addEventListener('keydown', (ev) => {
@@ -812,21 +929,6 @@ async function main() {
     lockDemoRf(map);
     fillPrintBlock(map);
   });
-  if (/[?&]print=1\b/.test(location.search)) {
-    const go = async () => {
-      document.body.classList.add('printing');
-      document.documentElement.classList.add('printing');
-      afterLetterLayout(map, () => {
-        setZoomForPrintRf(map, 24000);
-        fillPrintBlock(map);
-      });
-      try { await map.once('idle'); } catch { /* layout only — never print */ }
-      setZoomForPrintRf(map, 24000);
-      fillPrintBlock(map);
-    };
-    go();
-  }
-
   const scaleEl = document.getElementById('scale-readout');
 
   state.lastInterval = intervalForZoom(map.getZoom());
