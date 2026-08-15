@@ -143,7 +143,14 @@ package_arch() {
 
   has_code_signature "$mainbin" || fail "$dir: main binary has no LC_CODE_SIGNATURE after signing"
   [ -f "$app/Contents/_CodeSignature/CodeResources" ] || fail "$dir: bundle seal (_CodeSignature/CodeResources) missing"
-  "$RCODESIGN" verify "$mainbin" >/dev/null 2>&1 || fail "$dir: rcodesign verify failed on main binary"
+  # Note: `rcodesign verify` is self-documented as buggy and false-positives on
+  # ad-hoc signatures ("CMS error: missing further values" — ad-hoc has no CMS
+  # blob by design). Assert on the parsed signature contents instead.
+  local siginfo
+  siginfo="$("$RCODESIGN" print-signature-info "$mainbin" 2>/dev/null)"
+  echo "$siginfo" | grep -q "CodeSignatureFlags(ADHOC)" || fail "$dir: main binary CodeDirectory missing ADHOC flag"
+  echo "$siginfo" | grep -q "identifier: $BUNDLE_ID" || fail "$dir: main binary signature identifier is not $BUNDLE_ID"
+  echo "$siginfo" | grep -q "slot: CodeDirectory (0)" || fail "$dir: main binary has no CodeDirectory blob"
   local plist_id
   plist_id="$(python3 -c "import plistlib;print(plistlib.load(open('$app/Contents/Info.plist','rb'))['CFBundleIdentifier'])")"
   [ "$plist_id" = "$BUNDLE_ID" ] || fail "$dir: CFBundleIdentifier is $plist_id, expected $BUNDLE_ID"
@@ -155,9 +162,16 @@ package_arch() {
   rm -f "$RELEASE/$zipname"
   (cd "$RELEASE/$dir" && zip -qry "$RELEASE/$zipname" "$APP_NAME")
 
-  local links size
+  local links disk_links size
   links="$(zip_symlink_count "$RELEASE/$zipname")"
-  [ "$links" -gt 20 ] || fail "$zipname: only $links symlinks in zip; framework structure lost"
+  disk_links="$(find "$app" -type l | wc -l)"
+  [ "$links" -eq "$disk_links" ] && [ "$links" -gt 0 ] \
+    || fail "$zipname: $links symlinks in zip vs $disk_links on disk; framework structure lost"
+  python3 -c "
+import sys, zipfile
+names = zipfile.ZipFile('$RELEASE/$zipname').namelist()
+assert '$APP_NAME/Contents/Frameworks/Electron Framework.framework/Versions/Current' in names, 'Versions/Current missing from zip'
+" || fail "$zipname: Electron Framework Versions/Current symlink missing"
   size="$(stat -c %s "$RELEASE/$zipname")"
   [ "$size" -gt 60000000 ] && [ "$size" -lt 200000000 ] || fail "$zipname: size $size bytes out of sane range"
   note "[$arch] OK: $zipname ($((size / 1024 / 1024)) MB, $links symlinks)"
