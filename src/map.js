@@ -1,0 +1,240 @@
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { COPY } from './copy.js';
+
+/** Washington DC / Monument — zoom 12 so OpenTopoMap reads as topo. */
+export const DEFAULT_CENTER = { lon: -77.035, lat: 38.89 };
+export const DEFAULT_ZOOM = 12;
+
+export const OT_TILES = [
+  'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
+  'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
+  'https://c.tile.opentopomap.org/{z}/{x}/{y}.png',
+];
+
+export const OSM_TILES = ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'];
+
+export const OT_ATTR_SHORT =
+  'Map data © OpenStreetMap contributors, SRTM. Style © OpenTopoMap (CC-BY-SA). Not a USGS map.';
+export const OSM_ATTR_SHORT = 'Map data © OpenStreetMap contributors. Not a USGS map.';
+
+export const OT_ATTR_PRINT = COPY.print.attributionOtm;
+export const OSM_ATTR_PRINT = COPY.print.attributionOsm;
+
+const OT_PROBE = 'https://a.tile.opentopomap.org/12/1171/1566.png';
+
+/** @typedef {'opentopomap' | 'osm'} TileSourceId */
+
+/** @type {TileSourceId} */
+export let activeTileSource = 'opentopomap';
+
+const listeners = new Set();
+
+export function onTileSourceChange(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+function emitTileSource() {
+  for (const fn of listeners) fn(activeTileSource);
+  const el = document.getElementById('tile-source');
+  if (el) {
+    el.textContent =
+      activeTileSource === 'opentopomap'
+        ? COPY.chrome.tiles.opentopomap
+        : COPY.chrome.tiles.osm;
+  }
+  const attr = document.getElementById('print-attr');
+  if (attr) {
+    attr.textContent =
+      activeTileSource === 'opentopomap' ? OT_ATTR_PRINT : OSM_ATTR_PRINT;
+  }
+}
+
+export function setStatus(text, { retry = false } = {}) {
+  const status = document.getElementById('map-status');
+  const retryBtn = document.getElementById('tile-retry');
+  if (!status) return;
+  if (!text) {
+    status.hidden = true;
+    status.firstChild && (status.querySelector('.status-text').textContent = '');
+    if (retryBtn) retryBtn.hidden = true;
+    return;
+  }
+  status.hidden = false;
+  const textEl = status.querySelector('.status-text');
+  if (textEl) textEl.textContent = text;
+  else status.textContent = text;
+  if (retryBtn) retryBtn.hidden = !retry;
+}
+
+/**
+ * Probe OpenTopoMap. Image tiles are used as MapLibre raster textures,
+ * so CORS must succeed. Fall back to OSM on failure.
+ */
+export async function detectBaseTiles() {
+  try {
+    const res = await fetch(OT_PROBE, { mode: 'cors', cache: 'no-store' });
+    if (res.ok) {
+      activeTileSource = 'opentopomap';
+      return activeTileSource;
+    }
+  } catch {
+    // network / CORS / blocked
+  }
+  activeTileSource = 'osm';
+  return activeTileSource;
+}
+
+function rasterSource(id) {
+  const ot = id === 'opentopomap';
+  return {
+    type: 'raster',
+    tiles: ot ? OT_TILES : OSM_TILES,
+    tileSize: 256,
+    attribution: ot ? OT_ATTR_SHORT : OSM_ATTR_SHORT,
+    maxzoom: ot ? 17 : 19,
+  };
+}
+
+export function buildStyle(tileId = activeTileSource) {
+  return {
+    version: 8,
+    name: 'MGRS Topo',
+    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    sources: {
+      basemap: rasterSource(tileId),
+    },
+    layers: [
+      {
+        id: 'basemap',
+        type: 'raster',
+        source: 'basemap',
+      },
+    ],
+  };
+}
+
+export function applyTileSource(map, id) {
+  activeTileSource = id;
+  const source = map.getSource('basemap');
+  if (source && typeof source.setTiles === 'function') {
+    source.setTiles(id === 'opentopomap' ? OT_TILES : OSM_TILES);
+  }
+  emitTileSource();
+}
+
+/**
+ * Switch the live map to OSM if OpenTopoMap tiles start failing after load.
+ * @param {maplibregl.Map} map
+ */
+export function attachTileFallback(map) {
+  let errors = 0;
+  let switched = activeTileSource !== 'opentopomap';
+
+  map.on('error', (e) => {
+    const src = e?.sourceId || e?.source?.id;
+    const msg = String(e?.error?.message || e?.error || '');
+    const tileish =
+      src === 'basemap' ||
+      /tile|opentopo|Failed to fetch|CORS|network/i.test(msg);
+    if (!tileish) return;
+
+    if (!switched) {
+      errors += 1;
+      if (errors < 3) return;
+      switched = true;
+      applyTileSource(map, 'osm');
+      return;
+    }
+
+    setStatus(COPY.chrome.tilesFailed, { retry: true });
+  });
+}
+
+export async function retryTiles(map) {
+  setStatus(COPY.chrome.loadingTiles);
+  const id = await detectBaseTiles();
+  applyTileSource(map, id);
+  try {
+    await map.once('idle');
+    setStatus('');
+  } catch {
+    setStatus(COPY.chrome.tilesFailed, { retry: true });
+  }
+}
+
+/**
+ * @param {string} containerId
+ * @returns {Promise<maplibregl.Map | null>}
+ */
+export async function createMap(containerId = 'map') {
+  if (typeof maplibregl.supported === 'function' && !maplibregl.supported()) {
+    const banner = document.getElementById('no-webgl');
+    const chrome = document.getElementById('chrome');
+    const hud = document.getElementById('hud');
+    const frame = document.getElementById('print-frame');
+    if (banner) banner.hidden = false;
+    if (chrome) chrome.hidden = true;
+    if (hud) hud.hidden = true;
+    if (frame) frame.hidden = true;
+    return null;
+  }
+
+  setStatus(COPY.chrome.loading);
+
+  await detectBaseTiles();
+
+  const map = new maplibregl.Map({
+    container: containerId,
+    style: buildStyle(activeTileSource),
+    center: [DEFAULT_CENTER.lon, DEFAULT_CENTER.lat],
+    zoom: DEFAULT_ZOOM,
+    minZoom: 2,
+    maxZoom: 18,
+    maxPitch: 0,
+    dragRotate: false,
+    pitchWithRotate: false,
+    touchPitch: false,
+    attributionControl: false,
+    hash: false,
+  });
+
+  map.addControl(
+    new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }),
+    'bottom-left',
+  );
+  map.addControl(
+    new maplibregl.AttributionControl({ compact: false }),
+    'bottom-left',
+  );
+
+  attachTileFallback(map);
+  emitTileSource();
+
+  const retryBtn = document.getElementById('tile-retry');
+  if (retryBtn) {
+    retryBtn.addEventListener('click', () => {
+      retryTiles(map);
+    });
+  }
+
+  map.on('load', () => {
+    setStatus(COPY.chrome.loadingTiles);
+  });
+  map.on('idle', () => {
+    const status = document.getElementById('map-status');
+    const retryBtnEl = document.getElementById('tile-retry');
+    const retryVisible = retryBtnEl && !retryBtnEl.hidden;
+    if (status && !retryVisible) setStatus('');
+  });
+
+  return map;
+}
+
+export function getCenterLngLat(map) {
+  const c = map.getCenter();
+  return { lon: c.lng, lat: c.lat };
+}
+
+export { maplibregl };

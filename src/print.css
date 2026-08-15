@@ -1,0 +1,162 @@
+@page {
+  size: letter portrait;
+  margin: 0.4in;
+}
+
+@media print {
+  html, body, #app {
+    background: #fff !important;
+    color: #1c1914;
+    height: auto !important;
+    overflow: visible !important;
+    width: 7.7in;
+  }
+
+  body.printing,
+  body {
+    width: 7.7in;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .chrome,
+  .maplibregl-ctrl,
+  .maplibregl-ctrl-bottom-left,
+  .maplibregl-ctrl-bottom-right,
+  .maplibregl-ctrl-top-right,
+  .maplibregl-ctrl-attrib,
+  #chrome,
+  #hud,
+  #map-status,
+  #search-form,
+  #print-btn,
+  #print-frame,
+  #crosshair,
+  .print-frame,
+  .crosshair {
+    display: none !important;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 10.2in;
+    max-height: 10.2in;
+  }
+
+  #map {
+    position: relative !important;
+    inset: auto !important;
+    flex: 1 1 auto;
+    height: 9.1in !important;
+    width: 7.7in !important;
+    min-height: 9.1in;
+  }
+
+  .print-footer {
+    display: block;
+    flex: 0 0 1.1in;
+    height: 1.1in;
+    width: 7.7in;
+    box-sizing: border-box;
+    padding: 0.08in 0 0;
+    border-top: 1.25pt solid #1c1914;
+    font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+    color: #1c1914;
+    background: #ede6d6;
+  }
+
+  .print-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.16in;
+    height: 0.78in;
+  }
+
+  .print-title-col { flex: 1.2; min-width: 0; }
+  .print-series {
+    margin: 0;
+    font-size: 7.5pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4a4036;
+  }
+  .print-title-col h1 {
+    margin: 1px 0 0;
+    font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+    font-size: 14pt;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .print-subtitle {
+    margin: 1px 0 0;
+    font-size: 8pt;
+  }
+
+  .print-spec, .print-meta {
+    display: grid;
+    gap: 1px 8px;
+    font-size: 7.5pt;
+    line-height: 1.2;
+  }
+  .print-spec div, .print-meta div {
+    display: flex;
+    gap: 6px;
+    justify-content: space-between;
+  }
+  .print-spec span, .print-meta span { color: #4a4036; }
+  .print-spec { min-width: 1.5in; }
+  .print-meta { min-width: 1.45in; text-align: right; }
+  .print-spec strong, .print-meta strong, #print-scale {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 500;
+  }
+
+  .print-north {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 7pt;
+    width: 0.55in;
+  }
+  .print-north span { margin-top: 1px; }
+
+  .print-legend { min-width: 0.95in; }
+  .legend-h {
+    margin: 0 0 2px;
+    font-size: 7.5pt;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .print-legend ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 7.5pt;
+  }
+  .print-legend li {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .swatch {
+    display: inline-block;
+    width: 0.14in;
+    height: 0.08in;
+    border: 0.5pt solid #1c1914;
+  }
+  .swatch.relief { background: #5b7f4a; opacity: 0.55; }
+  .swatch.contours { background: #a65d32; }
+  .swatch.grid { background: #8b1e1e; }
+
+  .print-disclaimer,
+  .print-attr {
+    margin: 2px 0 0;
+    font-size: 6pt;
+    line-height: 1.25;
+    color: #4a4036;
+  }
+}

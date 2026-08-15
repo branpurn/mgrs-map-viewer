@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.DS_Store
+__pycache__
+.venv
+*.pyc
+_wreadme.py
+wreadme.py
+_mgrstest.mjs
+INFRA_NOTE.txt
