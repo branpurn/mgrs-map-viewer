@@ -138,7 +138,7 @@
   "chrome.wysiwyg": "WYSIWYG",
   "chrome.wysiwygOn": "On",
   "chrome.wysiwygOff": "Off",
-  "chrome.ariaWysiwyg": "WYSIWYG. Default on.",
+  "chrome.ariaWysiwyg": "WYSIWYG switch. Default on.",
   "chrome.ariaWysiwygOn": "WYSIWYG on. Screen matches the printed sheet.",
-  "chrome.ariaWysiwygOff": "WYSIWYG off."
+  "chrome.ariaWysiwygOff": "WYSIWYG off. Full map, no sheet."
 }
