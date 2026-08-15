@@ -139,12 +139,12 @@ function paintNorthDiagram(map) {
     star.setAttribute('y', String(tn[1] + 4));
   }
   if (gnLab) {
-    gnLab.setAttribute('x', String(gn[0] + (n.conv >= 0 ? 3 : -16));
+    gnLab.setAttribute('x', String(gn[0] + (n.conv >= 0 ? 3 : -16)));
     gnLab.setAttribute('y', String(gn[1] + 10));
     gnLab.textContent = t('print.north.grid');
   }
   if (mnLab) {
-    mnLab.setAttribute('x', String(mn[0] + (n.decl >= 0 ? 3 : -18));
+    mnLab.setAttribute('x', String(mn[0] + (n.decl >= 0 ? 3 : -18)));
     mnLab.setAttribute('y', String(mn[1] + 6));
     mnLab.textContent = t('print.north.magnetic');
   }
