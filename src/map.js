@@ -271,6 +271,9 @@ export async function createMap(containerId = 'map') {
     new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }),
     'bottom-left',
   );
+  const dock = document.getElementById('zoom-dock');
+  const navGroup = map.getContainer().querySelector('.maplibregl-ctrl-group');
+  if (dock && navGroup) dock.appendChild(navGroup);
 
   attachTileFallback(map);
   emitTileSource();

@@ -136,6 +136,11 @@ function createWindow() {
     webPreferences: { sandbox: false, contextIsolation: true },
   });
   win.removeMenu();
+  win.webContents.on("before-input-event", (event, input) => {
+    if (input.type === "keyDown" && input.key && input.key.toLowerCase() === "p" && (input.control || input.meta)) {
+      event.preventDefault();
+    }
+  });
   win.setTitle("MGRS Viewer");
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);

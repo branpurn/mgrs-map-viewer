@@ -4,15 +4,55 @@ import strings from '../strings.json';
 
 export const API_BASE = '';
 
+/** Packaged AppImage may ship an older strings.json. Never show raw keys. */
+const FALLBACKS = {
+  'print.gridZone': 'GRID ZONE',
+  'print.gridZoneValue': '{gzd}',
+  'print.example': 'EXAMPLE',
+  'print.example.place': 'Jefferson Pier',
+  'print.example.grid': '18S UJ 2337 0652',
+  'print.example.note': 'Read right, then up.',
+  'print.north.gm': 'G–M',
+  'print.north.grid': 'GN',
+  'print.north.true': 'TN',
+  'print.north.magnetic': 'MN',
+  'print.north.note': 'Grid, magnetic, and true north at center of sheet.',
+  'print.datum': 'DATUM',
+  'print.datumValue': 'NAD 83',
+  'print.grid': 'GRID',
+  'print.gridValue': 'MGRS',
+  'print.gridInterval': 'Grid interval',
+  'print.gridInterval.1k': '1 km',
+  'print.gridInterval.100m': '100 m',
+  'print.gridInterval.10k': '10 km',
+  'print.scale': 'SCALE',
+  'print.projection': 'Projection',
+  'print.projectionValue': 'UTM',
+  'print.legend.roads': 'Roads',
+  'print.legend.water': 'Water',
+  'print.legend.contours': 'Contours',
+  'print.legend.grid': 'MGRS grid',
+  'print.legend.places': 'Places',
+  'print.legend.relief': 'Relief',
+  'app.name': 'MGRS Viewer',
+  'print.attribution.notUsgs': 'Not a USGS map.',
+};
+
 /**
  * Look up a flat key from strings.json and replace `{name}` tokens.
  * @param {string} key
  * @param {Record<string, string|number>} [vars]
  */
 export function t(key, vars = {}) {
-  const template = Object.prototype.hasOwnProperty.call(strings, key)
-    ? strings[key]
-    : key;
+  let template;
+  if (Object.prototype.hasOwnProperty.call(strings, key) && strings[key] !== '') {
+    template = strings[key];
+  } else if (Object.prototype.hasOwnProperty.call(FALLBACKS, key)) {
+    template = FALLBACKS[key];
+  } else {
+    template = key;
+  }
+  if (template === 'WGS 84' && key === 'print.datumValue') template = 'NAD 83';
   return String(template).replace(/\{(\w+)\}/g, (match, name) =>
     Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : match,
   );

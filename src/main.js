@@ -17,6 +17,7 @@ import {
 import {
   attachScaleReadout,
   computePrintScale,
+  computeViewScale,
   intervalForPrintRf,
   buildPrintScaleBar,
   renderPrintScaleBar,
@@ -189,8 +190,8 @@ function layoutSheet(map) {
   const hudH = hud && !hud.hidden ? hud.offsetHeight : 88;
   const zoomW = 36;
   const zoomH = 74;
-  const leftReserve = Math.max(24, 16 + zoomW);
-  const rightReserve = Math.max(24, 16 + hudW);
+  const leftReserve = Math.max(36, 18 + zoomW);
+  const rightReserve = Math.max(36, 18 + hudW);
   const topReserve = 24;
   const bottomReserve = 24;
   const r = desk.getBoundingClientRect();
@@ -213,14 +214,14 @@ function layoutSheet(map) {
   sheet.style.transform = 'none';
   sheet.style.aspectRatio = 'auto';
   if (hud) {
-    hud.style.right = '8px';
-    hud.style.bottom = '8px';
+    hud.style.right = '18px';
+    hud.style.bottom = '18px';
     hud.style.left = 'auto';
     hud.style.top = 'auto';
   }
   if (dock) {
-    dock.style.left = '8px';
-    dock.style.bottom = '8px';
+    dock.style.left = '18px';
+    dock.style.bottom = '18px';
     dock.style.top = 'auto';
   }
   if (map) {
@@ -231,9 +232,12 @@ function layoutSheet(map) {
 }
 
 function setZoomForPrintRf(map, target = 24000) {
-  const w = (map.getCanvas() && map.getCanvas().clientWidth) || 7.74 * 96;
+  const mapEl = document.getElementById('map');
+  const w = (mapEl && mapEl.clientWidth)
+    || (map.getCanvas() && map.getCanvas().clientWidth)
+    || 7.74 * 96;
   const groundM = 7.74 * 0.0254 * target;
-  const mpp = groundM / w;
+  const mpp = groundM / Math.max(1, w);
   const lat = map.getCenter().lat;
   const z = Math.log2((156543.03392804097 * Math.cos((lat * Math.PI) / 180)) / mpp);
   if (Number.isFinite(z)) map.setZoom(Math.min(18, Math.max(2, z)));
@@ -279,15 +283,18 @@ function updateCenterHud(map) {
 
 
 function fillPrintBlock(map) {
+  const view = computeViewScale(map);
   const scale = computePrintScale(map);
-  state.lastScaleText = scale.text;
-  const rfBand = intervalForPrintRf(scale.rf);
+  const rf = view.rf || scale.rf;
+  const text = view.text || scale.text;
+  state.lastScaleText = text;
+  const rfBand = intervalForPrintRf(rf);
   const square = centerMgrs(map, rfBand.accuracy);
   const title = sheetTitle(square);
   setText('print-title', title);
   setText('print-title-upper', title);
   setText('print-upper-title', title);
-  setText('print-scale', scale.text);
+  setText('print-scale', text);
   setText('print-grid-value', t('print.gridValue'));
   setText('print-datum-value', t('print.datumValue'));
   setText('print-grid-interval', t(rfBand.labelKey));
@@ -310,25 +317,36 @@ function fillPrintBlock(map) {
     setText('print-example-place', title);
     setText('print-example-grid', square || '');
   }
-  renderPrintScaleBar(document.getElementById('print-scale-bar'), scale.metersPerPixel, scale.rf);
+  renderPrintScaleBar(document.getElementById('print-scale-bar'), scale.metersPerPixel, rf);
   return rfBand;
 }
 
 function attachPrint(map) {
   const btn = document.getElementById('print-btn');
   if (!btn) return;
+  btn.setAttribute('type', 'button');
+  btn.setAttribute('form', '');
+
+  let fromButton = false;
+  const nativePrint = window.print.bind(window);
+  window.print = function mgrsPrintGuard() {
+    if (!fromButton) return;
+    nativePrint();
+  };
 
   const prepare = () => {
-    const scale = computePrintScale(map);
-    setPrintInterval(intervalForPrintRf(scale.rf));
     document.body.classList.add('printing');
+    try { map.resize(); } catch { /* print size */ }
+    setZoomForPrintRf(map, 24000);
+    const scale = computeViewScale(map);
+    setPrintInterval(intervalForPrintRf(scale.rf || 24000));
     fillPrintBlock(map);
     const compact = centerMgrsCompact(map, precisionForZoom(map.getZoom()));
     document.title = printFilename(compact);
-    map.resize();
   };
 
   const restore = () => {
+    fromButton = false;
     setPrintInterval(null);
     document.body.classList.remove('printing');
     document.title = t('app.documentTitle');
@@ -336,13 +354,31 @@ function attachPrint(map) {
     layoutSheet();
   };
 
-  window.addEventListener('beforeprint', prepare);
+  window.addEventListener('beforeprint', () => {
+    if (!fromButton) return;
+    prepare();
+  });
   window.addEventListener('afterprint', restore);
 
-  btn.addEventListener('click', async () => {
+  const blockNativePrint = (ev) => {
+    const key = ev.key;
+    const code = ev.code;
+    if ((ev.ctrlKey || ev.metaKey) && (key === 'p' || key === 'P' || code === 'KeyP')) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+    }
+  };
+  window.addEventListener('keydown', blockNativePrint, true);
+  document.addEventListener('keydown', blockNativePrint, true);
+
+  btn.addEventListener('click', async (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (btn.disabled) return;
     btn.disabled = true;
     const prev = btn.textContent;
     btn.textContent = t('chrome.printing');
+    fromButton = true;
     prepare();
     try {
       await map.once('idle');
@@ -350,8 +386,9 @@ function attachPrint(map) {
       // print anyway
     }
     try {
-      window.print();
+      nativePrint();
     } catch {
+      fromButton = false;
       const note = document.getElementById('search-note');
       if (note) {
         note.hidden = false;
@@ -372,12 +409,6 @@ function attachPrint(map) {
       || ev.target.tagName === 'BUTTON'
       || ev.target.isContentEditable
     );
-    // Print only from #print-btn. Block Ctrl/Cmd+P (native dialog).
-    // Bare P must still type in search — never call print from a key.
-    if ((ev.ctrlKey || ev.metaKey) && (key === 'p' || key === 'P')) {
-      ev.preventDefault();
-      return;
-    }
     if (inField) return;
     if (key === '+' || key === '=') map.zoomIn();
     if (key === '-' || key === '_') map.zoomOut();
@@ -402,10 +433,12 @@ async function main() {
   fillPrintBlock(map);
   if (/[?&]print=1\b/.test(location.search)) {
     const go = async () => {
-      fillPrintBlock(map);
       document.body.classList.add('printing');
       try { map.resize(); } catch { /* print layout */ }
+      setZoomForPrintRf(map, 24000);
+      fillPrintBlock(map);
       try { await map.once('idle'); } catch { /* print anyway */ }
+      fillPrintBlock(map);
     };
     go();
   }

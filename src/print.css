@@ -53,7 +53,7 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   padding: 0.08in 0;
   display: flex;
   align-items: stretch;
-  overflow: visible;
+  overflow: hidden;
 }
 
 #print-footer .print-col {
@@ -62,10 +62,10 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   min-width: 0;
 }
 
-#print-footer .print-col-a { width: 2.70in; flex: 0 0 2.70in; }
+#print-footer .print-col-a { width: 2.40in; flex: 0 0 2.40in; overflow: hidden; }
 #print-footer .print-col-b {
-  width: 2.00in;
-  flex: 0 0 2.00in;
+  width: 1.90in;
+  flex: 0 0 1.90in;
   border-left: 0.35pt solid #000000;
   display: flex;
   flex-direction: column;
@@ -73,13 +73,15 @@ html.printing, html.printing body { background: #FFFFFF !important; }
   text-align: left;
 }
 #print-footer .print-col-c {
-  width: 1.50in;
-  flex: 0 0 1.50in;
+  width: 1.40in;
+  flex: 0 0 1.40in;
   border-left: 0.35pt solid #000000;
 }
 #print-footer .print-col-d {
-  width: 1.30in;
-  flex: 0 0 1.30in;
+  width: auto;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
   border-left: 0.35pt solid #000000;
   font-size: 7pt;
   line-height: 1.2;
@@ -228,11 +230,12 @@ html.printing, html.printing body { background: #FFFFFF !important; }
 
 #print-legal {
   position: absolute;
-  top: calc(100% * 10.76 / 11);
+  top: calc(100% * 10.80 / 11);
   left: calc(100% * 0.38 / 8.5);
   width: calc(100% * 7.74 / 8.5);
-  height: calc(100% * 0.22 / 11);
+  height: calc(100% * 0.18 / 11);
   overflow: hidden;
+  z-index: 6;
 }
 
 #print-legal .print-disclaimer,
@@ -410,7 +413,7 @@ body.printing #map {
 .print-note { margin: 0; font-size: 6pt; line-height: 1.15; color: #4A4036; }
 .print-gm { display: block; margin: 0 0 0.02in; }
 .print-gm-fig { margin: 0; font-size: 6.5pt; line-height: 1.2; text-align: left; }
-.print-col-a { overflow: visible; }
+.print-col-a { overflow: hidden; }
 .print-col-a .print-title { font-size: 11pt; }
 .print-spec div { height: 0.14in; }
 .psb-track { gap: 0; }
@@ -451,6 +454,6 @@ body.printing #sheet {
 #leg-roads, #leg-water, #leg-contours, #leg-grid, #leg-places, #leg-relief {
   color: #1C1914;
 }
-#print-legal { overflow: visible; }
+#print-legal { overflow: hidden; }
 #print-disclaimer { color: #1C1914; white-space: nowrap; }
 #print-attr { display: none; }
