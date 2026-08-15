@@ -581,8 +581,9 @@ body.printing:not(.has-print-face) #map .maplibregl-canvas {
 #print-title,
 .print-col-a .print-title {
   font-size: 11pt;
-  margin: 0.04in 0 0.03in;
+  margin: 0.10in 0 0.04in;
   padding-top: 0;
+  overflow: hidden;
 }
 .print-spec { margin: 0.04in 0 0.04in; }
 .print-spec div { height: 0.16in; font-size: 7pt; }

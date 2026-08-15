@@ -172,14 +172,10 @@ function rebuild(map, host) {
   // latitude on the left/right *inside* the neatline. Never a combined pair
   // hanging off the top-left into the page margin.
   const geo = [
-    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT + 0.02, top: TOP + 0.22, side: 'left' },
-    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT + MAP_W - 0.72, top: TOP + 0.22, side: 'right' },
-    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.02, top: TOP + 0.32, side: 'top-left' },
-    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.72, top: TOP + 0.32, side: 'top-right' },
-    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT + 0.02, top: TOP + MAP_H - 0.32, side: 'left' },
-    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT + MAP_W - 0.72, top: TOP + MAP_H - 0.32, side: 'right' },
-    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.02, top: TOP + MAP_H - 0.42, side: 'bot-left' },
-    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.72, top: TOP + MAP_H - 0.42, side: 'bot-right' },
+    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.18, top: TOP + 0.02 },
+    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.72, top: TOP + 0.02 },
+    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT + 0.02, top: TOP + 0.24 },
+    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT + 0.02, top: TOP + MAP_H - 0.12 },
   ];
   for (const g of geo) {
     lab(host, g.text, {
