@@ -1,4 +1,5 @@
 import { t, formatScaleRatio, roundToNice } from './copy.js';
+import { orientGridNorth } from './north.js';
 import {
   RF_PRESETS,
   DEFAULT_RF,
@@ -207,6 +208,7 @@ export function applyRfZoom(map, target) {
     z = zoomForPrintRf(map.getCenter().lat, w, n);
   }
   if (Number.isFinite(z)) map.setZoom(Math.min(18, Math.max(2, z)));
+  orientGridNorth(map);
 }
 
 function syncScaleControl(liveRf) {

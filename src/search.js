@@ -1,5 +1,6 @@
 import { toPoint } from 'mgrs';
 import { t } from './copy.js';
+import { gridNorthBearing } from './north.js';
 
 const DECIMAL = /^(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)$/;
 const HEMI_SUFFIX =
@@ -227,6 +228,7 @@ function flyTo(map, lon, lat, _zoom) {
   map.jumpTo({
     center: [lon, lat],
     zoom: map.getZoom(),
+    bearing: gridNorthBearing(lon, lat),
   });
 }
 
@@ -234,6 +236,7 @@ function fitOrFly(map, hit) {
   map.jumpTo({
     center: [hit.lon, hit.lat],
     zoom: map.getZoom(),
+    bearing: gridNorthBearing(hit.lon, hit.lat),
   });
 }
 

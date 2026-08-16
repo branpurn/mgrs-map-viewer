@@ -15,9 +15,28 @@ export function zoneLon0Deg(zone) {
 }
 
 /**
- * Grid convergence (degrees, east-positive): angle from true north to grid north.
- * Snyder: γ = atan(tan(λ−λ0) sin φ).
+ * MapLibre bearing that puts UTM grid north at the top of the viewport.
+ * Same number as east-positive convergence: 90 means east is up.
  */
+export function gridNorthBearing(lon, lat, zone = utmZone(lon)) {
+  return gridConvergenceDeg(lon, lat, zone);
+}
+
+/** Rotate the map so MGRS/UTM lines sit square to the neatline. */
+export function orientGridNorth(map) {
+  if (!map || typeof map.getCenter !== 'function') return 0;
+  const c = map.getCenter();
+  const next = gridNorthBearing(c.lng, c.lat);
+  if (!Number.isFinite(next)) return 0;
+  const cur = typeof map.getBearing === 'function' ? map.getBearing() : 0;
+  let delta = next - cur;
+  delta = ((delta + 540) % 360) - 180;
+  if (Math.abs(delta) < 0.04) return next;
+  try { map.setBearing(next); } catch { /* */ }
+  return next;
+}
+
+/** Grid convergence (degrees, east-positive): Snyder γ = atan(tan(λ−λ0) sin φ). */
 export function gridConvergenceDeg(lon, lat, zone = utmZone(lon)) {
   const φ = Number(lat) * DEG;
   const Δλ = (Number(lon) - zoneLon0Deg(zone)) * DEG;

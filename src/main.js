@@ -32,7 +32,7 @@ import {
 } from './scale.js';
 import { attachSearch } from './search.js';
 import { attachCollarTicks } from './ticks.js';
-import { northAt, ray, visualAngle } from './north.js';
+import { northAt, ray, visualAngle, orientGridNorth } from './north.js';
 
 if (typeof window.__mgrsNativePrint !== 'function') {
   window.__mgrsNativePrint = window.print.bind(window);
@@ -340,7 +340,8 @@ function captureCamera(map) {
     const c = map.getCenter();
     const z = map.getZoom();
     if (!Number.isFinite(z)) return null;
-    return { zoom: z, lng: c.lng, lat: c.lat };
+    const bearing = typeof map.getBearing === 'function' ? map.getBearing() : 0;
+    return { zoom: z, lng: c.lng, lat: c.lat, bearing };
   } catch {
     return null;
   }
@@ -350,7 +351,11 @@ function restoreCamera(map, saved) {
   if (!map || !saved || !Number.isFinite(saved.zoom)) return;
   try {
     if (Number.isFinite(saved.lng) && Number.isFinite(saved.lat)) {
-      map.jumpTo({ center: [saved.lng, saved.lat], zoom: saved.zoom });
+      map.jumpTo({
+        center: [saved.lng, saved.lat],
+        zoom: saved.zoom,
+        bearing: Number.isFinite(saved.bearing) ? saved.bearing : map.getBearing(),
+      });
     } else {
       map.setZoom(saved.zoom);
     }
@@ -565,8 +570,9 @@ function lockDemoRf(map) {
   layoutSheet(map, { keepCamera: false });
   try { map.resize(); } catch { /* lock */ }
   if (!letterMapWidth()) return;
-  setZoomForPrintRf(map, getPrintRf(DEFAULT_RF));
-  fillPrintBlock(map);
+    setZoomForPrintRf(map, getPrintRf(DEFAULT_RF));
+    orientGridNorth(map);
+    fillPrintBlock(map);
   allowAutoRf = false;
 }
 
@@ -869,6 +875,7 @@ function attachPrint(map) {
     return {
       zoom: map.getZoom(),
       center: { lng: c.lng, lat: c.lat },
+      bearing: map.getBearing(),
       sheetOn: !!sheetOn,
     };
   };
@@ -882,7 +889,11 @@ function attachPrint(map) {
       const lng = c && (c.lng ?? c.lon);
       const lat = c && c.lat;
       if (Number.isFinite(lng) && Number.isFinite(lat)) {
-        map.jumpTo({ center: [lng, lat], zoom: saved.zoom });
+        map.jumpTo({
+          center: [lng, lat],
+          zoom: saved.zoom,
+          bearing: Number.isFinite(saved.bearing) ? saved.bearing : map.getBearing(),
+        });
       } else {
         map.setZoom(saved.zoom);
       }
@@ -903,6 +914,7 @@ function attachPrint(map) {
     if (mapEl) void mapEl.clientWidth;
     const rf = getPrintRf(DEFAULT_RF);
     setZoomForPrintRf(map, rf);
+    orientGridNorth(map);
     setPrintInterval(intervalForPrintRf(rf));
     fillPrintBlock(map);
     const compact = centerMgrsCompact(map, precisionForZoom(map.getZoom()));
@@ -1040,6 +1052,7 @@ async function main() {
   });
 
   const map = await createMap('map');
+  window.__mgrsMap = map;
   if (!map) return;
   liveMap = map;
   layoutSheet(map);
@@ -1113,6 +1126,7 @@ async function main() {
     fillPrintBlock(map);
     pinCollarTitle();
   });
+  map.on('moveend', () => { orientGridNorth(map); });
   map.on('zoom', pinCollarTitle);
   map.on('zoomend', () => {
     fillPrintBlock(map);
