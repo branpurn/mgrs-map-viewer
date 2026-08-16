@@ -123,8 +123,8 @@ function rebuild(map, host) {
       height: `${(INN / PAGE_H) * 100}%`,
     });
     const text = edgeLabel(e, step);
-    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP - 0.13), fontSize: '7pt' });
-    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP + MAP_H + 0.015), fontSize: '7pt' });
+    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP - 0.12), fontSize: '7pt' });
+    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP + MAP_H - 0.01), fontSize: '7pt' });
   }
 
   for (let n = snapUp(minN, step); n <= maxN; n += step) {
@@ -147,8 +147,8 @@ function rebuild(map, host) {
       width: `${(INN / PAGE_W) * 100}%`,
     });
     const text = edgeLabel(n, step);
-    lab(host, text, { left: pctX(LEFT - 0.13), top: pctY(yIn - 0.05), fontSize: '7pt' });
-    lab(host, text, { left: pctX(LEFT + MAP_W + 0.02), top: pctY(yIn - 0.05), fontSize: '7pt' });
+    lab(host, text, { left: pctX(LEFT - 0.12), top: pctY(yIn - 0.05), fontSize: '7pt' });
+    lab(host, text, { left: pctX(LEFT + MAP_W - 0.01), top: pctY(yIn - 0.05), fontSize: '7pt' });
   }
 
   const corners = [

@@ -19,7 +19,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
   bottom: 0;
   width: calc(100% * 0.38 / 8.5);
   background: var(--paper);
-  z-index: 6;
+  z-index: 3;
   pointer-events: none;
 }
 #print-mask-left { left: 0; }
@@ -50,7 +50,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
   left: calc(100% * 0.38 / 8.5);
   right: auto;
   top: auto;
-  bottom: calc(100% * 0.12 / 0.58);
+  bottom: calc(100% * 0.28 / 0.58);
   font-size: 7.5pt;
   color: #4A4036;
   line-height: 1;
@@ -63,7 +63,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
   left: 19%;
   right: 19%;
   top: auto;
-  bottom: calc(100% * 0.12 / 0.58);
+  bottom: calc(100% * 0.28 / 0.58);
   margin: 0;
   font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
   font-size: 11pt;
@@ -84,7 +84,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
   right: calc(100% * 0.38 / 8.5);
   left: auto;
   top: auto;
-  bottom: calc(100% * 0.12 / 0.58);
+  bottom: calc(100% * 0.28 / 0.58);
   font-size: 7.5pt;
   color: #4A4036;
   line-height: 1;
@@ -524,10 +524,11 @@ body.printing #sheet {
   container-name: letter;
 }
 
-.print-col-a .print-title { font-size: 11pt; margin: 0.04in 0 0.03in; padding-top: 0; }
-.print-col-a .print-series { margin: 0.04in 0 0; font-size: 7.5pt; }
-.print-col-a .print-subtitle { margin: 0; font-size: 7pt; color: #4A4036; }
-.print-ident-extra { margin: 0.06in 0 0; }
+.print-col-a .print-title { font-size: 10pt; margin: 0 0 0.04in; padding-top: 0; }
+.print-col-a .print-series { margin: 0.04in 0 0; font-size: 7pt; }
+.print-col-a .print-subtitle { margin: 0; font-size: 6.5pt; color: #4A4036; }
+.print-ident-extra { margin: 0.08in 0 0; }
+#print-example-note { display: none; }
 #print-scale, #print-grid-value, #print-grid-interval, #print-datum-value { color: #1C1914; }
 
 #print-footer .print-col-c li,
@@ -592,11 +593,11 @@ body.printing:not(.has-print-face) #map .maplibregl-canvas {
 .print-spec { margin: 0.04in 0 0.04in; }
 .print-spec div { height: 0.16in; font-size: 7pt; }
 .print-spec dt, .print-spec dd { font-size: 7pt; }
-.print-ident-extra { margin: 0.05in 0 0; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.print-ident-extra { margin: 0.08in 0 0; flex: 0 0 auto; min-height: 0; overflow: visible; }
 .print-ident-extra .print-k,
-.print-k { margin: 0.04in 0 0; font-size: 6.5pt; line-height: 1.15; color: #4A4036; text-transform: uppercase; letter-spacing: 0.04em; }
+.print-k { margin: 0.06in 0 0.02in; font-size: 6.5pt; line-height: 1.2; color: #4A4036; text-transform: uppercase; letter-spacing: 0.04em; }
 .print-ident-extra .print-v,
-.print-v { margin: 0; font-size: 7.5pt; line-height: 1.15; }
+.print-v { margin: 0 0 0.02in; font-size: 7.5pt; line-height: 1.25; }
 .print-v.bold { font-size: 8pt; font-weight: 700; }
 .print-col-a .print-series { margin: 0.04in 0 0; font-size: 7.5pt; }
 .print-col-a .print-subtitle { margin: 0; font-size: 7pt; }
@@ -625,7 +626,7 @@ body.printing:not(.has-print-face) #map .maplibregl-canvas {
   color-adjust: exact !important;
   /* OTM roads are orange. Nudge the face toward USGS topo (brown/black roads,
      cooler greens) without swapping the tile source. */
-  filter: saturate(0.72) sepia(0.10) hue-rotate(-16deg) contrast(1.04);
+  filter: saturate(0.55) sepia(0.18) hue-rotate(-22deg) contrast(1.06);
 }
 body.has-print-face #print-map-face,
 html.has-print-face #print-map-face,
@@ -660,7 +661,7 @@ body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {
     height: 100% !important;
     object-fit: fill;
     z-index: 4;
-    filter: saturate(0.72) sepia(0.10) hue-rotate(-16deg) contrast(1.04);
+    filter: saturate(0.55) sepia(0.18) hue-rotate(-22deg) contrast(1.06);
   }
   body.has-print-face canvas.maplibregl-canvas,
   body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {

@@ -123,7 +123,7 @@ body:not(.printing) #print-mask-right {
   bottom: 0 !important;
   width: calc(100% * 0.38 / 8.5) !important;
   background: var(--paper) !important;
-  z-index: 6 !important;
+  z-index: 3 !important;
   pointer-events: none !important;
 }
 body:not(.printing) #print-mask-left { left: 0 !important; right: auto !important; }
@@ -146,7 +146,7 @@ body:not(.printing) #print-date-upper,
 body:not(.printing) #print-upper .print-product {
   position: absolute !important;
   top: auto !important;
-  bottom: calc(100% * 0.12 / 0.58) !important;
+  bottom: calc(100% * 0.28 / 0.58) !important;
   transform: none !important;
 }
 body:not(.printing) #print-title-upper {
