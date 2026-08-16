@@ -123,8 +123,8 @@ function rebuild(map, host) {
       height: `${(INN / PAGE_H) * 100}%`,
     });
     const text = edgeLabel(e, step);
-    lab(host, text, { left: pctX(xIn - 0.07), top: pctY(TOP + 0.02), fontSize: '7pt' });
-    lab(host, text, { left: pctX(xIn - 0.07), top: pctY(TOP + MAP_H - 0.12), fontSize: '7pt' });
+    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP - 0.13), fontSize: '7pt' });
+    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP + MAP_H + 0.015), fontSize: '7pt' });
   }
 
   for (let n = snapUp(minN, step); n <= maxN; n += step) {
@@ -147,35 +147,32 @@ function rebuild(map, host) {
       width: `${(INN / PAGE_W) * 100}%`,
     });
     const text = edgeLabel(n, step);
-    lab(host, text, { left: pctX(LEFT + 0.02), top: pctY(yIn - 0.055), fontSize: '7pt' });
-    lab(host, text, { left: pctX(LEFT + MAP_W - 0.16), top: pctY(yIn - 0.055), fontSize: '7pt' });
+    lab(host, text, { left: pctX(LEFT - 0.13), top: pctY(yIn - 0.05), fontSize: '7pt' });
+    lab(host, text, { left: pctX(LEFT + MAP_W + 0.02), top: pctY(yIn - 0.05), fontSize: '7pt' });
   }
 
   const corners = [
-    { utm: nw, xIn: LEFT + 0.02, yIn: TOP + 0.14, eAlign: 'left', nAlign: 'top' },
-    { utm: ne, xIn: LEFT + MAP_W - 0.02, yIn: TOP + 0.14, eAlign: 'right', nAlign: 'top' },
-    { utm: sw, xIn: LEFT + 0.02, yIn: TOP + MAP_H - 0.22, eAlign: 'left', nAlign: 'bottom' },
-    { utm: se, xIn: LEFT + MAP_W - 0.02, yIn: TOP + MAP_H - 0.22, eAlign: 'right', nAlign: 'bottom' },
+    { utm: nw, eAlign: 'left', nAlign: 'top' },
+    { utm: ne, eAlign: 'right', nAlign: 'top' },
+    { utm: sw, eAlign: 'left', nAlign: 'bottom' },
+    { utm: se, eAlign: 'right', nAlign: 'bottom' },
   ];
   for (const corner of corners) {
     const eText = utmCornerText(corner.utm.easting, 'E');
     const nText = utmCornerText(corner.utm.northing, 'N');
-    const eLeft = corner.eAlign === 'left' ? corner.xIn : corner.xIn - 0.62;
-    const nLeft = corner.eAlign === 'left' ? corner.xIn : corner.xIn - 0.62;
-    const eTop = corner.nAlign === 'top' ? TOP + 0.02 : TOP + MAP_H - 0.12;
-    const nTop = corner.nAlign === 'top' ? TOP + 0.12 : TOP + MAP_H - 0.22;
+    const eLeft = corner.eAlign === 'left' ? LEFT + 0.02 : LEFT + MAP_W - 0.68;
+    const nLeft = corner.eAlign === 'left' ? LEFT - 0.02 : LEFT + MAP_W - 0.68;
+    const eTop = corner.nAlign === 'top' ? TOP - 0.24 : TOP + MAP_H + 0.015;
+    const nTop = corner.nAlign === 'top' ? TOP + 0.02 : TOP + MAP_H - 0.10;
     lab(host, eText, { left: pctX(eLeft), top: pctY(eTop), fontSize: '6pt' });
-    lab(host, nText, { left: pctX(nLeft), top: pctY(nTop), fontSize: '6pt' });
+    lab(host, nText, { left: pctX(Math.max(LEFT + 0.02, nLeft)), top: pctY(nTop), fontSize: '6pt' });
   }
 
-  // Split geographic ticks: longitude on the top/bottom *inside* the neatline,
-  // latitude on the left/right *inside* the neatline. Never a combined pair
-  // hanging off the top-left into the page margin.
   const geo = [
-    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.18, top: TOP + 0.02 },
-    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.72, top: TOP + 0.02 },
-    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT + 0.02, top: TOP + 0.24 },
-    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT + 0.02, top: TOP + MAP_H - 0.12 },
+    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.02, top: TOP - 0.24 },
+    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.70, top: TOP - 0.24 },
+    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT - 0.02, top: TOP + 0.02 },
+    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT + 0.02, top: TOP + MAP_H - 0.10 },
   ];
   for (const g of geo) {
     lab(host, g.text, {

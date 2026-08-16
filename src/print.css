@@ -93,18 +93,16 @@ html.printing, html.printing body { background: var(--paper) !important; }
 
 #print-footer {
   position: absolute;
-  z-index: 8;
+  z-index: 22;
   top: calc(100% * 8.72 / 11);
   left: 0;
   width: 100%;
   height: calc(100% * 2.00 / 11);
   background: var(--collar);
-  padding-left: calc(100% * 0.38 / 8.5);
-  padding-right: calc(100% * 0.38 / 8.5);
   box-sizing: border-box;
   border-top: 0.75pt solid #000000;
   border-bottom: 0.35pt solid #000000;
-  padding: 1.55cqh 0 0.35cqh;
+  padding: 0.10in calc(100% * 0.38 / 8.5) 0.08in;
   display: flex;
   align-items: stretch;
   overflow: hidden;
@@ -490,9 +488,6 @@ body.printing #map {
 }
 #print-gm-angle, #print-gm-conv { white-space: nowrap; overflow: visible; }
 .print-col-a { overflow: hidden; }
-.print-col-a .print-title { font-size: 1.05cqh; }
-.print-spec { margin: 0.12cqh 0 0.1cqh; }
-.print-spec div { height: 0.92cqh; }
 .psb-track { gap: 0; }
 .psb-track .psb-gap {
   flex: 0 0 0.08in;
@@ -507,10 +502,15 @@ body.printing #map {
   color: #1C1914;
   line-height: 1;
   white-space: nowrap;
-  text-shadow: 0 0 2px #F4EFE4, 0 0 2px #F4EFE4, 1px 0 0 #F4EFE4, -1px 0 0 #F4EFE4, 0 1px 0 #F4EFE4, 0 -1px 0 #F4EFE4;
+  text-shadow: 0 0 2px #FFFEF8, 0 0 2px #FFFEF8, 1px 0 0 #FFFEF8, -1px 0 0 #FFFEF8, 0 1px 0 #FFFEF8, 0 -1px 0 #FFFEF8;
 }
 
-body.printing #print-ticks { display: block !important; z-index: 21; }
+body.printing #print-ticks { display: block !important; z-index: 6; }
+body.printing #print-footer,
+body.printing #print-legal,
+body.printing #print-upper {
+  z-index: 22;
+}
 body.printing #desk { background: var(--paper) !important; overflow: visible !important; position: static !important; }
 body.printing #sheet {
   position: absolute !important;
@@ -580,10 +580,14 @@ body.printing:not(.has-print-face) #map .maplibregl-canvas {
 }
 #print-title,
 .print-col-a .print-title {
-  font-size: 11pt;
-  margin: 0.10in 0 0.04in;
+  font-size: 10pt;
+  margin: 0 0 0.05in;
   padding-top: 0;
+  line-height: 1.2;
+  min-height: 0.18in;
+  max-height: 0.22in;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 .print-spec { margin: 0.04in 0 0.04in; }
 .print-spec div { height: 0.16in; font-size: 7pt; }
@@ -619,6 +623,9 @@ body.printing:not(.has-print-face) #map .maplibregl-canvas {
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
   color-adjust: exact !important;
+  /* OTM roads are orange. Nudge the face toward USGS topo (brown/black roads,
+     cooler greens) without swapping the tile source. */
+  filter: saturate(0.72) sepia(0.10) hue-rotate(-16deg) contrast(1.04);
 }
 body.has-print-face #print-map-face,
 html.has-print-face #print-map-face,
@@ -653,6 +660,7 @@ body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {
     height: 100% !important;
     object-fit: fill;
     z-index: 4;
+    filter: saturate(0.72) sepia(0.10) hue-rotate(-16deg) contrast(1.04);
   }
   body.has-print-face canvas.maplibregl-canvas,
   body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {

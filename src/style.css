@@ -1,6 +1,6 @@
 :root {
-  --paper: #F4EFE4;
-  --collar: #EDE6D6;
+  --paper: #FFFEF8;
+  --collar: #F4F0E6;
   --neatline: #000000;
   --ink: #1C1914;
   --ink-muted: #4A4036;
@@ -177,13 +177,13 @@ body:not(.printing) #print-title {
   height: 100%;
   pointer-events: none;
   z-index: 6;
-  /* Clip to the neatline. Labels live in a 0.14 in band *inside* the frame
-     so the left / top-left page margin stays empty. */
+  /* Label band sits on the neatline: 0.14 in above, 0.12 in left/right,
+     0.12 in into the collar. Footer paints above ticks so Col A is safe. */
   clip-path: inset(
-    calc(100% * 0.58 / 11)
-    calc(100% * 0.38 / 8.5)
-    calc(100% * 2.28 / 11)
-    calc(100% * 0.38 / 8.5)
+    calc(100% * 0.30 / 11)
+    calc(100% * 0.24 / 8.5)
+    calc(100% * 2.16 / 11)
+    calc(100% * 0.24 / 8.5)
   );
   overflow: hidden;
 }

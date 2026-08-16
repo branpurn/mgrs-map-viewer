@@ -656,7 +656,7 @@ function fillPrintBlock(map) {
     setText('print-example-grid', '');
   } else {
     if (exampleBlock) exampleBlock.hidden = false;
-    setText('print-example-place', title);
+    setText('print-example-place', '');
     setText('print-example-grid', example);
   }
   setText('print-scale-center', text);
