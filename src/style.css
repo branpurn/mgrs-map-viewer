@@ -1,3 +1,5 @@
+@import "./fonts.css";
+
 :root {
   --paper: #FFFFFF;
   --collar: #FFFFFF;
@@ -9,7 +11,9 @@
   --gzd: #8B1E1E;
   --desk: #D8D2C6;
   --frame: #000000;
-  font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "TeX Gyre Heros", Helvetica, Arial, sans-serif;
+  --font-cond: "TeX Gyre Heros Cn", "TeX Gyre Heros", Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 * { box-sizing: border-box; }
@@ -189,7 +193,8 @@ body:not(.printing) #print-title {
 #print-ticks .tick { position: absolute; background: #000000; }
 #print-ticks .lab {
   position: absolute;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   font-size: 7pt;
   color: #1C1914;
   line-height: 1;
@@ -253,7 +258,7 @@ body:not(.printing) #print-title {
   color: var(--ink);
   border: 1px solid var(--ink);
   border-radius: 2px;
-  font: 12px/1 "IBM Plex Sans", "Segoe UI", sans-serif;
+  font: 12px/1 var(--font-sans);
   padding: 0 8px;
 }
 .scale-control select { min-width: 7.6em; }
@@ -418,7 +423,7 @@ body.no-webgl-active #print-sheet {
   border-radius: 2px;
   background: var(--chrome-inset);
   color: var(--paper);
-  font: 14px/1.2 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  font: 14px/1.2 var(--font-sans);
 }
 
 #search-input::placeholder { color: rgba(255, 255, 255, 0.45); }
@@ -441,7 +446,7 @@ body.no-webgl-active #print-sheet {
 #tile-retry {
   border: 0;
   border-radius: 2px;
-  font: 600 13px/1 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  font: 600 13px/1 var(--font-sans);
   cursor: pointer;
 }
 
@@ -456,7 +461,7 @@ body.no-webgl-active #print-sheet {
   border-radius: 2px;
   background: transparent;
   color: var(--paper);
-  font: 600 12px/1 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  font: 600 12px/1 var(--font-sans);
   cursor: pointer;
 }
 #search-clear[hidden] { display: none !important; }
@@ -486,7 +491,7 @@ body.no-webgl-active #print-sheet {
   margin: 0;
   padding: 0 8px;
   box-sizing: border-box;
-  font: 12px/18px "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  font: 12px/18px var(--font-sans);
   color: var(--gzd);
   background: var(--paper);
   border-radius: 2px;
@@ -524,7 +529,7 @@ body.no-webgl-active #print-sheet {
   margin: 0;
   padding: 0 10px;
   height: 24px;
-  font: 600 12px/24px "IBM Plex Sans", sans-serif;
+  font: 600 12px/24px var(--font-sans);
   color: var(--ink-muted);
 }
 
@@ -538,7 +543,7 @@ body.no-webgl-active #print-sheet {
   border: 0;
   background: transparent;
   color: var(--ink);
-  font: 400 13px/32px "IBM Plex Sans", sans-serif;
+  font: 400 13px/32px var(--font-sans);
   text-align: left;
   cursor: pointer;
   white-space: nowrap;
@@ -559,7 +564,7 @@ body.no-webgl-active #print-sheet {
   padding: 6px 8px;
   background: var(--chrome-inset);
   border-radius: 2px;
-  font: 12px/1.45 "IBM Plex Mono", ui-monospace, monospace;
+  font: 12px/1.45 var(--font-sans);
   color: rgba(244, 239, 228, 0.78);
 }
 
@@ -567,7 +572,7 @@ body.no-webgl-active #print-sheet {
 
 .formats-h {
   margin: 0 0 2px;
-  font: 600 11px/1.2 "IBM Plex Sans", sans-serif;
+  font: 600 11px/1.2 var(--font-sans);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: rgba(244, 239, 228, 0.55);
@@ -597,12 +602,13 @@ body.no-webgl-active #print-sheet {
 .hud-rf,
 .hud-band,
 .hud-mgrs {
-  font: 13px/1.25 "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  font: 13px/1.25 var(--font-sans);
+  font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
 
 .hud-mgrs.is-unavailable {
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
   color: var(--ink-muted);
   max-width: 220px;
@@ -627,7 +633,7 @@ body.no-webgl-active #print-sheet {
 .scale-bar-label {
   display: block;
   margin-top: 2px;
-  font: 11px/1 "IBM Plex Mono", ui-monospace, monospace;
+  font: 11px/1 var(--font-sans);
   color: var(--ink-muted);
 }
 
@@ -666,7 +672,7 @@ body.no-webgl-active #print-sheet {
   color: var(--ink);
   border: 1px solid var(--ink);
   border-radius: 2px;
-  font: 600 12px/1 "IBM Plex Sans", sans-serif;
+  font: 600 12px/1 var(--font-sans);
 }
 
 .maplibregl-ctrl-bottom-left {
@@ -773,7 +779,7 @@ body.no-webgl-active #print-sheet {
   border: 0;
   background: transparent;
   color: #fff;
-  font: 600 13px/1 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  font: 600 13px/1 var(--font-sans);
   cursor: pointer;
   position: relative;
   z-index: 20;
@@ -815,7 +821,7 @@ body.no-webgl-active #print-sheet {
 }
 #wysiwyg-state {
   min-width: 1.4em;
-  font: 600 13px/1 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  font: 600 13px/1 var(--font-sans);
   color: inherit;
 }
 body.wysiwyg-off #print-sheet,

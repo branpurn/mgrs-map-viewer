@@ -19,7 +19,7 @@ Empty or ocean frames still print. The title is UNTITLED SHEET.
 
 ## What lands on the page
 
-US Letter, 8.5 × 11 in, portrait. USGS-style collar, not a screenshot of the toolbar.
+US Letter, 8.5 × 11 in, portrait. USGS-style collar, not a screenshot of the toolbar. Type is TeX Gyre Heros (Helvetica).
 
 - Map inside a neatline, MGRS overlay frozen at the print scale
 - Upper collar: MGRS MAP VIEWER, centered sheet title, date

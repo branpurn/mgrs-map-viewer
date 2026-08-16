@@ -65,7 +65,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
   top: auto;
   bottom: 0.08in;
   margin: 0;
-  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  font-family: var(--font-cond);
   font-size: 11pt;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -137,7 +137,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
 #print-title {
   margin: 0 0 0.04in;
   padding-top: 0;
-  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  font-family: var(--font-cond);
   font-size: 10pt;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -169,7 +169,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
 }
 .print-spec dd {
   margin: 0;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-sans);
   font-weight: 500;
   font-size: 7.5pt;
   color: #1C1914;
@@ -188,7 +188,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
 .print-gm { display: block; width: 1.28in; height: 0.88in; margin: 0.04in 0 0.06in; }
 .print-gm-fig {
   margin: 0;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-sans);
   font-size: 7pt;
   line-height: 1.2;
   white-space: nowrap;
@@ -196,7 +196,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
 .print-true-north { margin: 1px 0 0; font-size: 6.5pt; color: #4A4036; }
 .print-rf {
   margin: 0.08in 0 0.12in;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-sans);
   font-size: 9pt;
   color: #1C1914;
 }
@@ -222,7 +222,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
 .psb-labels {
   display: flex;
   justify-content: space-between;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-sans);
   font-size: 7pt;
   margin-top: 1px;
 }
@@ -358,7 +358,7 @@ body.printing #print-sheet {
   pointer-events: none;
   z-index: 5;
   background: transparent;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   color: #1C1914;
 }
 
@@ -421,7 +421,7 @@ body.printing #map {
     height: 11in;
     pointer-events: none;
     z-index: 20;
-    font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+    font-family: var(--font-sans);
     color: #1C1914;
   }
 
@@ -471,7 +471,7 @@ body.printing #map {
 .print-k { margin: 0.18cqh 0 0; font-size: 0.82cqh; line-height: 1.15; color: #4A4036; }
 .print-ident-extra .print-v,
 .print-v { margin: 0; font-size: 0.88cqh; line-height: 1.15; color: #1C1914; }
-.print-v.mono, .print-gm-fig { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+.print-v.mono, .print-gm-fig { font-family: var(--font-sans); }
 .print-v.bold { font-weight: 700; font-size: 1.07cqh; }
 .print-note { margin: 0; font-size: 0.76cqh; line-height: 1.15; color: #4A4036; }
 .print-gm { display: block; margin: 0 0 0.1cqh; width: 18cqw; height: 4.2cqh; flex: 0 0 auto; }
@@ -495,7 +495,8 @@ body.printing #map {
 #print-ticks .tick { position: absolute; background: #000000; }
 #print-ticks .lab {
   position: absolute;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   font-size: 7pt;
   color: #1C1914;
   line-height: 1;
