@@ -159,14 +159,16 @@ function rebuild(map, host) {
     });
     const digits = edgeLabel(e, step);
     labPrefixed(host, squareLettersAt(pTop.lon, pTop.lat), digits, {
-      left: box.x(top.x - 14),
+      left: box.x(top.x),
       top: box.y(-14),
       fontSize: '7pt',
+      transform: 'translateX(-50%)',
     });
     labPrefixed(host, squareLettersAt(pBot.lon, pBot.lat), digits, {
-      left: box.x(bot.x - 14),
+      left: box.x(bot.x),
       top: box.y(mh - 12),
       fontSize: '7pt',
+      transform: 'translateX(-50%)',
     });
   }
 
@@ -192,14 +194,16 @@ function rebuild(map, host) {
     });
     const digits = edgeLabel(n, step);
     labPrefixed(host, squareLettersAt(pL.lon, pL.lat), digits, {
-      left: box.x(-28),
-      top: box.y(left.y - 6),
+      left: box.x(-4),
+      top: box.y(left.y),
       fontSize: '7pt',
+      transform: 'translate(-100%, -50%)',
     });
     labPrefixed(host, squareLettersAt(pR.lon, pR.lat), digits, {
-      left: box.x(mw + 3),
-      top: box.y(right.y - 6),
+      left: box.x(mw + 4),
+      top: box.y(right.y),
       fontSize: '7pt',
+      transform: 'translateY(-50%)',
     });
   }
 
