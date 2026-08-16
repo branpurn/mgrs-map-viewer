@@ -136,7 +136,7 @@ body:not(.printing) #print-upper {
   right: auto !important;
   height: auto !important;
   max-height: none !important;
-  bottom: calc(100% * 10.58 / 11) !important;
+  bottom: calc(100% * 10.66 / 11) !important;
   padding: 0 !important;
   overflow: hidden !important;
   transform: none !important;
@@ -180,10 +180,10 @@ body:not(.printing) #print-title {
   /* Label band sits on the neatline: 0.14 in above, 0.12 in left/right,
      0.12 in into the collar. Footer paints above ticks so Col A is safe. */
   clip-path: inset(
-    calc(100% * 0.42 / 11)
-    calc(100% * 0.24 / 8.5)
+    calc(100% * 0.34 / 11)
+    calc(100% * 0.20 / 8.5)
     calc(100% * 2.16 / 11)
-    calc(100% * 0.24 / 8.5)
+    calc(100% * 0.20 / 8.5)
   );
   overflow: hidden;
 }

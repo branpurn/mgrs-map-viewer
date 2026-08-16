@@ -736,7 +736,7 @@ function snapshotPrintMapFace(map) {
     c2d.height = gl.height;
     const ctx = c2d.getContext('2d', { willReadFrequently: true });
     if (!ctx) return false;
-    ctx.filter = 'saturate(0.52) sepia(0.20) hue-rotate(-24deg) contrast(1.06)';
+    ctx.filter = 'grayscale(0.12) sepia(0.30) saturate(0.80) hue-rotate(-8deg) contrast(1.05)';
     ctx.drawImage(gl, 0, 0);
     ctx.filter = 'none';
     let rejected = false;

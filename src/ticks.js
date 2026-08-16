@@ -123,8 +123,8 @@ function rebuild(map, host) {
       height: `${(INN / PAGE_H) * 100}%`,
     });
     const text = edgeLabel(e, step);
-    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP - 0.12), fontSize: '7pt' });
-    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP + MAP_H - 0.01), fontSize: '7pt' });
+    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP - 0.18), fontSize: '7pt' });
+    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP + MAP_H - 0.02), fontSize: '7pt' });
   }
 
   for (let n = snapUp(minN, step); n <= maxN; n += step) {
@@ -147,8 +147,8 @@ function rebuild(map, host) {
       width: `${(INN / PAGE_W) * 100}%`,
     });
     const text = edgeLabel(n, step);
-    lab(host, text, { left: pctX(LEFT - 0.12), top: pctY(yIn - 0.05), fontSize: '7pt' });
-    lab(host, text, { left: pctX(LEFT + MAP_W - 0.01), top: pctY(yIn - 0.05), fontSize: '7pt' });
+    lab(host, text, { left: pctX(LEFT - 0.16), top: pctY(yIn - 0.05), fontSize: '7pt' });
+    lab(host, text, { left: pctX(LEFT + MAP_W + 0.02), top: pctY(yIn - 0.05), fontSize: '7pt' });
   }
 
   lab(host, utmCornerText(sw.easting, 'E'), {
@@ -165,14 +165,14 @@ function rebuild(map, host) {
   });
 
   const geo = [
-    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.02, top: TOP - 0.14 },
-    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.72, top: TOP - 0.14 },
-    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT - 0.14, top: TOP + 0.16 },
-    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT - 0.14, top: TOP + MAP_H - 0.22 },
+    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.02, top: TOP - 0.18 },
+    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.72, top: TOP - 0.18 },
+    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT - 0.16, top: TOP + 0.16 },
+    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT - 0.16, top: TOP + MAP_H - 0.20 },
   ];
   for (const g of geo) {
     lab(host, g.text, {
-      left: pctX(Math.max(LEFT + 0.02, Math.min(g.left, LEFT + MAP_W - 0.74))),
+      left: pctX(g.left),
       top: pctY(g.top),
       fontSize: '6pt',
       color: '#4A4036',

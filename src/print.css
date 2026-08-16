@@ -35,7 +35,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
   right: auto;
   height: auto;
   max-height: none;
-  bottom: calc(100% * 10.58 / 11);
+  bottom: calc(100% * 10.66 / 11);
   padding: 0;
   background: var(--collar);
   display: block;
@@ -626,7 +626,7 @@ body.printing:not(.has-print-face) #map .maplibregl-canvas {
   color-adjust: exact !important;
   /* OTM roads are orange. Nudge the face toward USGS topo (brown/black roads,
      cooler greens) without swapping the tile source. */
-  filter: saturate(0.55) sepia(0.18) hue-rotate(-22deg) contrast(1.06);
+  filter: grayscale(0.12) sepia(0.30) saturate(0.80) hue-rotate(-8deg) contrast(1.05);
 }
 body.has-print-face #print-map-face,
 html.has-print-face #print-map-face,
@@ -661,7 +661,7 @@ body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {
     height: 100% !important;
     object-fit: fill;
     z-index: 4;
-    filter: saturate(0.55) sepia(0.18) hue-rotate(-22deg) contrast(1.06);
+    filter: grayscale(0.12) sepia(0.30) saturate(0.80) hue-rotate(-8deg) contrast(1.05);
   }
   body.has-print-face canvas.maplibregl-canvas,
   body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {
