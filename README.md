@@ -14,9 +14,11 @@ MGRS Viewer is a browser tool for field and planning work.
 
 Search a Military Grid Reference, lat/long, or a place name. The map
 shows an MGRS grid over topographic tiles. Set the frame, then print
-a US Letter (8.5 × 11 in) sheet with scale, grid spec, and a title block.
+a US Letter (8.5 × 11 in) sheet locked to grid north, with scale, grid
+spec, and a title block.
 
-No account. Scale follows zoom. Tiles are OpenTopoMap, with OpenStreetMap
+No account. Scale presets are 1:25 000, 1:50 000 (default), 1:100 000,
+and 1:250 000, plus freeform. Tiles are OpenTopoMap, with OpenStreetMap
 as fallback. Not an official USGS or military product. Verify in the field.
 
 ## Search formats
@@ -35,16 +37,16 @@ Compact MGRS (`18TWK87120415`) is accepted. Enter submits. Esc clears.
 ## Print
 
 1. Search a grid or place.
-2. Pan and zoom. The map moves under a fixed dashed US Letter frame.
-3. Print. The browser prints that frame as an 8.5 × 11 in sheet.
+2. Pick a scale or leave 1:50 000. Pan under the Letter frame.
+3. Print. The browser prints that frame as an 8.5 × 11 in sheet, grid north up.
+
+![US Letter print sheet](docs/images/print-sheet.png)
 
 See [docs/print-howto.md](docs/print-howto.md).
 
 ## Chrome
 
-Toolbar label is **Sheet**. On is the Letter sheet. Off is the full map. Default On. Print is still Letter either way.
-
-![US Letter print sheet](docs/images/print-sheet.png)
+Toolbar label is **Sheet**. On is the Letter sheet. Off is the full map. Default On. Print is still Letter either way. Rotation is locked; turn the paper with a compass in the field.
 
 ## Tiles and attribution
 
