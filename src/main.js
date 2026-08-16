@@ -44,7 +44,7 @@ const state = {
   lastAccuracy: 2,
   lastScaleText: '',
   lastMgrs: '',
-  lastLabel: 'Washington, District of Columbia',
+  lastLabel: 'Fort Indiantown Gap, Pennsylvania',
   exampleLocked: false,
   polar: false,
   gridHidden: false,
@@ -406,6 +406,39 @@ function attachWysiwyg() {
   });
 }
 
+function pinLetterNeatline() {
+  const sheet = document.getElementById('sheet');
+  const mapEl = document.getElementById('map');
+  if (sheet) {
+    sheet.style.setProperty('position', 'absolute', 'important');
+    sheet.style.setProperty('width', '8.5in', 'important');
+    sheet.style.setProperty('height', '11in', 'important');
+    sheet.style.setProperty('left', '0', 'important');
+    sheet.style.setProperty('top', '0', 'important');
+    sheet.style.setProperty('transform', 'none', 'important');
+  }
+  if (mapEl) {
+    mapEl.style.setProperty('position', 'absolute', 'important');
+    mapEl.style.setProperty('top', '0.58in', 'important');
+    mapEl.style.setProperty('left', '0.38in', 'important');
+    mapEl.style.setProperty('width', '7.74in', 'important');
+    mapEl.style.setProperty('height', '8.14in', 'important');
+    mapEl.style.setProperty('right', 'auto', 'important');
+    mapEl.style.setProperty('bottom', 'auto', 'important');
+    mapEl.style.setProperty('inset', 'auto', 'important');
+  }
+}
+
+function unpinLetterNeatline() {
+  const sheet = document.getElementById('sheet');
+  const mapEl = document.getElementById('map');
+  const props = ['position', 'width', 'height', 'left', 'top', 'transform', 'right', 'bottom', 'inset'];
+  for (const el of [sheet, mapEl]) {
+    if (!el) continue;
+    for (const p of props) el.style.removeProperty(p);
+  }
+}
+
 function layoutSheet(map, opts = {}) {
   const desk = document.getElementById('desk');
   const sheet = document.getElementById('sheet');
@@ -736,9 +769,7 @@ function snapshotPrintMapFace(map) {
     c2d.height = gl.height;
     const ctx = c2d.getContext('2d', { willReadFrequently: true });
     if (!ctx) return false;
-    ctx.filter = 'grayscale(0.12) sepia(0.30) saturate(0.80) hue-rotate(-8deg) contrast(1.05)';
     ctx.drawImage(gl, 0, 0);
-    ctx.filter = 'none';
     let rejected = false;
     try {
       rejected = isBlankOrTan(ctx, c2d.width, c2d.height);
@@ -864,6 +895,7 @@ function attachPrint(map) {
     printSavedSheetOn = prePrint.sheetOn;
     document.body.classList.add('printing');
     document.documentElement.classList.add('printing');
+    pinLetterNeatline();
     try { map.resize(); } catch { /* print size */ }
     const mapEl = document.getElementById('map');
     if (mapEl) void mapEl.clientWidth;
@@ -884,6 +916,7 @@ function attachPrint(map) {
     setPrintInterval(null);
     document.body.classList.remove('printing');
     document.documentElement.classList.remove('printing');
+    unpinLetterNeatline();
     document.title = t('app.documentTitle');
     const saved = prePrint || { zoom: null, center: null, sheetOn: printSavedSheetOn };
     prePrint = null;

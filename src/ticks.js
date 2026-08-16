@@ -1,14 +1,7 @@
 import { latLonToUtm, utmToLatLon, utmZone, intervalForZoom, squareLettersAt } from './mgrs-grid.js';
 import { intervalForPrintRf } from './scale.js';
 
-const LEFT = 0.38;
-const TOP = 0.58;
-const MAP_W = 7.74;
-const MAP_H = 8.14;
-const PAGE_W = 8.5;
-const PAGE_H = 11;
-const SAFE = 0.26;
-const INN = 0.10;
+const INN_PX = 10;
 
 function snapUp(v, step) {
   return Math.ceil(v / step) * step;
@@ -47,11 +40,26 @@ function dms(value, pos, neg) {
   return `${d}°\u202f${pad(m)}′\u202f${pad(s)}″\u202f${hemi}`;
 }
 
-function pctX(xIn) {
-  return `${(xIn / PAGE_W) * 100}%`;
-}
-function pctY(yIn) {
-  return `${(yIn / PAGE_H) * 100}%`;
+/** Map-pixel → % of the sheet. Follows the live #map box, not a paper constant. */
+function sheetMap(map) {
+  const sheet = document.getElementById('sheet');
+  const mapEl = map.getContainer();
+  if (!sheet || !mapEl) return null;
+  const sr = sheet.getBoundingClientRect();
+  const mr = mapEl.getBoundingClientRect();
+  const mw = mapEl.clientWidth;
+  const mh = mapEl.clientHeight;
+  if (sr.width < 8 || sr.height < 8 || mw < 8 || mh < 8) return null;
+  return {
+    mw,
+    mh,
+    x(px) {
+      return `${((mr.left - sr.left + px) / sr.width) * 100}%`;
+    },
+    y(py) {
+      return `${((mr.top - sr.top + py) / sr.height) * 100}%`;
+    },
+  };
 }
 
 function tick(el, style) {
@@ -69,6 +77,34 @@ function lab(el, text, style) {
   el.appendChild(d);
 }
 
+function labPrefixed(el, letters, digits, style) {
+  const d = document.createElement('div');
+  d.className = 'lab';
+  if (letters) {
+    const pre = document.createElement('span');
+    pre.className = 'lab-sq';
+    pre.textContent = letters;
+    d.appendChild(pre);
+  }
+  const num = document.createElement('span');
+  num.textContent = digits;
+  d.appendChild(num);
+  Object.assign(d.style, style);
+  el.appendChild(d);
+}
+
+function cornerBlock(el, lineA, lineB, style) {
+  const d = document.createElement('div');
+  d.className = 'lab lab-corner';
+  const a = document.createElement('div');
+  a.textContent = lineA;
+  const b = document.createElement('div');
+  b.textContent = lineB;
+  d.append(a, b);
+  Object.assign(d.style, style);
+  el.appendChild(d);
+}
+
 function rebuild(map, host) {
   const printing = document.body.classList.contains('printing');
   const band = printing
@@ -80,15 +116,12 @@ function rebuild(map, host) {
     return;
   }
 
-  const mapEl = map.getContainer();
-  const sheet = document.getElementById('sheet');
-  const mw = mapEl.clientWidth || (sheet ? sheet.clientWidth * (MAP_W / PAGE_W) : 0);
-  const mh = mapEl.clientHeight || (sheet ? sheet.clientHeight * (MAP_H / PAGE_H) : 0);
-  if (mw < 8 || mh < 8) return;
+  const box = sheetMap(map);
+  if (!box) return;
+  const { mw, mh } = box;
 
   const c = map.getCenter();
   const zone = utmZone(c.lng);
-  const utm = latLonToUtm(c.lng, c.lat, zone);
   const b = map.getBounds();
   const sw = latLonToUtm(b.getWest(), b.getSouth(), zone);
   const ne = latLonToUtm(b.getEast(), b.getNorth(), zone);
@@ -102,120 +135,108 @@ function rebuild(map, host) {
   const north = c.lat >= 0;
   const firstE = snapUp(minE, 10000);
   const firstN = snapUp(minN, 10000);
+  const edge = 10;
 
   for (let e = snapUp(minE, step); e <= maxE; e += step) {
-    const p = utmToLatLon(zone, e, utm.northing, north);
-    const px = map.project([p.lon, p.lat]);
-    if (px.x < 8 || px.x > mw - 8) continue;
-    const xIn = LEFT + (px.x / mw) * MAP_W;
-    if (xIn < LEFT + 0.16 || xIn > LEFT + MAP_W - 0.16) continue;
+    const pTop = utmToLatLon(zone, e, nw.northing, north);
+    const pBot = utmToLatLon(zone, e, sw.northing, north);
+    const top = map.project([pTop.lon, pTop.lat]);
+    const bot = map.project([pBot.lon, pBot.lat]);
+    if (top.x < 56 || top.x > mw - 56) continue;
     const principal = Math.abs(e - firstE) % 10000 < 1 || e === firstE;
+    const thick = principal ? '0.9pt' : '0.6pt';
     tick(host, {
-      left: pctX(xIn),
-      top: pctY(TOP),
-      width: principal ? '0.9pt' : '0.6pt',
-      height: `${(INN / PAGE_H) * 100}%`,
+      left: box.x(top.x),
+      top: box.y(0),
+      width: thick,
+      height: `${INN_PX}px`,
     });
     tick(host, {
-      left: pctX(xIn),
-      top: pctY(TOP + MAP_H - INN),
-      width: principal ? '0.9pt' : '0.6pt',
-      height: `${(INN / PAGE_H) * 100}%`,
+      left: box.x(bot.x),
+      top: box.y(mh - INN_PX),
+      width: thick,
+      height: `${INN_PX}px`,
     });
-    const text = edgeLabel(e, step);
-    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP - 0.18), fontSize: '7pt' });
-    lab(host, text, { left: pctX(xIn - 0.06), top: pctY(TOP + MAP_H - 0.02), fontSize: '7pt' });
+    const digits = edgeLabel(e, step);
+    labPrefixed(host, squareLettersAt(pTop.lon, pTop.lat), digits, {
+      left: box.x(top.x - 14),
+      top: box.y(-14),
+      fontSize: '7pt',
+    });
+    labPrefixed(host, squareLettersAt(pBot.lon, pBot.lat), digits, {
+      left: box.x(bot.x - 14),
+      top: box.y(mh - 12),
+      fontSize: '7pt',
+    });
   }
 
   for (let n = snapUp(minN, step); n <= maxN; n += step) {
-    const p = utmToLatLon(zone, utm.easting, n, north);
-    const px = map.project([p.lon, p.lat]);
-    if (px.y < 8 || px.y > mh - 8) continue;
-    const yIn = TOP + (px.y / mh) * MAP_H;
-    if (yIn < TOP + 0.16 || yIn > TOP + MAP_H - 0.16) continue;
+    const pL = utmToLatLon(zone, nw.easting, n, north);
+    const pR = utmToLatLon(zone, ne.easting, n, north);
+    const left = map.project([pL.lon, pL.lat]);
+    const right = map.project([pR.lon, pR.lat]);
+    if (left.y < 40 || left.y > mh - 40) continue;
     const principal = Math.abs(n - firstN) % 10000 < 1 || n === firstN;
+    const thick = principal ? '0.9pt' : '0.6pt';
     tick(host, {
-      top: pctY(yIn),
-      left: pctX(LEFT),
-      height: principal ? '0.9pt' : '0.6pt',
-      width: `${(INN / PAGE_W) * 100}%`,
+      top: box.y(left.y),
+      left: box.x(0),
+      height: thick,
+      width: `${INN_PX}px`,
     });
     tick(host, {
-      top: pctY(yIn),
-      left: pctX(LEFT + MAP_W - INN),
-      height: principal ? '0.9pt' : '0.6pt',
-      width: `${(INN / PAGE_W) * 100}%`,
+      top: box.y(right.y),
+      left: box.x(mw - INN_PX),
+      height: thick,
+      width: `${INN_PX}px`,
     });
-    const text = edgeLabel(n, step);
-    lab(host, text, { left: pctX(LEFT - 0.16), top: pctY(yIn - 0.05), fontSize: '7pt' });
-    lab(host, text, { left: pctX(LEFT + MAP_W + 0.02), top: pctY(yIn - 0.05), fontSize: '7pt' });
+    const digits = edgeLabel(n, step);
+    labPrefixed(host, squareLettersAt(pL.lon, pL.lat), digits, {
+      left: box.x(-28),
+      top: box.y(left.y - 6),
+      fontSize: '7pt',
+    });
+    labPrefixed(host, squareLettersAt(pR.lon, pR.lat), digits, {
+      left: box.x(mw + 3),
+      top: box.y(right.y - 6),
+      fontSize: '7pt',
+    });
   }
 
-  lab(host, utmCornerText(sw.easting, 'E'), {
-    left: pctX(LEFT + 0.02), top: pctY(TOP + MAP_H - 0.10), fontSize: '6pt',
+  // Same two-line block at SW and NE: geographic DMS + UTM metres.
+  cornerBlock(host, dms(b.getSouth(), 'N', 'S'), utmCornerText(sw.easting, 'E'), {
+    left: box.x(4),
+    top: box.y(mh - 28),
+    fontSize: '6pt',
   });
-  lab(host, utmCornerText(se.easting, 'E'), {
-    left: pctX(LEFT + MAP_W - 0.68), top: pctY(TOP + MAP_H - 0.10), fontSize: '6pt',
+  cornerBlock(host, dms(b.getNorth(), 'N', 'S'), utmCornerText(ne.easting, 'E'), {
+    left: box.x(mw - 72),
+    top: box.y(4),
+    fontSize: '6pt',
+    textAlign: 'right',
+  });
+  lab(host, dms(b.getWest(), 'E', 'W'), {
+    left: box.x(4),
+    top: box.y(-14),
+    fontSize: '6pt',
+    color: '#4A4036',
+  });
+  lab(host, dms(b.getEast(), 'E', 'W'), {
+    left: box.x(mw - 72),
+    top: box.y(-14),
+    fontSize: '6pt',
+    color: '#4A4036',
   });
   lab(host, utmCornerText(nw.northing, 'N'), {
-    left: pctX(LEFT + 0.02), top: pctY(TOP + 0.02), fontSize: '6pt',
+    left: box.x(4),
+    top: box.y(4),
+    fontSize: '6pt',
   });
-  lab(host, utmCornerText(ne.northing, 'N'), {
-    left: pctX(LEFT + MAP_W - 0.68), top: pctY(TOP + 0.02), fontSize: '6pt',
+  lab(host, utmCornerText(se.northing, 'N'), {
+    left: box.x(mw - 72),
+    top: box.y(mh - 14),
+    fontSize: '6pt',
   });
-
-  const geo = [
-    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.02, top: TOP - 0.18 },
-    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.72, top: TOP - 0.18 },
-    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT - 0.16, top: TOP + 0.16 },
-    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT - 0.16, top: TOP + MAP_H - 0.20 },
-  ];
-  for (const g of geo) {
-    lab(host, g.text, {
-      left: pctX(g.left),
-      top: pctY(g.top),
-      fontSize: '6pt',
-      color: '#4A4036',
-      whiteSpace: 'nowrap',
-    });
-  }
-
-  const km100 = 100000;
-  for (let e = snapUp(minE, km100); e <= maxE; e += km100) {
-    const midLat = (b.getNorth() + b.getSouth()) / 2;
-    const p = utmToLatLon(zone, e, latLonToUtm(c.lng, midLat, zone).northing, north);
-    const px = map.project([p.lon, p.lat]);
-    if (px.x < 12 || px.x > mw - 12) continue;
-    const letters = squareLettersAt(p.lon + 0.01, midLat);
-    if (!letters) continue;
-    const xIn = LEFT + (px.x / mw) * MAP_W;
-    if (xIn < LEFT + 0.20 || xIn > LEFT + MAP_W - 0.20) continue;
-    lab(host, letters, {
-      left: pctX(xIn - 0.08),
-      top: pctY(TOP + 0.42),
-      fontSize: '8pt',
-      fontWeight: '700',
-      color: '#8B1E1E',
-    });
-  }
-  for (let n = snapUp(minN, km100); n <= maxN; n += km100) {
-    const midLon = (b.getWest() + b.getEast()) / 2;
-    const p = utmToLatLon(zone, latLonToUtm(midLon, c.lat, zone).easting, n, north);
-    const px = map.project([p.lon, p.lat]);
-    if (px.y < 12 || px.y > mh - 12) continue;
-    const letters = squareLettersAt(midLon, p.lat + 0.01);
-    if (!letters) continue;
-    const yIn = TOP + (px.y / mh) * MAP_H;
-    if (yIn < TOP + 0.28 || yIn > TOP + MAP_H - 0.28) continue;
-    lab(host, letters, {
-      left: pctX(LEFT + 0.18),
-      top: pctY(yIn - 0.06),
-      fontSize: '8pt',
-      fontWeight: '700',
-      color: '#8B1E1E',
-    });
-  }
-  void SAFE;
 }
 
 export function attachCollarTicks(map) {

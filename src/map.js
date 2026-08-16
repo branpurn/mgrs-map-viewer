@@ -2,8 +2,8 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { t } from './copy.js';
 
-/** Jefferson Pier / Washington DC — RF target 1:24 000 after Letter layout. */
-export const DEFAULT_CENTER = { lon: -77.0353, lat: 38.8895 };
+/** Fort Indiantown Gap cantonment — RF target 1:24 000 after Letter layout. */
+export const DEFAULT_CENTER = { lon: -76.5764, lat: 40.4347 };
 /** 512-based z for 1:24 000 at Letter neatline. Live lock uses #map.clientWidth. */
 export const DEFAULT_ZOOM = 13;
 
@@ -117,7 +117,7 @@ export function buildStyle(tileId = activeTileSource) {
       {
         id: 'well',
         type: 'background',
-        paint: { 'background-color': '#E8D9B8' },
+        paint: { 'background-color': '#FFFFFF' },
       },
       {
         id: 'basemap',

@@ -1,6 +1,6 @@
 :root {
-  --paper: #FFFEF8;
-  --collar: #F4F0E6;
+  --paper: #FFFFFF;
+  --collar: #FFFFFF;
   --neatline: #000000;
   --ink: #1C1914;
   --ink-muted: #4A4036;
@@ -106,7 +106,7 @@ body.has-print-face .maplibregl-canvas-container > canvas.maplibregl-canvas {
   inset: auto;
   overflow: hidden;
   contain: paint;
-  background: #E8D9B8;
+  background: #FFFFFF;
   outline: 1.25pt solid var(--neatline);
   z-index: 1;
 }
@@ -177,21 +177,30 @@ body:not(.printing) #print-title {
   height: 100%;
   pointer-events: none;
   z-index: 6;
-  /* Label band sits on the neatline: 0.14 in above, 0.12 in left/right,
-     0.12 in into the collar. Footer paints above ticks so Col A is safe. */
-  clip-path: inset(
-    calc(100% * 0.34 / 11)
-    calc(100% * 0.20 / 8.5)
-    calc(100% * 2.16 / 11)
-    calc(100% * 0.20 / 8.5)
-  );
-  overflow: hidden;
+  clip-path: none;
+  overflow: visible;
 }
 #print-ticks svg {
   display: block;
   width: 100%;
   height: 100%;
 }
+#print-ticks .tick { position: absolute; background: #000000; }
+#print-ticks .lab {
+  position: absolute;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 7pt;
+  color: #1C1914;
+  line-height: 1;
+  white-space: nowrap;
+}
+#print-ticks .lab-sq {
+  color: #8B1E1E;
+  font-weight: 700;
+  margin-right: 0.12em;
+  font-size: 0.85em;
+}
+#print-ticks .lab-corner { line-height: 1.2; }
 
 #print-sheet {
   display: block;
@@ -206,11 +215,11 @@ body:not(.printing) #print-title {
 }
 
 #map {
-  background: #E8D9B8;
+  background: #FFFFFF;
 }
 #map .maplibregl-canvas,
 #map .maplibregl-canvas-container {
-  background: #E8D9B8;
+  background: #FFFFFF;
 }
 #map canvas,
 #map .maplibregl-canvas {
@@ -801,7 +810,7 @@ body.wysiwyg-off #sheet {
   max-width: none;
   aspect-ratio: auto;
   box-shadow: none;
-  background: #E8D9B8;
+  background: #FFFFFF;
   overflow: hidden;
 }
 body.wysiwyg-off #sheet #map {

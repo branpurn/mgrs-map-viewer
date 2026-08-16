@@ -11,6 +11,10 @@ async function main() {
   assert.match(dc.gmText, /^G–M \d+° \d{2}′ W$/);
   assert.match(dc.convLine, /^convergence \d+° \d{2}′ W$/);
 
+  const ftig = northAt(-76.5764, 40.4347);
+  assert.ok(ftig.gm !== dc.gm, "FTIG G-M must not be the DC lock");
+  assert.match(ftig.gmText, /^G–M \d+° \d{2}′ W$/);
+
   const syd = northAt(151.2093, -33.8688);
   assert.ok(syd.decl > 10 && syd.decl < 15, `Sydney decl ${syd.decl}`);
   assert.ok(syd.gm !== dc.gm, "Sydney G-M must not be the DC lock");

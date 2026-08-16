@@ -55,7 +55,7 @@ Fail: true-north-only arrow. Garbled `0.4° 7' 93' W`. `0°38′W`. Jefferson Pi
 
 ## RF
 
-First-load Jefferson Pier: sheet and HUD both **1:24 000**.
+First-load Fort Indiantown Gap cantonment: sheet and HUD both **1:24 000**.
 
 Fail: first-load RF ≠ HUD. Print → Cancel leaves the live collar at **1:12 000**. A 1:12 000 print capture. Print preview is a blank tan sheet with no collar.
 
