@@ -1,5 +1,8 @@
 import { forward } from 'mgrs';
 import { t } from './copy.js';
+import { squareLettersFromUtm } from './mgrs-letters.js';
+
+export { squareLettersFromUtm } from './mgrs-letters.js';
 
 /**
  * Viewport MGRS graticule as a MapLibre GeoJSON source + line/symbol layers.
@@ -252,27 +255,8 @@ function padBounds(b, frac = 0.12) {
   };
 }
 
-function zonesIn(west, east) {
-  const out = new Set();
-  let w = west;
-  let e = east;
-  if (e < w) e += 360;
-  for (let lon = w; lon <= e + 0.05; lon += 2) {
-    let L = lon;
-    while (L > 180) L -= 360;
-    while (L < -180) L += 360;
-    out.add(utmZone(L));
-  }
-  return [...out];
-}
-
 function snapUp(v, step) {
   return Math.ceil(v / step) * step;
-}
-
-function inZone(lon, zone, slop = 0.2) {
-  const [a, b] = zoneLonRange(zone);
-  return lon >= a - slop && lon <= b + slop;
 }
 
 function sampleStep(interval) {
@@ -346,7 +330,7 @@ function levelFor(v) {
   return '100m';
 }
 
-function buildUtmLines(zone, northHem, bounds, interval, allowed) {
+function buildUtmLines(zone, northHem, bounds, interval, allowed, { clipZone = true } = {}) {
   const features = [];
   const corners = [
     [bounds.west, bounds.south],
@@ -369,7 +353,7 @@ function buildUtmLines(zone, northHem, bounds, interval, allowed) {
     minN = Math.min(minN, u.northing);
     maxN = Math.max(maxN, u.northing);
   }
-  minE = Math.max(100000, minE - interval);
+  minE = Math.max(clipZone ? 100000 : 0, minE - interval);
   maxE = Math.min(900000, maxE + interval);
   minN = Math.max(0, minN - interval);
   maxN = maxN + interval;
@@ -381,6 +365,11 @@ function buildUtmLines(zone, northHem, bounds, interval, allowed) {
   const latMax = Math.min(bounds.north + 1, northHem ? 84 : 0);
 
   const keep = (v) => allowed.includes(levelFor(v));
+  const lonOk = (lon) => {
+    if (lon < bounds.west - 1 || lon > bounds.east + 1) return false;
+    if (!clipZone) return true;
+    return lon >= zWest - 0.05 && lon <= zEast + 0.05;
+  };
 
   for (let e = snapUp(minE, step); e <= maxE; e += step) {
     if (!keep(e)) continue;
@@ -390,10 +379,7 @@ function buildUtmLines(zone, northHem, bounds, interval, allowed) {
       if (
         p.lat >= latMin &&
         p.lat <= latMax &&
-        p.lon >= zWest - 0.05 &&
-        p.lon <= zEast + 0.05 &&
-        p.lon >= bounds.west - 1 &&
-        p.lon <= bounds.east + 1
+        lonOk(p.lon)
       ) {
         coords.push([p.lon, p.lat]);
       } else if (coords.length >= 2) {
@@ -416,9 +402,7 @@ function buildUtmLines(zone, northHem, bounds, interval, allowed) {
       if (
         p.lat >= latMin &&
         p.lat <= latMax &&
-        inZone(p.lon, zone, 0.05) &&
-        p.lon >= bounds.west - 1 &&
-        p.lon <= bounds.east + 1
+        lonOk(p.lon)
       ) {
         coords.push([p.lon, p.lat]);
       } else if (coords.length >= 2) {
@@ -574,7 +558,8 @@ export function buildGridGeoJSON(map) {
 
   let usedStep = meters;
   if (meters > 0) {
-    for (const zone of zonesIn(bounds.west, bounds.east)) {
+    const home = utmZone(center.lng);
+    for (const zone of [home]) {
       for (const northHem of hems) {
         const { features: lines, step } = buildUtmLines(
           zone,
@@ -582,6 +567,7 @@ export function buildGridGeoJSON(map) {
           bounds,
           meters,
           levels,
+          { clipZone: false },
         );
         usedStep = Math.max(usedStep, step);
         features.push(...lines);
