@@ -368,7 +368,6 @@ body.printing #map {
   left: 0.38in !important;
   right: auto !important;
   bottom: auto !important;
-  inset: auto !important;
   width: 7.74in !important;
   height: 8.14in !important;
   overflow: hidden !important;
@@ -432,7 +431,6 @@ body.printing #map {
     left: 0.38in !important;
     right: auto !important;
     bottom: auto !important;
-    inset: auto !important;
     width: 7.74in !important;
     height: 8.14in !important;
     overflow: hidden !important;

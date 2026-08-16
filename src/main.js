@@ -425,7 +425,6 @@ function pinLetterNeatline() {
     mapEl.style.setProperty('height', '8.14in', 'important');
     mapEl.style.setProperty('right', 'auto', 'important');
     mapEl.style.setProperty('bottom', 'auto', 'important');
-    mapEl.style.setProperty('inset', 'auto', 'important');
   }
 }
 
