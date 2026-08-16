@@ -699,8 +699,9 @@ export function attachMgrsGrid(map, onUpdate) {
     }
     if (map.getLayer(GZD_LINE_LAYER)) {
       map.setPaintProperty(GZD_LINE_LAYER, 'line-color', GZD_LINE);
-      map.setPaintProperty(GZD_LINE_LAYER, 'line-width', 2.5);
+      map.setPaintProperty(GZD_LINE_LAYER, 'line-width', printing ? 1.8 : 1.6);
       map.setPaintProperty(GZD_LINE_LAYER, 'line-opacity', 0.85);
+      map.setPaintProperty(GZD_LINE_LAYER, 'line-dasharray', [2.2, 1.6]);
     }
     if (map.getLayer(LINE_LAYER)) {
       map.setPaintProperty(LINE_LAYER, 'line-color', INK);
@@ -782,8 +783,9 @@ export function attachMgrsGrid(map, onUpdate) {
         layout: { 'line-cap': 'butt', 'line-join': 'miter' },
         paint: {
           'line-color': GZD_LINE,
-          'line-width': 2.5,
+          'line-width': 1.6,
           'line-opacity': 0.85,
+          'line-dasharray': [2.2, 1.6],
         },
       });
 
