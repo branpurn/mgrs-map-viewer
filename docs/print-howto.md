@@ -21,7 +21,7 @@ Empty or ocean frames still print. The title is UNTITLED SHEET.
 
 US Letter, 8.5 × 11 in, portrait. USGS-style collar, not a screenshot of the toolbar. Type is TeX Gyre Heros (Helvetica).
 
-- Map inside a neatline, MGRS overlay frozen at the print scale. The view is rotated to grid north so UTM lines sit square to the neatline (true north is the one that tilts).
+- Map inside a neatline, MGRS overlay frozen at the print scale. The view is locked to grid north (no on-screen rotate). UTM lines sit square to the neatline; turn the paper with a compass in the field.
 - Upper collar: MGRS MAP VIEWER, centered sheet title, date
 - Lower collar: ident (scale, MGRS, interval, WGS 84, UTM zone, grid zone, live example) · metric bar + sheet · true north
 - Footer: disclaimer, then OSM / OpenTopoMap credit (not a USGS map, not for navigation)

@@ -2,7 +2,7 @@
 const assert = require("assert");
 
 async function main() {
-  const { northAt, formatAngleDms, gridConvergenceDeg, gridNorthBearing, orientGridNorth } = await import("./north.js");
+  const { northAt, formatAngleDms, gridConvergenceDeg, gridNorthBearing, orientGridNorth, lockMapRotation, attachGridNorthLock } = await import("./north.js");
 
   const dc = northAt(-77.0353, 38.8895);
   assert.ok(dc.decl < -9 && dc.decl > -12, `DC decl ${dc.decl}`);
@@ -37,6 +37,33 @@ async function main() {
   const aimed = orientGridNorth(mock);
   assert.ok(aimed < -0.6 && aimed > -1.4);
   assert.strictEqual(set, aimed);
+
+  const disabled = [];
+  const handlers = {};
+  let onCalls = 0;
+  const lockMock = {
+    getCenter: () => ({ lng: -76.5764, lat: 40.4347 }),
+    getBearing: () => 15,
+    setBearing: (b) => { set = b; },
+    getPitch: () => 0,
+    setPitch: () => {},
+    dragRotate: { disable: () => disabled.push("dragRotate") },
+    touchPitch: { disable: () => disabled.push("touchPitch") },
+    touchZoomRotate: { disableRotation: () => disabled.push("touchZoomRotate") },
+    keyboard: { disableRotation: () => disabled.push("keyboard") },
+    on: (ev, fn) => { onCalls += 1; handlers[ev] = fn; },
+  };
+  lockMapRotation(lockMock);
+  assert.deepStrictEqual(disabled, ["dragRotate", "touchPitch", "touchZoomRotate", "keyboard"]);
+  attachGridNorthLock(lockMock);
+  assert.ok(lockMock.__mgrsGridNorthLock);
+  assert.ok(typeof handlers.rotate === "function");
+  const bound = onCalls;
+  set = null;
+  handlers.rotate();
+  assert.ok(set < -0.6 && set > -1.4, "rotate snap returns to grid north");
+  attachGridNorthLock(lockMock);
+  assert.strictEqual(onCalls, bound);
 
   // A grid-north rhumb at FTIG is ~1° off a north-up mercator frame; after
   // the MapLibre CCW bearing it sits on the +Y axis (square to the neatline).

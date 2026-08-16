@@ -22,6 +22,20 @@ export function gridNorthBearing(lon, lat, zone = utmZone(lon)) {
   return gridConvergenceDeg(lon, lat, zone);
 }
 
+function bearingDelta(from, to) {
+  return ((Number(to) - Number(from) + 540) % 360) - 180;
+}
+
+/** Kill every rotate gesture. Field users turn the paper, not the screen. */
+export function lockMapRotation(map) {
+  if (!map) return;
+  try { map.dragRotate?.disable(); } catch { /* */ }
+  try { map.touchPitch?.disable(); } catch { /* */ }
+  try { map.touchZoomRotate?.disableRotation(); } catch { /* */ }
+  try { map.keyboard?.disableRotation(); } catch { /* */ }
+  try { if (typeof map.setPitch === 'function' && map.getPitch?.() !== 0) map.setPitch(0); } catch { /* */ }
+}
+
 /** Rotate the map so MGRS/UTM lines sit square to the neatline. */
 export function orientGridNorth(map) {
   if (!map || typeof map.getCenter !== 'function') return 0;
@@ -29,11 +43,24 @@ export function orientGridNorth(map) {
   const next = gridNorthBearing(c.lng, c.lat);
   if (!Number.isFinite(next)) return 0;
   const cur = typeof map.getBearing === 'function' ? map.getBearing() : 0;
-  let delta = next - cur;
-  delta = ((delta + 540) % 360) - 180;
-  if (Math.abs(delta) < 0.04) return next;
+  if (Math.abs(bearingDelta(cur, next)) < 0.04) return next;
   try { map.setBearing(next); } catch { /* */ }
   return next;
+}
+
+/** Grid north only. No user rotate, no snap-to-true-north. */
+export function attachGridNorthLock(map) {
+  if (!map || map.__mgrsGridNorthLock) return;
+  map.__mgrsGridNorthLock = true;
+  lockMapRotation(map);
+  orientGridNorth(map);
+  const snap = () => {
+    lockMapRotation(map);
+    orientGridNorth(map);
+  };
+  map.on('rotate', snap);
+  map.on('pitch', snap);
+  map.on('moveend', snap);
 }
 
 /** Grid convergence (degrees, east-positive): Snyder γ = atan(tan(λ−λ0) sin φ). */

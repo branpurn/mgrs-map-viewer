@@ -1,7 +1,7 @@
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { t } from './copy.js';
-import { gridNorthBearing } from './north.js';
+import { attachGridNorthLock, gridNorthBearing } from './north.js';
 
 /** Fort Indiantown Gap cantonment — RF target 1:50 000 after Letter layout. */
 export const DEFAULT_CENTER = { lon: -76.5764, lat: 40.4347 };
@@ -293,6 +293,7 @@ export async function createMap(containerId = 'map') {
     center: [DEFAULT_CENTER.lon, DEFAULT_CENTER.lat],
     zoom: startZoom,
     bearing: gridNorthBearing(DEFAULT_CENTER.lon, DEFAULT_CENTER.lat),
+    bearingSnap: 0,
     minZoom: 2,
     maxZoom: 18,
     maxPitch: 0,
@@ -305,6 +306,7 @@ export async function createMap(containerId = 'map') {
     fadeDuration: 0,
     pixelRatio: screenPixelRatio(),
   });
+  attachGridNorthLock(map);
 
   detectBaseTiles().then((id) => {
     if (id !== 'opentopomap') applyTileSource(map, id);

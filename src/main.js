@@ -32,7 +32,7 @@ import {
 } from './scale.js';
 import { attachSearch } from './search.js';
 import { attachCollarTicks } from './ticks.js';
-import { northAt, ray, visualAngle, orientGridNorth } from './north.js';
+import { northAt, ray, visualAngle, orientGridNorth, gridNorthBearing } from './north.js';
 
 if (typeof window.__mgrsNativePrint !== 'function') {
   window.__mgrsNativePrint = window.print.bind(window);
@@ -354,7 +354,7 @@ function restoreCamera(map, saved) {
       map.jumpTo({
         center: [saved.lng, saved.lat],
         zoom: saved.zoom,
-        bearing: Number.isFinite(saved.bearing) ? saved.bearing : map.getBearing(),
+        bearing: gridNorthBearing(saved.lng, saved.lat),
       });
     } else {
       map.setZoom(saved.zoom);
@@ -892,7 +892,7 @@ function attachPrint(map) {
         map.jumpTo({
           center: [lng, lat],
           zoom: saved.zoom,
-          bearing: Number.isFinite(saved.bearing) ? saved.bearing : map.getBearing(),
+          bearing: gridNorthBearing(lng, lat),
         });
       } else {
         map.setZoom(saved.zoom);
