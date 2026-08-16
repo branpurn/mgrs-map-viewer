@@ -4,6 +4,8 @@ import {
   dockZoom,
   activeTileSource,
   attrPrint,
+  screenPixelRatio,
+  printPixelRatio,
 } from './map.js';
 import {
   attachMgrsGrid,
@@ -895,6 +897,7 @@ function attachPrint(map) {
     document.body.classList.add('printing');
     document.documentElement.classList.add('printing');
     pinLetterNeatline();
+    try { map.setPixelRatio(printPixelRatio()); } catch { /* */ }
     try { map.resize(); } catch { /* print size */ }
     const mapEl = document.getElementById('map');
     if (mapEl) void mapEl.clientWidth;
@@ -917,6 +920,7 @@ function attachPrint(map) {
     document.body.classList.remove('printing');
     document.documentElement.classList.remove('printing');
     unpinLetterNeatline();
+    try { map.setPixelRatio(screenPixelRatio()); } catch { /* */ }
     document.title = t('app.documentTitle');
     const saved = prePrint || { zoom: null, center: null, sheetOn: printSavedSheetOn };
     prePrint = null;

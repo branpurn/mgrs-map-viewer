@@ -19,6 +19,16 @@ export const OT_ATTR_SHORT =
   'Map data © OpenStreetMap contributors, SRTM. Style © OpenTopoMap (CC-BY-SA). Not a USGS map.';
 export const OSM_ATTR_SHORT = 'Map data © OpenStreetMap contributors. Not a USGS map.';
 
+export function screenPixelRatio() {
+  const dpr = typeof window !== 'undefined' ? Number(window.devicePixelRatio) || 1 : 1;
+  return Math.max(2, dpr);
+}
+
+export function printPixelRatio() {
+  const dpr = typeof window !== 'undefined' ? Number(window.devicePixelRatio) || 1 : 1;
+  return Math.max(3, dpr);
+}
+
 export function attrPrint() {
   return activeTileSource === 'opentopomap' ? t('lbl.attribution') : t('lbl.attributionOsm');
 }
@@ -99,7 +109,9 @@ function rasterSource(id) {
   return {
     type: 'raster',
     tiles: ot ? OT_TILES : OSM_TILES,
-    tileSize: 256,
+    // 256px OTM/OSM images advertised as 128 CSS px → MapLibre fetches z+1
+    // so 1:50 000 (z≈12.1) uses z13 tiles instead of stretched z12.
+    tileSize: 128,
     attribution: ot ? OT_ATTR_SHORT : OSM_ATTR_SHORT,
     maxzoom: ot ? 17 : 19,
   };
@@ -123,6 +135,7 @@ export function buildStyle(tileId = activeTileSource) {
         id: 'basemap',
         type: 'raster',
         source: 'basemap',
+        paint: { 'raster-resampling': 'linear' },
       },
     ],
   };
@@ -288,6 +301,7 @@ export async function createMap(containerId = 'map') {
     hash: false,
     preserveDrawingBuffer: true,
     fadeDuration: 0,
+    pixelRatio: screenPixelRatio(),
   });
 
   detectBaseTiles().then((id) => {
