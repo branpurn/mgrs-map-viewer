@@ -151,28 +151,24 @@ function rebuild(map, host) {
     lab(host, text, { left: pctX(LEFT + MAP_W - 0.01), top: pctY(yIn - 0.05), fontSize: '7pt' });
   }
 
-  const corners = [
-    { utm: nw, eAlign: 'left', nAlign: 'top' },
-    { utm: ne, eAlign: 'right', nAlign: 'top' },
-    { utm: sw, eAlign: 'left', nAlign: 'bottom' },
-    { utm: se, eAlign: 'right', nAlign: 'bottom' },
-  ];
-  for (const corner of corners) {
-    const eText = utmCornerText(corner.utm.easting, 'E');
-    const nText = utmCornerText(corner.utm.northing, 'N');
-    const eLeft = corner.eAlign === 'left' ? LEFT + 0.02 : LEFT + MAP_W - 0.68;
-    const nLeft = corner.eAlign === 'left' ? LEFT - 0.02 : LEFT + MAP_W - 0.68;
-    const eTop = corner.nAlign === 'top' ? TOP - 0.24 : TOP + MAP_H + 0.015;
-    const nTop = corner.nAlign === 'top' ? TOP + 0.02 : TOP + MAP_H - 0.10;
-    lab(host, eText, { left: pctX(eLeft), top: pctY(eTop), fontSize: '6pt' });
-    lab(host, nText, { left: pctX(Math.max(LEFT + 0.02, nLeft)), top: pctY(nTop), fontSize: '6pt' });
-  }
+  lab(host, utmCornerText(sw.easting, 'E'), {
+    left: pctX(LEFT + 0.02), top: pctY(TOP + MAP_H - 0.10), fontSize: '6pt',
+  });
+  lab(host, utmCornerText(se.easting, 'E'), {
+    left: pctX(LEFT + MAP_W - 0.68), top: pctY(TOP + MAP_H - 0.10), fontSize: '6pt',
+  });
+  lab(host, utmCornerText(nw.northing, 'N'), {
+    left: pctX(LEFT + 0.02), top: pctY(TOP + 0.02), fontSize: '6pt',
+  });
+  lab(host, utmCornerText(ne.northing, 'N'), {
+    left: pctX(LEFT + MAP_W - 0.68), top: pctY(TOP + 0.02), fontSize: '6pt',
+  });
 
   const geo = [
-    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.02, top: TOP - 0.24 },
-    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.70, top: TOP - 0.24 },
-    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT - 0.02, top: TOP + 0.02 },
-    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT + 0.02, top: TOP + MAP_H - 0.10 },
+    { text: dms(b.getWest(), 'E', 'W'), left: LEFT + 0.02, top: TOP - 0.14 },
+    { text: dms(b.getEast(), 'E', 'W'), left: LEFT + MAP_W - 0.72, top: TOP - 0.14 },
+    { text: dms(b.getNorth(), 'N', 'S'), left: LEFT - 0.14, top: TOP + 0.16 },
+    { text: dms(b.getSouth(), 'N', 'S'), left: LEFT - 0.14, top: TOP + MAP_H - 0.22 },
   ];
   for (const g of geo) {
     lab(host, g.text, {

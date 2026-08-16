@@ -35,7 +35,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
   right: auto;
   height: auto;
   max-height: none;
-  bottom: calc(100% * 10.42 / 11);
+  bottom: calc(100% * 10.58 / 11);
   padding: 0;
   background: var(--collar);
   display: block;
@@ -50,7 +50,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
   left: calc(100% * 0.38 / 8.5);
   right: auto;
   top: auto;
-  bottom: calc(100% * 0.28 / 0.58);
+  bottom: 0.08in;
   font-size: 7.5pt;
   color: #4A4036;
   line-height: 1;
@@ -63,7 +63,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
   left: 19%;
   right: 19%;
   top: auto;
-  bottom: calc(100% * 0.28 / 0.58);
+  bottom: 0.08in;
   margin: 0;
   font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
   font-size: 11pt;
@@ -84,7 +84,7 @@ html.printing, html.printing body { background: var(--paper) !important; }
   right: calc(100% * 0.38 / 8.5);
   left: auto;
   top: auto;
-  bottom: calc(100% * 0.28 / 0.58);
+  bottom: 0.08in;
   font-size: 7.5pt;
   color: #4A4036;
   line-height: 1;
@@ -135,16 +135,15 @@ html.printing, html.printing body { background: var(--paper) !important; }
 }
 
 #print-title {
-  margin: 0.04in 0 0.03in;
+  margin: 0 0 0.04in;
   padding-top: 0;
   font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
-  font-size: 11pt;
+  font-size: 10pt;
   font-weight: 700;
   letter-spacing: 0.02em;
-  line-height: 1.1;
-  white-space: nowrap;
+  line-height: 1.15;
+  white-space: normal;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .print-series { margin: 0.15cqh 0 0; font-size: 0.95cqh; line-height: 1.2; }
@@ -525,8 +524,8 @@ body.printing #sheet {
 }
 
 .print-col-a .print-title { font-size: 10pt; margin: 0 0 0.04in; padding-top: 0; }
-.print-col-a .print-series { margin: 0.04in 0 0; font-size: 7pt; }
-.print-col-a .print-subtitle { margin: 0; font-size: 6.5pt; color: #4A4036; }
+.print-col-a .print-series,
+.print-col-a .print-subtitle { display: none; }
 .print-ident-extra { margin: 0.08in 0 0; }
 #print-example-note { display: none; }
 #print-scale, #print-grid-value, #print-grid-interval, #print-datum-value { color: #1C1914; }
@@ -584,11 +583,12 @@ body.printing:not(.has-print-face) #map .maplibregl-canvas {
   font-size: 10pt;
   margin: 0 0 0.05in;
   padding-top: 0;
-  line-height: 1.2;
-  min-height: 0.18in;
-  max-height: 0.22in;
+  line-height: 1.15;
+  min-height: 0.16in;
+  max-height: 0.28in;
+  white-space: normal;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: unset;
 }
 .print-spec { margin: 0.04in 0 0.04in; }
 .print-spec div { height: 0.16in; font-size: 7pt; }

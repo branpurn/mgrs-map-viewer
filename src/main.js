@@ -37,7 +37,7 @@ const REAL_PRINT = window.__mgrsNativePrint;
 window.__mgrsAllowPrint = false;
 window.print = function mgrsPrintDead() { return; };
 
-const TITLE_MAX = 28;
+const TITLE_MAX = 44;
 
 const state = {
   lastInterval: null,
@@ -736,7 +736,9 @@ function snapshotPrintMapFace(map) {
     c2d.height = gl.height;
     const ctx = c2d.getContext('2d', { willReadFrequently: true });
     if (!ctx) return false;
+    ctx.filter = 'saturate(0.52) sepia(0.20) hue-rotate(-24deg) contrast(1.06)';
     ctx.drawImage(gl, 0, 0);
+    ctx.filter = 'none';
     let rejected = false;
     try {
       rejected = isBlankOrTan(ctx, c2d.width, c2d.height);
