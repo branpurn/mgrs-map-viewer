@@ -17,14 +17,16 @@ import {
 } from './mgrs-grid.js';
 import {
   attachScaleReadout,
+  attachScaleControl,
+  applyRfZoom,
   computePrintScale,
   computeViewScale,
   intervalForPrintRf,
-  buildPrintScaleBar,
   renderPrintScaleBar,
-  frameWidthPx,
-  metersPerPixelAtCenter,
-  zoomForPrintRf,
+  getPrintRf,
+  getLockedRf,
+  setFreeRf,
+  DEFAULT_RF,
 } from './scale.js';
 import { attachSearch } from './search.js';
 import { attachCollarTicks } from './ticks.js';
@@ -219,6 +221,14 @@ function applyChromeCopy() {
     submit.textContent = t('search.submit');
     submit.setAttribute('aria-label', t('search.ariaSubmit'));
   }
+  const scaleSel = document.getElementById('scale-preset');
+  if (scaleSel) {
+    scaleSel.setAttribute('aria-label', t('chrome.scalePreset'));
+    const freeOpt = scaleSel.querySelector('option[value="free"]');
+    if (freeOpt) freeOpt.textContent = t('chrome.scaleFree');
+  }
+  const scaleFree = document.getElementById('scale-free');
+  if (scaleFree) scaleFree.setAttribute('aria-label', t('chrome.scaleCustom'));
   const printBtn = document.getElementById('print-btn');
   if (printBtn) {
     printBtn.textContent = t('chrome.print');
@@ -351,6 +361,11 @@ function endAutoRf() {
   allowAutoRf = false;
 }
 
+function userTookZoom() {
+  allowAutoRf = false;
+  setFreeRf();
+}
+
 function setWysiwyg(on) {
   endAutoRf();
   const saved = captureCamera(liveMap);
@@ -366,6 +381,8 @@ function setWysiwyg(on) {
       requestAnimationFrame(() => {
         try { liveMap.resize(); } catch { /* toggle */ }
         restoreCamera(liveMap, saved);
+        const rf = getLockedRf();
+        if (rf) applyRfZoom(liveMap, rf);
       });
     }
   }
@@ -511,23 +528,8 @@ function layoutSheet(map, opts = {}) {
   pinCollarTitle();
 }
 
-function setZoomForPrintRf(map, target = 24000) {
-  // AFTER Letter layout. Use live #map.clientWidth (7.74 in neatline).
-  // MapLibre z0 world is 512 px — 156543 (256) was 1:6 000 / 1:12 000.
-  // Restore must never call this (that leaked print zoom onto the desk).
-  const mapEl = document.getElementById('map');
-  const w = (mapEl && mapEl.clientWidth) || frameWidthPx() || (7.74 * 96);
-  if (w < 8) return;
-  const targetMpp = (target * 7.74 * 0.0254) / w;
-  const currentMpp = metersPerPixelAtCenter(map);
-  const z0 = map.getZoom();
-  let z;
-  if (currentMpp && currentMpp > 0 && Number.isFinite(z0)) {
-    z = z0 + Math.log2(currentMpp / targetMpp);
-  } else {
-    z = zoomForPrintRf(map.getCenter().lat, w, target);
-  }
-  if (Number.isFinite(z)) map.setZoom(Math.min(18, Math.max(2, z)));
+function setZoomForPrintRf(map, target = DEFAULT_RF) {
+  applyRfZoom(map, target);
 }
 
 function afterLetterLayout(map, fn) {
@@ -561,7 +563,7 @@ function lockDemoRf(map) {
   layoutSheet(map, { keepCamera: false });
   try { map.resize(); } catch { /* lock */ }
   if (!letterMapWidth()) return;
-  setZoomForPrintRf(map, 24000);
+  setZoomForPrintRf(map, getPrintRf(DEFAULT_RF));
   fillPrintBlock(map);
   allowAutoRf = false;
 }
@@ -655,10 +657,8 @@ function fillPrintBlock(map) {
   const view = computeViewScale(map);
   const scale = computePrintScale(map);
   const printing = document.body.classList.contains('printing');
-  const raw = view.rawRf;
-  const locked = Number.isFinite(raw) && raw >= 23200 && raw <= 24800;
-  const rf = printing ? 24000 : (locked ? 24000 : (view.rf || 24000));
-  const text = printing || locked ? formatScaleRatio(24000) : (view.text || formatScaleRatio(rf));
+  const rf = getPrintRf(view.rawRf || view.rf);
+  const text = formatScaleRatio(rf) || view.text || formatScaleRatio(DEFAULT_RF);
   state.lastScaleText = text;
   const rfBand = intervalForPrintRf(rf);
   const square = centerMgrs(map, rfBand.accuracy);
@@ -898,8 +898,9 @@ function attachPrint(map) {
     try { map.resize(); } catch { /* print size */ }
     const mapEl = document.getElementById('map');
     if (mapEl) void mapEl.clientWidth;
-    setZoomForPrintRf(map, 24000);
-    setPrintInterval(intervalForPrintRf(24000));
+    const rf = getPrintRf(DEFAULT_RF);
+    setZoomForPrintRf(map, rf);
+    setPrintInterval(intervalForPrintRf(rf));
     fillPrintBlock(map);
     const compact = centerMgrsCompact(map, precisionForZoom(map.getZoom()));
     document.title = printFilename(compact);
@@ -1018,8 +1019,8 @@ function attachPrint(map) {
     );
     if (inField) return;
     if (printArmed) return;
-    if (key === '+' || key === '=') map.zoomIn();
-    if (key === '-' || key === '_') map.zoomOut();
+    if (key === '+' || key === '=') { userTookZoom(); map.zoomIn(); }
+    if (key === '-' || key === '_') { userTookZoom(); map.zoomOut(); }
   });
 }
 
@@ -1030,6 +1031,8 @@ async function main() {
   window.addEventListener('resize', () => {
     if (document.body.classList.contains('printing') || printArmed) return;
     layoutSheet(liveMap);
+    const rf = getLockedRf();
+    if (rf && liveMap) applyRfZoom(liveMap, rf);
   });
 
   const map = await createMap('map');
@@ -1057,12 +1060,13 @@ async function main() {
     state.polar = !!polar;
     updateCenterHud(map);
   });
+  attachScaleControl(map);
   attachScaleReadout(map, scaleEl);
   attachSearch(map, {
-    onInteract: () => { endAutoRf(); },
+    onInteract: () => { userTookZoom(); },
     onLocate: (info) => {
       // Search must not write sheetOn / chrome.sheet / zoom lock.
-      endAutoRf();
+      userTookZoom();
       state.exampleLocked = false;
       if (info && info.kind === 'place' && info.label && !isLatLonLabel(info.label)) {
         state.lastLabel = info.label;
@@ -1078,7 +1082,7 @@ async function main() {
       b.setAttribute('type', 'button');
       b.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        endAutoRf();
+        userTookZoom();
       });
     });
   }

@@ -2,10 +2,10 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { t } from './copy.js';
 
-/** Fort Indiantown Gap cantonment — RF target 1:24 000 after Letter layout. */
+/** Fort Indiantown Gap cantonment — RF target 1:50 000 after Letter layout. */
 export const DEFAULT_CENTER = { lon: -76.5764, lat: 40.4347 };
-/** 512-based z for 1:24 000 at Letter neatline. Live lock uses #map.clientWidth. */
-export const DEFAULT_ZOOM = 13;
+/** 512-based z for 1:50 000 at Letter neatline. Live lock uses #map.clientWidth. */
+export const DEFAULT_ZOOM = 12;
 
 export const OT_TILES = [
   'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
@@ -268,7 +268,7 @@ export async function createMap(containerId = 'map') {
     : (liveW > 40 && liveW < dw * 0.82 ? liveW : letterMapW);
   let startZoom = DEFAULT_ZOOM;
   if (hostW && hostW > 40) {
-    const mpp = (24000 * 7.74 * 0.0254) / hostW;
+    const mpp = (50000 * 7.74 * 0.0254) / hostW;
     const z = Math.log2((78271.51696402048 * Math.cos((DEFAULT_CENTER.lat * Math.PI) / 180)) / mpp);
     if (Number.isFinite(z)) startZoom = Math.min(18, Math.max(2, z));
   }

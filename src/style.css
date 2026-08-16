@@ -239,6 +239,25 @@ body:not(.printing) #print-title {
   isolation: isolate;
   pointer-events: auto;
 }
+.scale-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+}
+.scale-control select,
+.scale-control input {
+  height: 32px;
+  box-sizing: border-box;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  font: 12px/1 "IBM Plex Sans", "Segoe UI", sans-serif;
+  padding: 0 8px;
+}
+.scale-control select { min-width: 7.6em; }
+.scale-control input { width: 7.6em; }
 #chrome-tools #zoom-dock,
 #zoom-dock {
   position: relative !important;

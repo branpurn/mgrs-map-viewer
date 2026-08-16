@@ -1,4 +1,25 @@
 import { t, formatScaleRatio, roundToNice } from './copy.js';
+import {
+  RF_PRESETS,
+  DEFAULT_RF,
+  isPresetRf,
+  getLockedRf,
+  getPrintRf,
+  setPresetRf,
+  setFreeRf,
+  parseRfInput,
+} from './rf.js';
+
+export {
+  RF_PRESETS,
+  DEFAULT_RF,
+  isPresetRf,
+  getLockedRf,
+  getPrintRf,
+  setPresetRf,
+  setFreeRf,
+  parseRfInput,
+};
 
 /**
  * Meters per CSS pixel at the map center, from MapLibre's transform
@@ -37,7 +58,7 @@ export const MPP_Z0 = 78271.51696402048;
 export const NEATLINE_IN = 7.74;
 
 /** Zoom that makes the 7.74 in neatline read `target` RF at `widthPx`. */
-export function zoomForPrintRf(lat, widthPx, target = 24000) {
+export function zoomForPrintRf(lat, widthPx, target = DEFAULT_RF) {
   const w = Number(widthPx) > 8 ? Number(widthPx) : NEATLINE_IN * 96;
   const mpp = (target * NEATLINE_IN * 0.0254) / w;
   const z = Math.log2((MPP_Z0 * Math.cos((Number(lat) * Math.PI) / 180)) / mpp);
@@ -123,7 +144,7 @@ export function buildPrintScaleBar(track, endEl, mpp, rf) {
     }
     if (px <= maxPx) total = n;
   }
-  if (Number.isFinite(rf) && rf >= 15000 && rf <= 40000) total = 2000;
+  if (Number.isFinite(rf) && rf >= 15000 && rf <= 35000) total = 2000;
   const segs = 4;
   track.innerHTML = '';
   for (let i = 0; i < segs; i += 1) {
@@ -170,15 +191,103 @@ export function renderPrintScaleBar(el, mpp, rf) {
   buildPrintScaleBar(track, endEl, mpp, rf);
 }
 
+export function applyRfZoom(map, target) {
+  const n = Number(target);
+  if (!map || !Number.isFinite(n) || n < 100) return;
+  const mapEl = document.getElementById('map');
+  const w = (mapEl && mapEl.clientWidth) || frameWidthPx() || (NEATLINE_IN * 96);
+  if (w < 8) return;
+  const targetMpp = (n * NEATLINE_IN * 0.0254) / w;
+  const currentMpp = metersPerPixelAtCenter(map);
+  const z0 = map.getZoom();
+  let z;
+  if (currentMpp && currentMpp > 0 && Number.isFinite(z0)) {
+    z = z0 + Math.log2(currentMpp / targetMpp);
+  } else {
+    z = zoomForPrintRf(map.getCenter().lat, w, n);
+  }
+  if (Number.isFinite(z)) map.setZoom(Math.min(18, Math.max(2, z)));
+}
+
+function syncScaleControl(liveRf) {
+  const sel = document.getElementById('scale-preset');
+  const input = document.getElementById('scale-free');
+  if (!sel) return;
+  if (isPresetRf()) {
+    const rf = getLockedRf();
+    const match = RF_PRESETS.includes(rf) ? String(rf) : 'free';
+    sel.value = match;
+    if (input) {
+      input.hidden = match !== 'free';
+      input.value = formatScaleRatio(rf);
+    }
+    return;
+  }
+  sel.value = 'free';
+  if (input) {
+    input.hidden = false;
+    if (document.activeElement !== input) {
+      const n = Number.isFinite(liveRf) ? liveRf : DEFAULT_RF;
+      input.value = formatScaleRatio(n);
+    }
+  }
+}
+
+export function attachScaleControl(map) {
+  const sel = document.getElementById('scale-preset');
+  const input = document.getElementById('scale-free');
+  if (!sel) return;
+  const applyPreset = (rf) => {
+    setPresetRf(rf);
+    applyRfZoom(map, rf);
+    syncScaleControl(rf);
+  };
+  sel.addEventListener('change', () => {
+    if (sel.value === 'free') {
+      setFreeRf();
+      syncScaleControl(computeViewScale(map).rawRf);
+      return;
+    }
+    applyPreset(Number(sel.value));
+  });
+  if (input) {
+    const commit = () => {
+      const n = parseRfInput(input.value);
+      if (!n) {
+        syncScaleControl(computeViewScale(map).rawRf);
+        return;
+      }
+      if (RF_PRESETS.includes(n)) {
+        applyPreset(n);
+        return;
+      }
+      setFreeRf();
+      applyRfZoom(map, n);
+      input.value = formatScaleRatio(n);
+    };
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        commit();
+      }
+    });
+    input.addEventListener('blur', commit);
+  }
+  syncScaleControl(DEFAULT_RF);
+}
+
 export function attachScaleReadout(map, el) {
   const bar = document.getElementById('scale-bar');
   const render = () => {
-    const { text, metersPerPixel } = computeViewScale(map);
+    const view = computeViewScale(map);
+    const rf = getPrintRf(view.rf);
+    const text = formatScaleRatio(rf) || view.text;
     if (el && text) {
       el.textContent = text;
       el.setAttribute('aria-label', t('chrome.scaleLabel'));
     }
-    renderScaleBar(bar, metersPerPixel);
+    renderScaleBar(bar, view.metersPerPixel);
+    syncScaleControl(view.rawRf);
   };
   map.on('load', render);
   map.on('move', render);

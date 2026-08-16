@@ -59,6 +59,17 @@
             <span class="sheet-track" aria-hidden="true"><span class="sheet-thumb"></span></span>
             <span id="wysiwyg-state">On</span>
           </button>
+          <div id="scale-control" class="scale-control">
+            <label class="sr-only" for="scale-preset" id="lbl-scale-preset">Scale</label>
+            <select id="scale-preset" aria-label="Map scale">
+              <option value="free">Free</option>
+              <option value="25000">1:25 000</option>
+              <option value="50000" selected>1:50 000</option>
+              <option value="100000">1:100 000</option>
+              <option value="250000">1:250 000</option>
+            </select>
+            <input id="scale-free" type="text" inputmode="numeric" hidden spellcheck="false" autocomplete="off" aria-label="Custom scale" placeholder="1:50 000" />
+          </div>
           <button type="button" id="print-btn">Print</button>
         </div>
         <p id="search-helper" class="search-helper"></p>

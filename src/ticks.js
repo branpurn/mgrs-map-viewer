@@ -1,5 +1,5 @@
 import { latLonToUtm, utmToLatLon, utmZone, intervalForZoom, squareLettersAt } from './mgrs-grid.js';
-import { intervalForPrintRf } from './scale.js';
+import { intervalForPrintRf, getPrintRf, DEFAULT_RF } from './scale.js';
 
 const INN_PX = 10;
 
@@ -108,7 +108,7 @@ function cornerBlock(el, lineA, lineB, style) {
 function rebuild(map, host) {
   const printing = document.body.classList.contains('printing');
   const band = printing
-    ? intervalForPrintRf(24000)
+    ? intervalForPrintRf(getPrintRf(DEFAULT_RF))
     : intervalForZoom(map.getZoom());
   const step = band.meters;
   if (!step || band.hidden || band.gzdOnly) {

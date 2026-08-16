@@ -74,14 +74,13 @@ export function t(key, vars = {}) {
 }
 
 export function roundToNice(rf) {
-  const steps = [1000,1250,1500,2000,2500,3000,4000,5000,6000,7500,8000,10000,12000,15000,20000,24000,25000,30000,40000,50000,62500,75000,100000];
+  const steps = [1000,1250,1500,2000,2500,3000,4000,5000,6000,7500,8000,10000,12000,15000,20000,24000,25000,30000,40000,50000,62500,75000,100000,250000];
   const n = Number(rf);
-  if (!Number.isFinite(n) || n <= 0) return 24000;
-  // First-load / print lock: do not snap 1:24 000 → 1:25 000.
-  if (n >= 22800 && n <= 25200) return 24000;
+  if (!Number.isFinite(n) || n <= 0) return 50000;
+  if (n >= 22500 && n <= 27500) return Math.abs(n - 24000) < Math.abs(n - 25000) ? 24000 : 25000;
   let best = steps[0];
   for (const s of steps) if (Math.abs(s - n) < Math.abs(best - n)) best = s;
-  if (n > 100000) {
+  if (n > 250000) {
     const mag = 10 ** Math.round(Math.log10(n));
     return Math.round(n / mag) * mag;
   }
