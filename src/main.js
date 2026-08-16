@@ -437,6 +437,10 @@ function pinLetterNeatline() {
     sheet.style.setProperty('position', 'absolute', 'important');
     sheet.style.setProperty('width', '8.5in', 'important');
     sheet.style.setProperty('height', '11in', 'important');
+    sheet.style.setProperty('min-width', '8.5in', 'important');
+    sheet.style.setProperty('min-height', '11in', 'important');
+    sheet.style.setProperty('max-width', 'none', 'important');
+    sheet.style.setProperty('max-height', 'none', 'important');
     sheet.style.setProperty('left', '0', 'important');
     sheet.style.setProperty('top', '0', 'important');
     sheet.style.setProperty('transform', 'none', 'important');
@@ -455,7 +459,7 @@ function pinLetterNeatline() {
 function unpinLetterNeatline() {
   const sheet = document.getElementById('sheet');
   const mapEl = document.getElementById('map');
-  const props = ['position', 'width', 'height', 'left', 'top', 'transform', 'right', 'bottom', 'inset'];
+  const props = ['position', 'width', 'height', 'min-width', 'min-height', 'max-width', 'max-height', 'left', 'top', 'transform', 'right', 'bottom', 'inset'];
   for (const el of [sheet, mapEl]) {
     if (!el) continue;
     for (const p of props) el.style.removeProperty(p);

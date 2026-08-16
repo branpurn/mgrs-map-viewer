@@ -4,7 +4,18 @@ html, body, #sheet, #map, canvas, .maplibregl-canvas, #map canvas, .maplibregl-c
   color-adjust: exact !important;
 }
 
-html.printing, html.printing body { background: var(--paper) !important; }
+html.printing,
+html.printing body {
+  background: var(--paper) !important;
+  width: 8.5in !important;
+  height: 11in !important;
+  max-width: 8.5in !important;
+  max-height: 11in !important;
+  min-width: 8.5in !important;
+  min-height: 11in !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
 @page {
   size: 8.5in 11in;
   margin: 0;
@@ -315,11 +326,14 @@ html.printing, html.printing body { background: var(--paper) !important; }
 #print-contour-row[hidden] { display: none; }
 
 body.printing,
-body.printing #app {
+body.printing #app,
+body.printing #desk {
   width: 8.5in !important;
   height: 11in !important;
-  max-width: 8.5in;
-  max-height: 11in;
+  max-width: 8.5in !important;
+  max-height: 11in !important;
+  min-width: 8.5in !important;
+  min-height: 11in !important;
   background: var(--paper) !important;
   color: #1C1914;
   overflow: hidden !important;
@@ -451,6 +465,10 @@ body.printing #map {
     transform: none !important;
     width: 8.5in !important;
     height: 11in !important;
+    min-width: 8.5in !important;
+    min-height: 11in !important;
+    max-width: none !important;
+    max-height: none !important;
     box-shadow: none !important;
   }
 
@@ -528,6 +546,10 @@ body.printing #sheet {
   transform: none !important;
   width: 8.5in !important;
   height: 11in !important;
+  min-width: 8.5in !important;
+  min-height: 11in !important;
+  max-width: none !important;
+  max-height: none !important;
   box-shadow: none !important;
   container-type: size;
   container-name: letter;
